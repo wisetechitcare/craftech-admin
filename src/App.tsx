@@ -19,6 +19,7 @@ import TestimonialsList from './pages/admin/cms/TestimonialsList';
 import ClientsList from './pages/admin/cms/ClientsList';
 import LeadsCRM from './pages/admin/LeadsCRM';
 import Settings from './pages/admin/cms/Settings';
+import Appearance from './pages/admin/cms/Appearance';
 import CTACMS from './pages/admin/cms/CTACMS';
 import AnalyticsDashboard from './pages/admin/analytics/Dashboard';
 import BlogManager from './pages/admin/blog/BlogManager';
@@ -70,6 +71,7 @@ function App() {
           <Route path="leads" element={<LeadsCRM />} />
           <Route path="ctas" element={<CTACMS />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="appearance" element={<Appearance />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="blog" element={<BlogManager />} />
           <Route path="blog/new" element={<BlogForm />} />

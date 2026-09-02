@@ -134,6 +134,12 @@ export const cmsApi = {
   deleteCTA: (id: string) => api.delete(`/cms/ctas/${id}`),
 };
 
+// ── Appearance (Layout & Appearance domain — separate from General Settings) ──
+export const appearanceApi = {
+  get: () => api.get('/cms/appearance'),
+  update: (data: any) => api.put('/cms/appearance', data),
+};
+
 // ── Blog ────────────────────────────────────────────────────────────────────
 export const blogApi = {
   list: (params?: any) => api.get('/cms/blog', { params }),                 // page, limit, category, search

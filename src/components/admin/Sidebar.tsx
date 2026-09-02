@@ -5,7 +5,7 @@ import {
   LayoutDashboard, FolderOpen, Settings, LogOut,
   Building2, Video, X, Users, MessageSquare,
   Image as ImageIcon, Home, Layers, Star, ChevronRight,
-  Cpu, FileText, Briefcase, BookOpen, BarChart3, HelpCircle
+  Cpu, FileText, Briefcase, BookOpen, BarChart3, HelpCircle, Palette
 } from 'lucide-react';
 
 interface NavItem {
@@ -59,6 +59,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'System',
     items: [
+      { to: '/admin/appearance', icon: Palette, label: 'Appearance' },
       { to: '/admin/settings', icon: Settings, label: 'Settings' },
     ],
   },
