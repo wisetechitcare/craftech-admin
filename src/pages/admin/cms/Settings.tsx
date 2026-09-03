@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { cmsApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import { Save, Loader2, AlertCircle } from "lucide-react";
+import BrandingTab from "../../../components/admin/BrandingTab";
+
+const humanize = (field: string) =>
+  field
+    .split(".")
+    .map((part) => part.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()).trim())
+    .join(" → ");
 
 const SectionHeader = ({ title, description }: any) => (
   <div className="mb-6 pb-4 border-b border-line">
@@ -73,19 +80,54 @@ const CheckboxField = ({ label, checked, onChange }: any) => (
 );
 
 export default function Settings() {
-  const [data, setData] = useState<any>(null);
+  const [data, setRawData] = useState<any>(null);
+  const [saved, setSaved] = useState<any>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("company");
+  const [dirtyTabs, setDirtyTabs] = useState<string[]>([]);
+
+  // Every field editor in this file (and BrandingTab) already calls setData, so
+  // wrapping it here marks the open tab without touching ~45 call sites. It
+  // tracks "touched", not "differs" — typing and undoing leaves the dot until
+  // save or reset, which is why the dots only render while changes are pending.
+  const setData = (next: any) => {
+    setRawData(next);
+    setDirtyTabs((prev) => (prev.includes(activeTab) ? prev : [...prev, activeTab]));
+  };
+
+  // Only what the admin actually touched. PUTting the whole record re-validated
+  // every required column, so one empty legacy field blocked saving any tab.
+  const changes = useMemo(() => {
+    if (!data || !saved) return {};
+    return Object.fromEntries(
+      Object.entries(data).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(saved[key]))
+    );
+  }, [data, saved]);
+  const changeCount = Object.keys(changes).length;
 
   useEffect(() => {
     fetchSettings();
   }, []);
 
+  useEffect(() => {
+    if (!changeCount) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [changeCount]);
+
   const fetchSettings = async () => {
     try {
       const res = await cmsApi.getSettings();
-      setData(res.data.data);
+      setRawData(res.data.data);
+      setSaved(res.data.data);
+      setFieldErrors({});
+      setDirtyTabs([]);
     } catch (err) {
       toast.error("Failed to load settings");
     } finally {
@@ -95,12 +137,19 @@ export default function Settings() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!changeCount) return;
+
     setSaving(true);
+    setFieldErrors({});
     try {
-      await cmsApi.updateSettings(data);
+      const res = await cmsApi.updateSettings(changes);
+      setRawData(res.data.data);
+      setSaved(res.data.data);
+      setDirtyTabs([]);
       toast.success("Settings saved successfully");
-    } catch (err) {
-      toast.error("Failed to save settings");
+    } catch (err: any) {
+      setFieldErrors(err.response?.data?.fields || {});
+      toast.error(err.response?.data?.message || "Failed to save settings");
     } finally {
       setSaving(false);
     }
@@ -115,6 +164,7 @@ export default function Settings() {
 
   const tabs = [
     { id: "company", label: "Company" },
+    { id: "branding", label: "Branding" },
     { id: "contact", label: "Contact" },
     { id: "social", label: "Social & Web" },
     { id: "business", label: "Business Hours" },
@@ -155,14 +205,35 @@ export default function Settings() {
             }`}
           >
             {tab.label}
+            {changeCount > 0 && dirtyTabs.includes(tab.id) && (
+              <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-warn align-middle" />
+            )}
           </button>
         ))}
       </div>
+
+      {Object.keys(fieldErrors).length > 0 && (
+        <div className="flex items-start gap-3 p-4 bg-danger/10 border border-danger/40 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-danger space-y-1">
+            <p className="font-bold">Nothing was saved. Fix these first:</p>
+            <ul className="space-y-0.5">
+              {Object.entries(fieldErrors).map(([field, message]) => (
+                <li key={field}>
+                  <span className="font-semibold">{humanize(field)}</span> &mdash; {message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
         className="bg-paper border border-line rounded-xl p-6 space-y-6"
       >
+        {activeTab === "branding" && <BrandingTab data={data} setData={setData} />}
+
         {/* COMPANY TAB */}
         {activeTab === "company" && (
           <>
@@ -767,7 +838,7 @@ export default function Settings() {
           </button>
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || !changeCount}
             className="px-6 py-2 bg-info text-white rounded-lg font-bold text-sm hover:bg-info disabled:opacity-50 flex items-center gap-2 transition-colors"
           >
             {saving ? (
@@ -778,7 +849,7 @@ export default function Settings() {
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Save Settings
+                {changeCount ? `Save ${changeCount} change${changeCount > 1 ? "s" : ""}` : "Saved"}
               </>
             )}
           </button>

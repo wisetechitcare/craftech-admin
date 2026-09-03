@@ -69,6 +69,11 @@ export const uploadApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: onProgress,
     }),
+  logo: (formData: FormData, onProgress?: any) =>
+    api.post('/upload/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: onProgress,
+    }),
   highlightThumbnail: (formData: FormData, onProgress?: any) =>
     api.post('/upload/highlights/thumbnail', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -101,6 +106,7 @@ export const cmsApi = {
 
   getSettings: () => api.get('/cms/settings'),
   updateSettings: (data: any) => api.put('/cms/settings', data),
+  getThemeOptions: () => api.get('/cms/theme/options'),
 
   getTestimonials: () => api.get('/cms/testimonials'),
   createTestimonial: (data: any) => api.post('/cms/testimonials', data),
