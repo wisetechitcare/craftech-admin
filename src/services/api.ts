@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import type { HeroContent, HeroResponse } from '../types/hero';
+
 const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({ baseURL: BASE_URL });
@@ -144,6 +146,13 @@ export const cmsApi = {
 export const appearanceApi = {
   get: () => api.get('/cms/appearance'),
   update: (data: any) => api.put('/cms/appearance', data),
+};
+
+// ── Hero (own domain: slides + copy + CTAs). A Hero write touches only Hero
+//    fields, so it can never clobber About/Stats sharing the same Home row. ──
+export const heroApi = {
+  get: () => api.get<{ success: boolean; data: HeroResponse }>('/cms/hero'),
+  update: (data: HeroContent) => api.put<{ success: boolean; data: HeroResponse }>('/cms/hero', data),
 };
 
 // ── Blog ────────────────────────────────────────────────────────────────────

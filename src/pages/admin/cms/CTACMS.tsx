@@ -44,7 +44,10 @@ const CTACMS = () => {
     setEditData({ ...editData, [field]: value });
   };
 
-  const sections = ['hero', 'services', 'portfolio', 'testimonials', 'contact'];
+  // 'hero' is deliberately absent: the Hero CMS edits that same CTA row, next to
+  // the copy it sits under and against the Hero's own length limits. Two forms
+  // writing one row is how the old duplicate-CTA confusion started.
+  const sections = ['services', 'portfolio', 'testimonials', 'contact'];
 
   if (loading) return <div className="p-8 text-center text-ink">Loading...</div>;
 
