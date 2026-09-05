@@ -4,8 +4,11 @@ import { Check, Loader2, Palette } from 'lucide-react';
 import ImageDropzone from './ui/ImageDropzone';
 import { cmsApi, uploadApi } from '../../services/api';
 
-// Mirrors src/domain/theme/types.ts. The identity is the only thing the admin
-// edits; both token sets below are derived from it by the server on save.
+// The identity is the only thing the admin edits; both token sets below are
+// derived from it by the server on save. SemanticTokens here is the subset of
+// src/domain/theme/types.ts the preview actually paints — the server sends more
+// roles than these (the text variants of the brand colours), and the preview
+// does not need them because every swatch it draws is a fill.
 interface BrandIdentity {
   primary: string;
   secondary: string;

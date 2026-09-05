@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+import type { AboutContent, AboutResponse } from '../types/about';
 import type { HeroContent, HeroResponse } from '../types/hero';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -146,6 +147,13 @@ export const cmsApi = {
 export const appearanceApi = {
   get: () => api.get('/cms/appearance'),
   update: (data: any) => api.put('/cms/appearance', data),
+};
+
+// ── About (own domain: the whole /about page in one document). Writes only
+//    home.aboutPage, so it can never clobber Hero or Stats on the same row. ──
+export const aboutApi = {
+  get: () => api.get<{ success: boolean; data: AboutResponse }>('/cms/about'),
+  update: (data: AboutContent) => api.put<{ success: boolean; data: AboutResponse }>('/cms/about', data),
 };
 
 // ── Hero (own domain: slides + copy + CTAs). A Hero write touches only Hero
