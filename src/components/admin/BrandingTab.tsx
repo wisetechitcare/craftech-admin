@@ -4,18 +4,33 @@ import { Check, Loader2, Palette } from 'lucide-react';
 import ImageDropzone from './ui/ImageDropzone';
 import { cmsApi, uploadApi } from '../../services/api';
 
-interface ThemeColors {
+// Mirrors src/domain/theme/types.ts. The identity is the only thing the admin
+// edits; both token sets below are derived from it by the server on save.
+interface BrandIdentity {
   primary: string;
-  primaryForeground: string;
   secondary: string;
-  secondaryForeground: string;
   accent: string;
-  accentForeground: string;
-  background: string;
+}
+
+interface SemanticTokens {
+  page: string;
   surface: string;
-  foreground: string;
+  surface2: string;
+  ink: string;
   muted: string;
-  border: string;
+  line: string;
+  brand: string;
+  onBrand: string;
+  brand2: string;
+  onBrand2: string;
+  accent: string;
+  onAccent: string;
+}
+
+interface ThemeColors {
+  brand: BrandIdentity;
+  light: SemanticTokens;
+  dark: SemanticTokens;
 }
 
 interface ThemeOption {
@@ -29,33 +44,62 @@ interface BrandingTabProps {
   setData: (next: any) => void;
 }
 
-const ROLES: [keyof ThemeColors, string][] = [
+// The three colours a human would point at in the logo. Editing one regenerates
+// every semantic token in both modes — which is why these are the only pickers
+// on this screen. A hand-edited `muted` used to ship straight to the website
+// with no contrast check behind it.
+const IDENTITY_ROLES: [keyof BrandIdentity, string][] = [
   ['primary', 'Primary'],
-  ['primaryForeground', 'On Primary'],
   ['secondary', 'Secondary'],
-  ['secondaryForeground', 'On Secondary'],
   ['accent', 'Accent'],
-  ['accentForeground', 'On Accent'],
-  ['background', 'Background'],
-  ['surface', 'Surface'],
-  ['foreground', 'Text'],
-  ['muted', 'Muted Text'],
-  ['border', 'Border'],
 ];
 
-// The full strip. Background and foreground barely differ between options, but
-// they are part of the theme and hiding them hides what is being chosen; the
-// labels say which bar is which so a repeated colour reads as intentional.
-const PREVIEW_ROLES: [keyof ThemeColors, string][] = [
-  ['primary', 'Primary'],
-  ['secondary', 'Secondary'],
+// The bars a human actually reads when comparing options — one row per mode, so
+// the dark system is visible before it ships rather than after a bug report.
+const PREVIEW_ROLES: [keyof SemanticTokens, string][] = [
+  ['brand', 'Brand'],
+  ['brand2', 'Brand 2'],
   ['accent', 'Accent'],
-  ['background', 'Background'],
-  ['foreground', 'Text'],
+  ['page', 'Page'],
+  ['ink', 'Text'],
 ];
 
 const signature = (colors?: ThemeColors) =>
-  colors ? `${colors.primary}|${colors.accent}|${colors.background}` : '';
+  colors ? `${colors.brand.primary}|${colors.brand.accent}` : '';
+
+// One mode's strip plus a live sample of the pairing the site paints most often:
+// a heading and a CTA on the canvas. Rendered for both modes because "readable
+// on white" was never the same promise as "readable".
+const ModeStrip = ({ tokens, label }: { tokens: SemanticTokens; label: string }) => (
+  <div className="space-y-1.5">
+    <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">{label}</span>
+    <div className="flex gap-1.5">
+      {PREVIEW_ROLES.map(([role, roleLabel]) => (
+        <span
+          key={role}
+          title={`${roleLabel} ${tokens[role]}`}
+          className="h-6 flex-1 rounded-md border border-line"
+          style={{ background: tokens[role] }}
+        />
+      ))}
+    </div>
+    <div
+      className="rounded-lg px-3 py-2.5 flex items-center gap-2 border"
+      style={{ background: tokens.page, color: tokens.ink, borderColor: tokens.line }}
+    >
+      <span className="text-xs font-semibold">Heading</span>
+      <span className="text-[11px]" style={{ color: tokens.muted }}>
+        supporting copy
+      </span>
+      <span
+        className="text-[11px] font-semibold px-2 py-1 rounded-md ml-auto"
+        style={{ background: tokens.accent, color: tokens.onAccent }}
+      >
+        Get a quote
+      </span>
+    </div>
+  </div>
+);
 
 export default function BrandingTab({ data, setData }: BrandingTabProps) {
   const [uploading, setUploading] = useState<boolean>(false);
@@ -63,7 +107,7 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
   const [loadingOptions, setLoadingOptions] = useState<boolean>(false);
 
   const palette: string[] = data?.brandPalette?.colors || [];
-  const theme: ThemeColors | undefined = data?.themeColors || undefined;
+  const theme: ThemeColors | undefined = data?.themeColors?.brand ? data.themeColors : undefined;
 
   // Options are regenerated from the saved palette, so revisiting this tab shows
   // the same choices without re-uploading the logo.
@@ -104,9 +148,13 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
     }
   };
 
-  const setRole = (role: keyof ThemeColors, value: string) => {
+  // Only the identity is sent; the server rebuilds both token sets from it, so
+  // the strips below stay stale until save. That is deliberate — the preview a
+  // human trusts has to be the one the generator produced, not one the browser
+  // guessed at with a second copy of the colour maths.
+  const setIdentity = (role: keyof BrandIdentity, value: string) => {
     if (!theme) return;
-    setData({ ...data, themeColors: { ...theme, [role]: value } });
+    setData({ ...data, themeColors: { ...theme, brand: { ...theme.brand, [role]: value.toUpperCase() } } });
   };
 
   return (
@@ -145,8 +193,8 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
             ))}
           </div>
           <p className="text-xs text-ink-faint">
-            The palette is the raw logo identity. The themes below are generated from it and checked for
-            readable contrast &mdash; that is what the website actually renders.
+            The palette is the raw logo identity. Each theme below generates a light and a dark system from
+            it, every pairing checked for readable contrast against the surface it actually lands on.
           </p>
         </div>
       )}
@@ -172,27 +220,9 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
                     <span className="text-sm font-bold text-ink">{option.label}</span>
                     {selected && <Check className="w-4 h-4 text-info" />}
                   </div>
-                  <div className="flex gap-1.5 mb-3">
-                    {PREVIEW_ROLES.map(([role, label]) => (
-                      <span
-                        key={role}
-                        title={`${label} ${option.colors[role]}`}
-                        className="h-8 flex-1 rounded-md border border-line"
-                        style={{ background: option.colors[role] }}
-                      />
-                    ))}
-                  </div>
-                  <div
-                    className="rounded-lg px-3 py-2.5 flex items-center gap-2"
-                    style={{ background: option.colors.background, color: option.colors.foreground }}
-                  >
-                    <span className="text-xs font-semibold">Heading</span>
-                    <span
-                      className="text-[11px] font-semibold px-2 py-1 rounded-md"
-                      style={{ background: option.colors.accent, color: option.colors.accentForeground }}
-                    >
-                      Get a quote
-                    </span>
+                  <div className="space-y-3">
+                    <ModeStrip tokens={option.colors.light} label="Light" />
+                    <ModeStrip tokens={option.colors.dark} label="Dark" />
                   </div>
                 </button>
               );
@@ -204,27 +234,28 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
       {theme && (
         <div className="space-y-3">
           <p className="text-xs font-semibold text-ink-mute uppercase tracking-wider flex items-center gap-2">
-            <Palette className="w-3.5 h-3.5" /> Active theme
+            <Palette className="w-3.5 h-3.5" /> Brand identity
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {ROLES.map(([role, label]) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {IDENTITY_ROLES.map(([role, label]) => (
               <label key={role} className="flex items-center gap-2.5 p-2.5 bg-raise border border-line rounded-lg">
                 <input
                   type="color"
-                  value={theme[role]}
-                  onChange={(e) => setRole(role, e.target.value)}
+                  value={theme.brand[role]}
+                  onChange={(e) => setIdentity(role, e.target.value)}
                   className="w-8 h-8 rounded-md border border-line bg-transparent cursor-pointer"
                 />
                 <span className="text-xs">
                   <span className="block font-semibold text-ink">{label}</span>
-                  <code className="text-ink-mute">{theme[role]}</code>
+                  <code className="text-ink-mute">{theme.brand[role]}</code>
                 </span>
               </label>
             ))}
           </div>
           <p className="text-xs text-ink-faint">
-            Changes apply to the website once you save. Hand-edits are not contrast-checked &mdash; pick a
-            generated theme if you want that guarantee.
+            These three colours are the brand. Every other colour on the website &mdash; page, surface, text,
+            muted text, borders, buttons, in both light and dark mode &mdash; is regenerated from them when
+            you save, so none of them can be edited into something unreadable.
           </p>
         </div>
       )}
