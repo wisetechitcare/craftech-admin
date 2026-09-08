@@ -5,7 +5,15 @@
 
 export type HeroVariant = 'premium-glass' | 'clean-modern' | 'floating';
 
+/** True when a slide's media is a video rather than a still. Mirrors
+ *  isHeroVideo in the website bundle — the two apps ship separately and share
+ *  no package, so the rule is stated in each rather than imported across. */
+export const isHeroVideo = (url?: string): boolean =>
+  /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(url ?? '');
+
 export interface HeroSlide {
+  /** Image OR video URL. Named `image` because that is the stored field; video
+   *  support was added without changing the write contract. */
   image: string;
   pos: string;
   title: string;

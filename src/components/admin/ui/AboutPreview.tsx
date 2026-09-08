@@ -20,6 +20,11 @@ import type { AboutContent, AboutSection, AboutVariant } from '../../../types/ab
 interface AboutPreviewProps {
   variant: AboutVariant;
   content: AboutContent;
+  /** Reads appearance.visibility the way the live page does — absent or not
+   *  offered to this layout means visible. Hidden parts are left out rather
+   *  than greyed: the sketch answers "what will the page look like", and a
+   *  ghost of a section that is not there would answer something else. */
+  show: (key: string) => boolean;
 }
 
 interface Tone {
@@ -74,7 +79,17 @@ const AccentHeading = ({ text, className }: { text: string; className: string })
   );
 };
 
-export default function AboutPreview({ variant, content }: AboutPreviewProps) {
+// This sketch honours every visibility key except about.whoWeAre.image: it
+// draws a photo in the opening only, never in the Who We Are band, so Premium
+// Glass's photo there has nothing to hide here. Its own switch still says
+// Hidden. Drawing a photo into the band purely so the switch has an effect
+// would be adding to the sketch rather than reflecting the page.
+//
+// The two Premium Glass badge slots map onto the first two detail rows, the
+// same split the registry and the variant1 components make.
+const DETAIL_KEYS = ['about.whoWeAre.establishedBadge', 'about.whoWeAre.experienceBadge'];
+
+export default function AboutPreview({ variant, content, show }: AboutPreviewProps) {
   const { story, stats, whoWeAre, values, whatWeDo, whyChooseUs, howWeWork, cta } = content;
   const tone = variant === 'premium-glass' ? DARK : LIGHT;
   const valuesGetOwnBand = variant === 'floating';
@@ -99,10 +114,12 @@ export default function AboutPreview({ variant, content }: AboutPreviewProps) {
   const photo = (className: string) => (
     <div className={`relative overflow-hidden border ${tone.rule} ${tone.fill} ${className}`}>
       {story.image && <img src={story.image} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-      <div className="absolute inset-x-0 bottom-0 bg-ink/85 px-1.5 py-1">
-        <p className="text-[5px] font-bold uppercase tracking-[0.14em] text-white/60">{story.label}</p>
-        <p className="text-[7px] font-bold leading-tight text-white">{story.caption}</p>
-      </div>
+      {show('about.story.caption') && (
+        <div className="absolute inset-x-0 bottom-0 bg-ink/85 px-1.5 py-1">
+          <p className="text-[5px] font-bold uppercase tracking-[0.14em] text-white/60">{story.label}</p>
+          <p className="text-[7px] font-bold leading-tight text-white">{story.caption}</p>
+        </div>
+      )}
     </div>
   );
 
@@ -123,12 +140,16 @@ export default function AboutPreview({ variant, content }: AboutPreviewProps) {
       <div className="space-y-1.5 px-3.5 py-4 text-center">
         {eyebrow(story.label)}
         <AccentHeading text={story.heading} className={`text-[13px] font-black leading-tight ${tone.head}`} />
-        <p className={`mx-auto line-clamp-3 max-w-[80%] text-[8px] leading-relaxed ${tone.body}`}>
-          {story.description}
-        </p>
-        <span className="mt-1 inline-block rounded-full bg-accent px-2 py-1 text-[6px] font-bold uppercase tracking-wider text-white">
-          {cta.primary.label}
-        </span>
+        {show('about.story.description') && (
+          <p className={`mx-auto line-clamp-3 max-w-[80%] text-[8px] leading-relaxed ${tone.body}`}>
+            {story.description}
+          </p>
+        )}
+        {show('about.story.cta') && (
+          <span className="mt-1 inline-block rounded-full bg-accent px-2 py-1 text-[6px] font-bold uppercase tracking-wider text-white">
+            {cta.primary.label}
+          </span>
+        )}
       </div>
     ) : variant === 'floating' ? (
       <div className="px-3.5 py-3">
@@ -146,7 +167,7 @@ export default function AboutPreview({ variant, content }: AboutPreviewProps) {
           <AccentHeading text={story.heading} className={`text-[13px] font-black leading-tight ${tone.head}`} />
           <p className={`line-clamp-4 text-[8px] leading-relaxed ${tone.body}`}>{story.description}</p>
         </div>
-        {photo('w-[38%] shrink-0 aspect-[4/3] rounded')}
+        {show('about.story.image') && photo('w-[38%] shrink-0 aspect-[4/3] rounded')}
       </div>
     );
 
@@ -199,40 +220,52 @@ export default function AboutPreview({ variant, content }: AboutPreviewProps) {
   // ── Bands ─────────────────────────────────────────────────────────────────
   const bands: React.ReactNode[] = [];
 
-  bands.push(
-    band(
-      'who',
-      <>
-        {head(whoWeAre)}
-        {whoWeAre.details.length > 0 && (
-          <div className={`border-t ${tone.rule}`}>
-            {whoWeAre.details.map((detail, i) => (
-              <div key={i} className={`flex items-baseline justify-between gap-3 border-b ${tone.rule} py-1`}>
-                <span className={`truncate text-[6px] font-bold uppercase tracking-[0.14em] ${tone.body}`}>
-                  {detail.label}
-                </span>
-                <span className={`shrink-0 text-[6px] font-bold uppercase tracking-[0.14em] ${tone.head}`}>
-                  {detail.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-        <p className={`text-[9px] font-semibold italic leading-snug ${tone.head}`}>{whoWeAre.description}</p>
-        {whoWeAre.attribution && (
-          <p className={`text-[6px] font-bold uppercase tracking-[0.14em] ${tone.body}`}>— {whoWeAre.attribution}</p>
-        )}
-        {!valuesGetOwnBand && values.items.length > 0 && (
-          <div className={`space-y-1.5 rounded border ${tone.rule} p-2`}>
-            <p className={`text-[6px] font-bold uppercase tracking-[0.14em] ${tone.body}`}>{values.heading}</p>
-            {valuesGrid}
-          </div>
-        )}
-      </>,
-    ),
-  );
+  // Clean Modern lists every detail as one table under a single switch; the
+  // other layouts draw the first two as separate badges, so those rows answer
+  // to their own keys. Both questions go through `show`, which returns true for
+  // whichever of them the live layout does not offer.
+  const details = whoWeAre.details.filter((_, i) => !DETAIL_KEYS[i] || show(DETAIL_KEYS[i]));
 
-  if (whatWeDo.items.length > 0) {
+  if (show('about.whoWeAre')) {
+    bands.push(
+      band(
+        'who',
+        <>
+          {head(whoWeAre)}
+          {show('about.whoWeAre.details') && details.length > 0 && (
+            <div className={`border-t ${tone.rule}`}>
+              {details.map((detail, i) => (
+                <div key={i} className={`flex items-baseline justify-between gap-3 border-b ${tone.rule} py-1`}>
+                  <span className={`truncate text-[6px] font-bold uppercase tracking-[0.14em] ${tone.body}`}>
+                    {detail.label}
+                  </span>
+                  <span className={`shrink-0 text-[6px] font-bold uppercase tracking-[0.14em] ${tone.head}`}>
+                    {detail.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          {show('about.whoWeAre.statement') && (
+            <>
+              <p className={`text-[9px] font-semibold italic leading-snug ${tone.head}`}>{whoWeAre.description}</p>
+              {whoWeAre.attribution && (
+                <p className={`text-[6px] font-bold uppercase tracking-[0.14em] ${tone.body}`}>— {whoWeAre.attribution}</p>
+              )}
+            </>
+          )}
+          {!valuesGetOwnBand && show('about.whoWeAre.values') && values.items.length > 0 && (
+            <div className={`space-y-1.5 rounded border ${tone.rule} p-2`}>
+              <p className={`text-[6px] font-bold uppercase tracking-[0.14em] ${tone.body}`}>{values.heading}</p>
+              {valuesGrid}
+            </div>
+          )}
+        </>,
+      ),
+    );
+  }
+
+  if (show('about.whatWeDo') && whatWeDo.items.length > 0) {
     bands.push(
       band(
         'what',
@@ -266,7 +299,7 @@ export default function AboutPreview({ variant, content }: AboutPreviewProps) {
     );
   }
 
-  if (whyChooseUs.items.length > 0) {
+  if (show('about.whyChooseUs') && whyChooseUs.items.length > 0) {
     bands.push(
       band(
         'why',
@@ -286,7 +319,7 @@ export default function AboutPreview({ variant, content }: AboutPreviewProps) {
     );
   }
 
-  if (howWeWork.steps.length > 0) {
+  if (show('about.howWeWork') && howWeWork.steps.length > 0) {
     bands.push(
       band(
         'how',
@@ -306,32 +339,36 @@ export default function AboutPreview({ variant, content }: AboutPreviewProps) {
     );
   }
 
-  if (valuesGetOwnBand && values.items.length > 0) {
+  if (valuesGetOwnBand && show('about.whoWeAre.values') && values.items.length > 0) {
     bands.push(band('values', <>{head(values)}{valuesGrid}</>));
   }
 
   return (
     <div className={`overflow-hidden rounded-lg border border-line ${tone.sheet}`}>
-      {opening}
-      {metrics}
+      {show('about.story') && opening}
+      {show('about.stats') && metrics}
       {bands}
-      <div className="space-y-1.5 bg-ink px-3.5 py-3">
-        <p className="text-[7px] font-bold uppercase tracking-[0.18em] text-white/60">{cta.label}</p>
-        <p className="text-[11px] font-extrabold leading-tight text-white">{cta.heading}</p>
-        {cta.description && (
-          <p className="line-clamp-2 text-[7px] leading-relaxed text-white/70">{cta.description}</p>
-        )}
-        <div className="flex gap-1.5 pt-0.5">
-          <span className="rounded-sm bg-accent px-2 py-1 text-[6px] font-bold uppercase tracking-wider text-white">
-            {cta.primary.label}
-          </span>
-          {cta.secondary && (
-            <span className="rounded-sm border border-white/40 px-2 py-1 text-[6px] font-bold uppercase tracking-wider text-white/80">
-              {cta.secondary.label}
-            </span>
+      {show('about.cta') && (
+        <div className="space-y-1.5 bg-ink px-3.5 py-3">
+          {show('about.cta.label') && (
+            <p className="text-[7px] font-bold uppercase tracking-[0.18em] text-white/60">{cta.label}</p>
           )}
+          <p className="text-[11px] font-extrabold leading-tight text-white">{cta.heading}</p>
+          {show('about.cta.description') && cta.description && (
+            <p className="line-clamp-2 text-[7px] leading-relaxed text-white/70">{cta.description}</p>
+          )}
+          <div className="flex gap-1.5 pt-0.5">
+            <span className="rounded-sm bg-accent px-2 py-1 text-[6px] font-bold uppercase tracking-wider text-white">
+              {cta.primary.label}
+            </span>
+            {cta.secondary && (
+              <span className="rounded-sm border border-white/40 px-2 py-1 text-[6px] font-bold uppercase tracking-wider text-white/80">
+                {cta.secondary.label}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

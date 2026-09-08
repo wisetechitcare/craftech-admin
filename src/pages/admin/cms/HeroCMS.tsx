@@ -1,13 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Save, Loader2, Plus, Trash2, Image as ImageIcon, Palette } from 'lucide-react';
+import type { Accept } from 'react-dropzone';
+import { Save, Loader2, Plus, Trash2, Palette, Eye } from 'lucide-react';
 
+import FileUpload from '../../../components/admin/ui/FileUpload';
 import HeroField from '../../../components/admin/ui/HeroField';
 import HeroPreview from '../../../components/admin/ui/HeroPreview';
-import MediaPickerModal from '../../../components/admin/ui/MediaPickerModal';
+import {
+  ElementVisibility,
+  VisibilityToggle,
+  isVisible,
+  type VisibilityMap,
+  type VisibilitySection,
+} from '../../../components/admin/ui/VisibilityToggle';
 
-import { heroApi } from '../../../services/api';
+import { appearanceApi, heroApi, uploadApi } from '../../../services/api';
 import {
   HERO_VARIANT_LABELS,
   type FieldErrors,
@@ -43,7 +51,7 @@ function clientErrors(content: HeroContent, rules: HeroRules): FieldErrors {
 
   content.slides.forEach((slide, i) => {
     if (!slide.title.trim()) errors[`slides.${i}.title`] = 'Title is required.';
-    if (!slide.image.trim()) errors[`slides.${i}.image`] = 'Image is required.';
+    if (!slide.image.trim()) errors[`slides.${i}.image`] = 'An image or video is required.';
     cap(`slides.${i}.title`, slide.title, rules.title.max, 'Title');
     cap(`slides.${i}.subtitle`, slide.subtitle, rules.subtitle.max, 'Subtitle');
   });
@@ -63,6 +71,79 @@ function clientErrors(content: HeroContent, rules: HeroRules): FieldErrors {
   return errors;
 }
 
+/** Anything the CMS media endpoint takes. Containers beyond MP4 are listed
+ *  because the server transcodes video to MP4 on upload, so what an admin has
+ *  on disk (a phone's .mov, a .mkv) does not have to be converted first. */
+const SLIDE_ACCEPT: Accept = {
+  'image/*': ['.jpg', '.jpeg', '.png', '.webp'],
+  'video/*': ['.mp4', '.mov', '.webm', '.mkv', '.avi'],
+};
+
+/**
+ * The media slot for one Hero slide, on the shared FileUpload control: drop a
+ * file and it uploads straight away, the returned URL becoming the slide's
+ * media. The × on the thumbnail clears the slot.
+ *
+ * This replaces a URL text box beside a read-only Media Library picker. That
+ * pairing could only reference assets uploaded on some other screen, so there
+ * was no way to get a new file into a slide from this page at all — the reason
+ * uploading here appeared broken.
+ */
+function SlideMedia({ value, error, onChange }: {
+  value: string;
+  error?: string;
+  onChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState<boolean>(false);
+  // FileUpload stages files internally; once one has been uploaded and its URL
+  // stored, that staged copy is stale — it would show a second thumbnail and
+  // count against maxFiles. Remounting is the whole reset.
+  const [slot, setSlot] = useState<number>(0);
+
+  const upload = async (staged: File[]) => {
+    const file = staged[staged.length - 1];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const { data } = await uploadApi.cmsMedia('hero', form);
+      onChange(data.data.url);
+      setSlot((n) => n + 1);
+      toast.success(data.data.kind === 'video' ? 'Video uploaded' : 'Image uploaded');
+    } catch (err) {
+      // The server names the actual problem (wrong type, too large, timed out);
+      // a blanket "Upload failed" is what made this screen impossible to debug.
+      const res = (err as { response?: { data?: { message?: string } } }).response;
+      toast.error(res?.data?.message || 'Upload failed');
+      setSlot((n) => n + 1);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-[10px] font-bold text-ink-faint uppercase tracking-wider mb-1.5">
+        Media
+      </label>
+      <FileUpload
+        key={slot}
+        acceptTypes={SLIDE_ACCEPT}
+        maxFiles={1}
+        maxSizeMB={200}
+        busy={uploading}
+        error={error}
+        label={<>Drag and drop a photo or video, or <span className="underline">browse files</span></>}
+        hint="One image or video. JPG, PNG, WebP, MP4, MOV, WebM — video is converted to MP4 on upload."
+        existingImages={value ? [value] : []}
+        onExistingImagesChange={(urls) => onChange(urls[0] ?? '')}
+        onFilesChange={upload}
+      />
+    </div>
+  );
+}
+
 export default function HeroCMS() {
   const [content, setContent] = useState<HeroContent | null>(null);
   const [variant, setVariant] = useState<HeroVariant>('floating');
@@ -70,8 +151,14 @@ export default function HeroCMS() {
   const [serverErrors, setServerErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-  const [pickerFor, setPickerFor] = useState<number | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number>(0);
+  // Visibility is Appearance's record, not the Hero document — hiding a part is
+  // a presentation decision and the copy behind it survives. The switches sit
+  // here, on the page you edit, but they still write to appearance.visibility.
+  // `sections` is the server's catalogue, so a key added there needs no change
+  // in this file.
+  const [visibility, setVisibility] = useState<VisibilityMap>({});
+  const [sections, setSections] = useState<VisibilitySection[]>([]);
 
   const apply = (data: HeroResponse) => {
     const { variant: v, rules: r, ...rest } = data;
@@ -85,6 +172,18 @@ export default function HeroCMS() {
       .then(({ data }) => apply(data.data))
       .catch(() => toast.error('Failed to load Hero content'))
       .finally(() => setLoading(false));
+
+    appearanceApi.get()
+      .then(({ data }) => {
+        const record = data.data;
+        setVisibility(record.visibility ?? {});
+        setSections(
+          (record.visibilityOptions as { key: string; sections: VisibilitySection[] }[] | undefined)?.find(
+            (group) => group.key === 'home',
+          )?.sections ?? [],
+        );
+      })
+      .catch(() => toast.error('Failed to load section visibility'));
   }, []);
 
   const localErrors = useMemo(
@@ -96,6 +195,22 @@ export default function HeroCMS() {
 
   const patch = (changes: Partial<HeroContent>) =>
     setContent((prev) => (prev ? { ...prev, ...changes } : prev));
+
+  // Only the key that moved is written; the map stays sparse because absent
+  // means visible, so a part this build has never heard of is never pinned.
+  const patchVisibility = (key: string, visible: boolean) =>
+    setVisibility((prev) => ({ ...prev, [key]: visible }));
+
+  const heroSection = sections.find((section) => section.key === 'home.hero');
+
+  // The stored map keeps flags belonging to other pages and other layouts on
+  // purpose, so the preview asks the served catalogue whether this one is even
+  // offered before honouring it — the same question the live site answers.
+  const previewShows = (key: string) =>
+    !(heroSection?.key === key || (heroSection?.elements ?? []).some((el) => el.key === key)) ||
+    isVisible(visibility, key);
+
+  const hiddenCount = Object.keys(visibility).filter((key) => !previewShows(key)).length;
 
   const patchSlide = (index: number, changes: Partial<HeroSlide>) =>
     setContent((prev) =>
@@ -120,6 +235,18 @@ export default function HeroCMS() {
     try {
       const { data } = await heroApi.update(content);
       apply(data.data);
+
+      // Separate document, separate request — sent on every save rather than
+      // behind a "has it changed?" guard, which saves one cheap idempotent
+      // write and, with a stale baseline, silently skips it while still
+      // reporting success.
+      try {
+        const { data: appearance } = await appearanceApi.update({ visibility });
+        setVisibility(appearance.data.visibility ?? {});
+      } catch {
+        toast.error('Hero saved, but section visibility did not. Try again.');
+        return;
+      }
       toast.success('Hero updated successfully');
     } catch (err) {
       // The API returns a per-field map alongside the summary message. Rendering
@@ -166,7 +293,22 @@ export default function HeroCMS() {
 
       <div className="bg-paper border border-line rounded-xl p-6 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">Preview</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">Preview</h3>
+            {/* Absent means visible, so the default state IS the empty map and
+                clearing it is the whole reset. It clears every page's flags,
+                which is what "everything visible" means; nothing is written
+                until Save, like every switch on this page. */}
+            <button
+              type="button"
+              onClick={() => setVisibility({})}
+              disabled={hiddenCount === 0}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Eye className="w-3 h-3" />
+              {hiddenCount ? `Show all (${hiddenCount} hidden)` : 'All visible'}
+            </button>
+          </div>
           {slideCount > 1 && (
             <div className="flex gap-1.5">
               {content.slides.map((_, i) => (
@@ -185,9 +327,15 @@ export default function HeroCMS() {
             </div>
           )}
         </div>
-        <HeroPreview variant={variant} content={content} slideIndex={Math.min(previewIndex, slideCount - 1)} />
+        <HeroPreview
+          variant={variant}
+          content={content}
+          slideIndex={Math.min(previewIndex, slideCount - 1)}
+          show={previewShows}
+        />
         <p className="text-[11px] text-ink-faint">
-          Indicative sketch of layout and focal point — not a pixel-accurate render of the live site.
+          Indicative sketch of layout and focal point — not a pixel-accurate render of the live site. It follows the
+          Visible/Hidden switches below.
         </p>
       </div>
 
@@ -254,32 +402,11 @@ export default function HeroCMS() {
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-ink-faint uppercase tracking-wider mb-1.5">
-                      Image
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="https://…"
-                        className={`flex-1 min-w-0 px-3 py-2 bg-paper border rounded-lg text-ink text-sm ${
-                          errors[`slides.${i}.image`] ? 'border-danger' : 'border-line'
-                        }`}
-                        value={slide.image}
-                        onChange={(e) => patchSlide(i, { image: e.target.value })}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setPickerFor(i)}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-paper border border-line rounded-lg text-xs font-semibold text-ink-mute hover:text-ink hover:border-info"
-                      >
-                        <ImageIcon className="w-4 h-4" /> Browse
-                      </button>
-                    </div>
-                    {errors[`slides.${i}.image`] && (
-                      <p className="mt-1 text-[11px] text-danger">{errors[`slides.${i}.image`]}</p>
-                    )}
-                  </div>
+                  <SlideMedia
+                    value={slide.image}
+                    error={errors[`slides.${i}.image`]}
+                    onChange={(url) => patchSlide(i, { image: url })}
+                  />
 
                   <div>
                     <label className="block text-[10px] font-bold text-ink-faint uppercase tracking-wider mb-1.5">
@@ -294,7 +421,7 @@ export default function HeroCMS() {
                         <option key={pos} value={pos}>{POSITION_LABELS[pos] || pos}</option>
                       ))}
                     </select>
-                    <p className="mt-1 text-[11px] text-ink-faint">Which part of the image stays visible when it is cropped.</p>
+                    <p className="mt-1 text-[11px] text-ink-faint">Which part of the media stays visible when it is cropped.</p>
                   </div>
                 </div>
               </div>
@@ -303,7 +430,22 @@ export default function HeroCMS() {
         </div>
 
         <div className="bg-paper border border-line rounded-xl p-6 space-y-5">
-          <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">Hero Content</h3>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">Hero Content</h3>
+              {heroSection && (
+                <p className="mt-1 text-[11px] text-ink-faint">
+                  The switch hides the whole Hero, slides included. Nothing is deleted.
+                </p>
+              )}
+            </div>
+            {heroSection && (
+              <VisibilityToggle
+                visible={isVisible(visibility, 'home.hero')}
+                onChange={(v) => patchVisibility('home.hero', v)}
+              />
+            )}
+          </div>
 
           <HeroField
             label="Eyebrow"
@@ -358,6 +500,15 @@ export default function HeroCMS() {
               </>
             }
           />
+
+          {heroSection?.elements?.length ? (
+            <ElementVisibility
+              elements={heroSection.elements}
+              map={visibility}
+              sectionVisible={isVisible(visibility, 'home.hero')}
+              onChange={patchVisibility}
+            />
+          ) : null}
         </div>
 
         <div className="flex items-center justify-end gap-4">
@@ -372,12 +523,6 @@ export default function HeroCMS() {
           </button>
         </div>
       </form>
-
-      <MediaPickerModal
-        open={pickerFor !== null}
-        onClose={() => setPickerFor(null)}
-        onSelect={(url) => pickerFor !== null && patchSlide(pickerFor, { image: url })}
-      />
     </div>
   );
 }

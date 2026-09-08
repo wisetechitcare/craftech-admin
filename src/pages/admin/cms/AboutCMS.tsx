@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Save, Loader2, Plus, Image as ImageIcon, Palette } from 'lucide-react';
+import { Save, Loader2, Plus, Image as ImageIcon, Palette, Eye } from 'lucide-react';
 
 import AboutPreview from '../../../components/admin/ui/AboutPreview';
 import HeroField from '../../../components/admin/ui/HeroField';
 import ListRow from '../../../components/admin/ui/ListRow';
 import MediaPickerModal from '../../../components/admin/ui/MediaPickerModal';
+import {
+  ElementVisibility,
+  VisibilityToggle,
+  isVisible,
+  type VisibilityMap,
+  type VisibilitySection,
+} from '../../../components/admin/ui/VisibilityToggle';
 
-import { aboutApi } from '../../../services/api';
+import { aboutApi, appearanceApi } from '../../../services/api';
 import {
   ABOUT_VARIANT_LABELS,
   EMPTY_CAPABILITY,
@@ -45,14 +52,19 @@ const HEADING = 'text-sm font-semibold text-ink uppercase tracking-wider';
 interface SectionCardProps {
   title: string;
   description: string;
+  /** The section's Visible/Hidden switch, rendered opposite the title. */
+  toggle?: React.ReactNode;
   children: React.ReactNode;
 }
 
-const SectionCard = ({ title, description, children }: SectionCardProps) => (
+const SectionCard = ({ title, description, toggle, children }: SectionCardProps) => (
   <div className={CARD}>
-    <div>
-      <h3 className={HEADING}>{title}</h3>
-      <p className="mt-1 text-[11px] text-ink-faint">{description}</p>
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <h3 className={HEADING}>{title}</h3>
+        <p className="mt-1 text-[11px] text-ink-faint">{description}</p>
+      </div>
+      {toggle}
     </div>
     {children}
   </div>
@@ -124,6 +136,14 @@ export default function AboutCMS() {
   const [saving, setSaving] = useState<boolean>(false);
   const [picker, setPicker] = useState<boolean>(false);
 
+  // Visibility is Appearance's record, not this document — hiding a section is
+  // a layout decision and must not cost the admin the copy behind it. The
+  // switches live here because this is where those sections are edited; the
+  // flag still writes to appearance.visibility. `sections` is the server's
+  // catalogue for this page, so what is controllable is never hardcoded below.
+  const [visibility, setVisibility] = useState<VisibilityMap>({});
+  const [sections, setSections] = useState<VisibilitySection[]>([]);
+
   const apply = (data: AboutResponse) => {
     const { variant: v, rules: r, ...rest } = data;
     setVariant(v);
@@ -137,6 +157,22 @@ export default function AboutCMS() {
       .then(({ data }) => apply(data.data))
       .catch(() => toast.error('Failed to load About content'))
       .finally(() => setLoading(false));
+
+    // Separate request, separate document. A failure here costs the toggles,
+    // not the form: the content is still fully editable without them.
+    appearanceApi
+      .get()
+      .then(({ data }) => {
+        const record = data.data;
+        const map: VisibilityMap = record.visibility ?? {};
+        setVisibility(map);
+        setSections(
+          (record.visibilityOptions as { key: string; sections: VisibilitySection[] }[] | undefined)?.find(
+            (group) => group.key === 'about',
+          )?.sections ?? [],
+        );
+      })
+      .catch(() => toast.error('Failed to load section visibility'));
   }, []);
 
   const patch = (changes: Partial<AboutContent>) =>
@@ -144,6 +180,43 @@ export default function AboutCMS() {
 
   const patchSection = <K extends keyof AboutContent>(key: K, changes: Partial<AboutContent[K]>) =>
     setContent((prev) => (prev ? { ...prev, [key]: { ...prev[key], ...changes } } : prev));
+
+  // Only the key that moved is written. The map stays sparse on purpose:
+  // absent means visible, so a section this build has never heard of is never
+  // pinned to whatever this form happened to render for it.
+  const patchVisibility = (key: string, visible: boolean) =>
+    setVisibility((prev) => ({ ...prev, [key]: visible }));
+
+  // Both read the server's catalogue rather than a list written here, so a
+  // section or element added on the server appears with no change to this file
+  // — and if the Appearance request failed, no toggle is drawn that could not
+  // be saved anyway.
+  const sectionToggle = (key: string) =>
+    sections.some((section) => section.key === key) ? (
+      <VisibilityToggle visible={isVisible(visibility, key)} onChange={(v) => patchVisibility(key, v)} />
+    ) : null;
+
+  // Only the keys THIS layout honours can hide anything in the preview. The
+  // stored map deliberately keeps flags set under other layouts, and the live
+  // page ignores those — `sections` is the server's catalogue for the variant
+  // that is actually live, so asking it is the same question the site asks.
+  const previewShows = (key: string) =>
+    !sections.some((sec) => sec.key === key || (sec.elements ?? []).some((el) => el.key === key)) ||
+    isVisible(visibility, key);
+
+  const hiddenCount = Object.keys(visibility).filter((key) => !previewShows(key)).length;
+
+  const elementToggles = (key: string) => {
+    const elements = sections.find((section) => section.key === key)?.elements;
+    return elements?.length ? (
+      <ElementVisibility
+        elements={elements}
+        map={visibility}
+        sectionVisible={isVisible(visibility, key)}
+        onChange={patchVisibility}
+      />
+    ) : null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,6 +226,23 @@ export default function AboutCMS() {
     try {
       const { data } = await aboutApi.update(content);
       apply(data.data);
+
+      // Separate document, so a separate request. Sent on EVERY save, never
+      // conditionally: a "has it changed?" guard here saved one cheap
+      // idempotent write and, when its baseline was wrong for any reason,
+      // skipped the write while still reporting success — a save that silently
+      // does nothing is far more expensive than the request it avoided.
+      try {
+        const { data: appearance } = await appearanceApi.update({ visibility });
+        // Trust the server's copy over local state, so what the toggles show
+        // after a save is what was actually stored.
+        setVisibility(appearance.data.visibility ?? {});
+      } catch {
+        // The copy is already saved. Say which half did not land rather than
+        // reporting the whole save as failed and inviting a pointless retry.
+        toast.error('Content saved, but section visibility did not. Try again.');
+        return;
+      }
       toast.success('About page updated successfully');
     } catch (err) {
       // The API returns a per-field map keyed by its zod path alongside the
@@ -207,20 +297,39 @@ export default function AboutCMS() {
           top-0` here follows the page as the form scrolls past it. */}
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <aside className="space-y-2 xl:order-last xl:sticky xl:top-0">
-          <h3 className={HEADING}>
-            Preview <span className="text-ink-faint normal-case font-normal">— {ABOUT_VARIANT_LABELS[variant]}</span>
-          </h3>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className={HEADING}>
+              Preview <span className="text-ink-faint normal-case font-normal">— {ABOUT_VARIANT_LABELS[variant]}</span>
+            </h3>
+            {/* Absent means visible, so the default state IS the empty map —
+                clearing it is the whole reset. It clears the flags set under
+                the other two layouts too, which is what "everything visible"
+                means; nothing is written until Save, like every toggle here. */}
+            <button
+              type="button"
+              onClick={() => setVisibility({})}
+              disabled={hiddenCount === 0}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Eye className="w-3 h-3" />
+              {hiddenCount ? `Show all (${hiddenCount} hidden)` : 'All visible'}
+            </button>
+          </div>
           <div className="max-h-[calc(100vh-11rem)] overflow-y-auto rounded-lg">
-            <AboutPreview variant={variant} content={content} />
+            <AboutPreview variant={variant} content={content} show={previewShows} />
           </div>
           <p className="text-[11px] text-ink-faint leading-relaxed">
             Indicative sketch of content, order and arrangement for the live About style — not a pixel-accurate render.
-            Sections with an empty list are hidden here and on the site.
+            It follows the Visible/Hidden switches, so anything missing here is either switched off or an empty list.
           </p>
         </aside>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-        <SectionCard title="Our Story" description="The opening block: the page heading, its introduction and the main image.">
+        <SectionCard
+          title="Our Story"
+          description="The opening block: the page heading, its introduction and the main image."
+          toggle={sectionToggle('about.story')}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <HeroField
               label="Section label"
@@ -278,6 +387,7 @@ export default function AboutCMS() {
             error={errors['story.caption']}
             helper="Printed over the image. Kept short — Floating sets it in large display type inside a narrow card."
           />
+          {elementToggles('about.story')}
         </SectionCard>
 
         <div className={CARD}>
@@ -288,11 +398,14 @@ export default function AboutCMS() {
               </h3>
               <p className="mt-1 text-[11px] text-ink-faint">The metrics band. Type the value exactly as it should read, e.g. "25+".</p>
             </div>
-            <AddButton
-              label="Add Stat"
-              disabled={stats.length >= rules.lists.stats.max}
-              onClick={() => patch({ stats: [...stats, { ...EMPTY_STAT }] })}
-            />
+            <div className="flex items-center gap-3">
+              {sectionToggle('about.stats')}
+              <AddButton
+                label="Add Stat"
+                disabled={stats.length >= rules.lists.stats.max}
+                onClick={() => patch({ stats: [...stats, { ...EMPTY_STAT }] })}
+              />
+            </div>
           </div>
           {errors.stats && <p className="text-[11px] text-danger">{errors.stats}</p>}
           <div className="space-y-4">
@@ -324,9 +437,14 @@ export default function AboutCMS() {
               </ListRow>
             ))}
           </div>
+          {elementToggles('about.stats')}
         </div>
 
-        <SectionCard title="Who We Are" description="The statement beside the story image, the facts listed with it, and the values grid.">
+        <SectionCard
+          title="Who We Are"
+          description="The statement beside the story image, the facts listed with it, and the values grid."
+          toggle={sectionToggle('about.whoWeAre')}
+        >
           <HeadFields
             section={whoWeAre}
             rules={rules}
@@ -461,6 +579,7 @@ export default function AboutCMS() {
               </ListRow>
             ))}
           </div>
+          {elementToggles('about.whoWeAre')}
         </SectionCard>
 
         <div className={CARD}>
@@ -474,11 +593,14 @@ export default function AboutCMS() {
               </h3>
               <p className="mt-1 text-[11px] text-ink-faint">The services list. Shown in the order below.</p>
             </div>
-            <AddButton
-              label="Add Service"
-              disabled={whatWeDo.items.length >= rules.lists.whatWeDo.max}
-              onClick={() => patchSection('whatWeDo', { items: [...whatWeDo.items, { ...EMPTY_CAPABILITY }] })}
-            />
+            <div className="flex items-center gap-3">
+              {sectionToggle('about.whatWeDo')}
+              <AddButton
+                label="Add Service"
+                disabled={whatWeDo.items.length >= rules.lists.whatWeDo.max}
+                onClick={() => patchSection('whatWeDo', { items: [...whatWeDo.items, { ...EMPTY_CAPABILITY }] })}
+              />
+            </div>
           </div>
           <HeadFields
             section={whatWeDo}
@@ -537,6 +659,7 @@ export default function AboutCMS() {
               </ListRow>
             ))}
           </div>
+          {elementToggles('about.whatWeDo')}
         </div>
 
         <div className={CARD}>
@@ -550,11 +673,14 @@ export default function AboutCMS() {
               </h3>
               <p className="mt-1 text-[11px] text-ink-faint">The reasons list. Shown in the order below.</p>
             </div>
-            <AddButton
-              label="Add Reason"
-              disabled={whyChooseUs.items.length >= rules.lists.whyChooseUs.max}
-              onClick={() => patchSection('whyChooseUs', { items: [...whyChooseUs.items, { ...EMPTY_ITEM }] })}
-            />
+            <div className="flex items-center gap-3">
+              {sectionToggle('about.whyChooseUs')}
+              <AddButton
+                label="Add Reason"
+                disabled={whyChooseUs.items.length >= rules.lists.whyChooseUs.max}
+                onClick={() => patchSection('whyChooseUs', { items: [...whyChooseUs.items, { ...EMPTY_ITEM }] })}
+              />
+            </div>
           </div>
           <HeadFields
             section={whyChooseUs}
@@ -600,6 +726,7 @@ export default function AboutCMS() {
               </ListRow>
             ))}
           </div>
+          {elementToggles('about.whyChooseUs')}
         </div>
 
         <div className={CARD}>
@@ -613,11 +740,14 @@ export default function AboutCMS() {
               </h3>
               <p className="mt-1 text-[11px] text-ink-faint">The process steps, in the order they are performed.</p>
             </div>
-            <AddButton
-              label="Add Step"
-              disabled={howWeWork.steps.length >= rules.lists.howWeWork.max}
-              onClick={() => patchSection('howWeWork', { steps: [...howWeWork.steps, { ...EMPTY_STEP }] })}
-            />
+            <div className="flex items-center gap-3">
+              {sectionToggle('about.howWeWork')}
+              <AddButton
+                label="Add Step"
+                disabled={howWeWork.steps.length >= rules.lists.howWeWork.max}
+                onClick={() => patchSection('howWeWork', { steps: [...howWeWork.steps, { ...EMPTY_STEP }] })}
+              />
+            </div>
           </div>
           <HeadFields
             section={howWeWork}
@@ -666,9 +796,14 @@ export default function AboutCMS() {
               </ListRow>
             ))}
           </div>
+          {elementToggles('about.howWeWork')}
         </div>
 
-        <SectionCard title="Call to Action" description="The closing band at the foot of the page.">
+        <SectionCard
+          title="Call to Action"
+          description="The closing band at the foot of the page."
+          toggle={sectionToggle('about.cta')}
+        >
           <HeadFields
             section={cta}
             rules={rules}
@@ -730,6 +865,7 @@ export default function AboutCMS() {
               />
             </div>
           )}
+          {elementToggles('about.cta')}
         </SectionCard>
 
         <div className="flex items-center justify-end gap-4">

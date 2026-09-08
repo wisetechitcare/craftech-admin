@@ -72,6 +72,13 @@ export const uploadApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: onProgress,
     }),
+  // Any CMS slot that takes an image or a video; the server picks Cloudinary's
+  // resource type from the file. `folder` groups the asset (e.g. 'hero').
+  cmsMedia: (folder: string, formData: FormData, onProgress?: any) =>
+    api.post(`/upload/cms?folder=${folder}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: onProgress,
+    }),
   logo: (formData: FormData, onProgress?: any) =>
     api.post('/upload/logo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

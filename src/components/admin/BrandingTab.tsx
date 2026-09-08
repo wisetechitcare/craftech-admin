@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Check, Loader2, Palette } from 'lucide-react';
-import ImageDropzone from './ui/ImageDropzone';
+import FileUpload from './ui/FileUpload';
 import { cmsApi, uploadApi } from '../../services/api';
 
 // The identity is the only thing the admin edits; both token sets below are
@@ -106,6 +106,9 @@ const ModeStrip = ({ tokens, label }: { tokens: SemanticTokens; label: string })
 
 export default function BrandingTab({ data, setData }: BrandingTabProps) {
   const [uploading, setUploading] = useState<boolean>(false);
+  // Remounts FileUpload once a logo is stored, clearing the file it staged —
+  // the "Current logo" panel beside it is what shows the result.
+  const [slot, setSlot] = useState<number>(0);
   const [options, setOptions] = useState<ThemeOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState<boolean>(false);
 
@@ -148,6 +151,7 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
       toast.error('Logo upload failed');
     } finally {
       setUploading(false);
+      setSlot((n) => n + 1);
     }
   };
 
@@ -170,11 +174,15 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ImageDropzone
-          multiple={false}
-          label="Drop your logo here"
-          uploading={uploading}
-          onUpload={handleLogo}
+        <FileUpload
+          key={slot}
+          acceptTypes={{ 'image/*': ['.jpg', '.jpeg', '.png', '.webp'] }}
+          maxFiles={1}
+          maxSizeMB={5}
+          busy={uploading}
+          label={<>Drag and drop your logo, or <span className="underline">browse files</span></>}
+          hint="JPG, PNG or WebP up to 5MB — its colours become the theme below."
+          onFilesChange={handleLogo}
         />
         {data?.logoUrl && (
           <div className="flex flex-col items-center justify-center gap-3 p-6 bg-raise border border-line rounded-2xl">
