@@ -2,6 +2,8 @@ import { forwardRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import type { FieldError } from "react-hook-form";
 
+import { InfoTooltip } from "./Tooltip";
+
 import { cn } from "../../../utils/utils";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -12,8 +14,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   hint?: React.ReactNode;
   warning?: React.ReactNode;
   maxChars?: number;
-  multiline?: boolean;
-  rows?: number;
+  tooltip?: React.ReactNode;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -37,14 +38,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       hint,
       warning,
       maxChars,
-      multiline = false,
-      rows = 2,
+      tooltip,
       ...rest
     },
     ref,
   ) => {
     const [showPassword, setShowPassword] = useState<boolean>(false);
-    const isPasswordField = !multiline && type === "password";
+    const isPasswordField = type === "password";
     const inputType = isPasswordField && showPassword ? "text" : type;
     const length = String(value ?? "").length;
     const over = maxChars !== undefined && length > maxChars;
@@ -54,8 +54,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       hint ?? (typeof error === "object" && error ? error.message : undefined);
 
     const fieldClassName = cn(
-      "w-full appearance-none rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30",
-      multiline ? "resize-y" : "h-11",
+      "h-11 w-full appearance-none rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30",
       isPasswordField && "pr-11",
       disabled &&
         "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500 opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400",
@@ -70,17 +69,20 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div>
-        {(label || maxChars !== undefined) && (
+        {(label || tooltip || maxChars !== undefined) && (
           <div className="mb-2 flex items-baseline justify-between gap-3">
-            <label
-              className={cn(
-                "block text-sm font-medium text-black",
-                labelClassName,
-              )}
-            >
-              {label}
-              {required && <span className="text-error-500"> *</span>}
-            </label>
+            <div className="flex items-center gap-1.5">
+              <label
+                className={cn(
+                  "block text-sm font-medium text-black",
+                  labelClassName,
+                )}
+              >
+                {label}
+                {required && <span className="text-error-500"> *</span>}
+              </label>
+              {tooltip && <InfoTooltip content={tooltip} label={label} />}
+            </div>
             {maxChars !== undefined && (
               <span
                 className={cn(
@@ -95,38 +97,21 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
 
         <div className="relative">
-          {multiline ? (
-            <textarea
-              ref={ref as unknown as React.Ref<HTMLTextAreaElement>}
-              name={name}
-              placeholder={placeholder}
-              value={value}
-              onChange={
-                onChange as unknown as React.ChangeEventHandler<HTMLTextAreaElement>
-              }
-              rows={rows}
-              disabled={disabled}
-              autoComplete={autoComplete}
-              className={fieldClassName}
-              {...(rest as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
-            />
-          ) : (
-            <input
-              ref={ref}
-              type={inputType}
-              name={name}
-              placeholder={placeholder}
-              value={value}
-              onChange={onChange}
-              min={min}
-              max={max}
-              step={step}
-              disabled={disabled}
-              autoComplete={autoComplete}
-              className={fieldClassName}
-              {...rest}
-            />
-          )}
+          <input
+            ref={ref}
+            type={inputType}
+            name={name}
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
+            min={min}
+            max={max}
+            step={step}
+            disabled={disabled}
+            autoComplete={autoComplete}
+            className={fieldClassName}
+            {...rest}
+          />
 
           {isPasswordField && (
             <button

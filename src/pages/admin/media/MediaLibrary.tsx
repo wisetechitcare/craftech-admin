@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Eye, Plus } from 'lucide-react';
-import { mediaApi } from '../../../services/api';
-import InputField from '../../../components/admin/ui/InputField';
-import toast from 'react-hot-toast';
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Trash2, Eye, Plus } from "lucide-react";
+import { mediaApi } from "../../../services/api";
+import InputField from "../../../components/admin/ui/InputField";
+import toast from "react-hot-toast";
+import SelectField from "../../../components/admin/ui/SelectField";
+import { toSelectOptions } from "../../../utils/utils";
 
 const MediaLibrary = () => {
   const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [deleteModal, setDeleteModal] = useState<string | null>(null);
   const [uploadModal, setUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadData, setUploadData] = useState({
-    name: '',
-    url: '',
-    category: '',
+    name: "",
+    url: "",
+    category: "",
   });
 
   useEffect(() => {
@@ -30,7 +32,7 @@ const MediaLibrary = () => {
         setMedia(data.data);
       }
     } catch (err) {
-      toast.error('Failed to load media');
+      toast.error("Failed to load media");
     } finally {
       setLoading(false);
     }
@@ -38,20 +40,20 @@ const MediaLibrary = () => {
 
   const handleUpload = async () => {
     if (!uploadData.name || !uploadData.url || !uploadData.category) {
-      toast.error('Please fill all fields');
+      toast.error("Please fill all fields");
       return;
     }
 
     setUploading(true);
     try {
       // The backend schema requires `type`; the modal only collects image URLs.
-      await mediaApi.create({ ...uploadData, type: 'image' });
-      toast.success('Media uploaded');
+      await mediaApi.create({ ...uploadData, type: "image" });
+      toast.success("Media uploaded");
       setUploadModal(false);
-      setUploadData({ name: '', url: '', category: '' });
+      setUploadData({ name: "", url: "", category: "" });
       fetchMedia();
     } catch (err) {
-      toast.error('Upload failed');
+      toast.error("Upload failed");
     } finally {
       setUploading(false);
     }
@@ -60,18 +62,26 @@ const MediaLibrary = () => {
   const handleDelete = async (id: string) => {
     try {
       await mediaApi.remove(id);
-      setMedia(prev => prev.filter(m => m._id !== id));
+      setMedia((prev) => prev.filter((m) => m._id !== id));
       setDeleteModal(null);
-      toast.success('Media deleted');
+      toast.success("Media deleted");
     } catch (err) {
-      toast.error('Failed to delete');
+      toast.error("Failed to delete");
     }
   };
 
-  const categories = ['all', ...new Set(media.map(m => m.category))];
-  const filteredMedia = selectedCategory === 'all' ? media : media.filter(m => m.category === selectedCategory);
+  const categories = ["all", ...new Set(media.map((m) => m.category))];
+  const filteredMedia =
+    selectedCategory === "all"
+      ? media
+      : media.filter((m) => m.category === selectedCategory);
 
-  if (loading) return <div className="flex items-center justify-center h-screen text-ink">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-ink">
+        Loading...
+      </div>
+    );
 
   return (
     <div className="space-y-6">
@@ -79,7 +89,9 @@ const MediaLibrary = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-ink">Media Library</h1>
-          <p className="text-ink-mute text-sm mt-2">Manage project images and assets</p>
+          <p className="text-ink-mute text-sm mt-2">
+            Manage project images and assets
+          </p>
         </div>
         <button
           onClick={() => setUploadModal(true)}
@@ -91,17 +103,17 @@ const MediaLibrary = () => {
 
       {/* Category Filter */}
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {categories.map(cat => (
+        {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
             className={`whitespace-nowrap px-4 py-2 rounded-lg text-[0.7rem] font-semibold uppercase tracking-[0.18em] transition-all ${
               selectedCategory === cat
-                ? 'bg-accent text-white'
-                : 'bg-raise text-ink-soft-soft hover:bg-line hover:text-ink'
+                ? "bg-accent text-white"
+                : "bg-raise text-ink-soft-soft hover:bg-line hover:text-ink"
             }`}
           >
-            {cat === 'all' ? 'All' : cat}
+            {cat === "all" ? "All" : cat}
           </button>
         ))}
       </div>
@@ -150,8 +162,12 @@ const MediaLibrary = () => {
 
               {/* Info */}
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-ink text-[0.75rem] font-bold truncate">{item.name}</p>
-                <p className="text-accent text-[0.65rem] font-bold uppercase">{item.category}</p>
+                <p className="text-ink text-[0.75rem] font-bold truncate">
+                  {item.name}
+                </p>
+                <p className="text-accent text-[0.65rem] font-bold uppercase">
+                  {item.category}
+                </p>
               </div>
             </motion.div>
           ))}
@@ -186,26 +202,36 @@ const MediaLibrary = () => {
                   type="text"
                   placeholder="Media name"
                   value={uploadData.name}
-                  onChange={(e) => setUploadData({ ...uploadData, name: e.target.value })}
+                  onChange={(e) =>
+                    setUploadData({ ...uploadData, name: e.target.value })
+                  }
                 />
 
                 <InputField
                   type="url"
                   placeholder="Image URL"
                   value={uploadData.url}
-                  onChange={(e) => setUploadData({ ...uploadData, url: e.target.value })}
+                  onChange={(e) =>
+                    setUploadData({ ...uploadData, url: e.target.value })
+                  }
                 />
 
-                <select
+                <SelectField
+                  placeholder="Select category"
                   value={uploadData.category}
-                  onChange={(e) => setUploadData({ ...uploadData, category: e.target.value })}
-                  className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                >
-                  <option value="">Select category</option>
-                  {['Kitchen', 'Bedroom', 'Bathroom', 'Living', 'MEP', 'Process', 'Commercial'].map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                  onValueChange={(category) =>
+                    setUploadData({ ...uploadData, category })
+                  }
+                  options={toSelectOptions([
+                    "Kitchen",
+                    "Bedroom",
+                    "Bathroom",
+                    "Living",
+                    "MEP",
+                    "Process",
+                    "Commercial",
+                  ])}
+                />
               </div>
 
               <div className="flex gap-4">
@@ -220,7 +246,7 @@ const MediaLibrary = () => {
                   disabled={uploading}
                   className="flex-1 px-4 py-2 rounded-lg bg-accent text-white font-bold hover:shadow-lg hover:shadow-accent/50 transition-all disabled:opacity-50"
                 >
-                  {uploading ? 'Uploading...' : 'Upload'}
+                  {uploading ? "Uploading..." : "Upload"}
                 </button>
               </div>
             </motion.div>
@@ -251,7 +277,11 @@ const MediaLibrary = () => {
               >
                 ✕
               </button>
-              <img src={selectedMedia.url} alt={selectedMedia.name} className="w-full h-auto" />
+              <img
+                src={selectedMedia.url}
+                alt={selectedMedia.name}
+                className="w-full h-auto"
+              />
               <div className="p-6 space-y-4">
                 <div>
                   <p className="text-ink-mute text-sm">Name</p>
@@ -259,7 +289,9 @@ const MediaLibrary = () => {
                 </div>
                 <div>
                   <p className="text-ink-mute text-sm">Category</p>
-                  <p className="text-accent font-bold">{selectedMedia.category}</p>
+                  <p className="text-accent font-bold">
+                    {selectedMedia.category}
+                  </p>
                 </div>
                 {selectedMedia.description && (
                   <div>
@@ -288,8 +320,12 @@ const MediaLibrary = () => {
               exit={{ scale: 0.9 }}
               className="bg-paper rounded-2xl p-8 max-w-sm"
             >
-              <h3 className="text-xl font-semibold text-ink mb-4">Delete Media?</h3>
-              <p className="text-ink-mute mb-8">This action cannot be undone.</p>
+              <h3 className="text-xl font-semibold text-ink mb-4">
+                Delete Media?
+              </h3>
+              <p className="text-ink-mute mb-8">
+                This action cannot be undone.
+              </p>
               <div className="flex gap-4">
                 <button
                   onClick={() => setDeleteModal(null)}

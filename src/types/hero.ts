@@ -3,13 +3,13 @@
 // payload as `rules`, so the admin renders counters from the same numbers the
 // server enforces and the two can never drift.
 
-export type HeroVariant = 'premium-glass' | 'clean-modern' | 'floating';
+export type HeroVariant = "premium-glass" | "clean-modern" | "floating";
 
 /** True when a slide's media is a video rather than a still. Mirrors
  *  isHeroVideo in the website bundle — the two apps ship separately and share
  *  no package, so the rule is stated in each rather than imported across. */
 export const isHeroVideo = (url?: string): boolean =>
-  /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(url ?? '');
+  /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(url ?? "");
 
 export interface HeroSlide {
   /** The slide's backdrop media, in display order — images, or one video. More
@@ -21,19 +21,6 @@ export interface HeroSlide {
   title: string;
   subtitle: string;
 }
-
-/** One frame of the live Hero: a single medium and the copy shown over it. The
- *  site flattens slides into these to cycle through; heroFrames does the same
- *  so the preview steps through exactly what a visitor sees. */
-export interface HeroFrame {
-  image: string;
-  pos: string;
-  title: string;
-  subtitle: string;
-}
-
-export const heroFrames = (slides: HeroSlide[]): HeroFrame[] =>
-  slides.flatMap(({ images, ...copy }) => images.map((image) => ({ ...copy, image })));
 
 export interface HeroCta {
   label: string;
@@ -69,7 +56,7 @@ export interface HeroResponse extends HeroContent {
 export type FieldErrors = Record<string, string>;
 
 export const HERO_VARIANT_LABELS: Record<HeroVariant, string> = {
-  'premium-glass': 'Premium Glass',
-  'clean-modern': 'Clean Modern',
-  floating: 'Floating',
+  "premium-glass": "Premium Glass",
+  "clean-modern": "Clean Modern",
+  floating: "Floating",
 };

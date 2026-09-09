@@ -6,7 +6,9 @@ import { Save, Loader2, Plus, Trash2, Palette, Eye } from "lucide-react";
 
 import FileUpload from "../../../components/admin/ui/FileUpload";
 import InputField from "../../../components/admin/ui/InputField";
-import HeroPreview from "../../../components/admin/ui/HeroPreview";
+import TextArea from "../../../components/admin/ui/TextArea";
+import SelectField from "../../../components/admin/ui/SelectField";
+import SitePreview, { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
   ElementVisibility,
   VisibilityToggle,
@@ -18,7 +20,6 @@ import {
 import { appearanceApi, heroApi, uploadApi } from "../../../services/api";
 import {
   HERO_VARIANT_LABELS,
-  heroFrames,
   isHeroVideo,
   type FieldErrors,
   type HeroContent,
@@ -232,7 +233,6 @@ export default function HeroCMS() {
   const [serverErrors, setServerErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-  const [previewIndex, setPreviewIndex] = useState<number>(0);
   // Visibility is Appearance's record, not the Hero document — hiding a part is
   // a presentation decision and the copy behind it survives. The switches sit
   // here, on the page you edit, but they still write to appearance.visibility.
@@ -263,8 +263,7 @@ export default function HeroCMS() {
         setSections(
           (
             record.visibilityOptions as
-              | { key: string; sections: VisibilitySection[] }[]
-              | undefined
+              { key: string; sections: VisibilitySection[] }[] | undefined
           )?.find((group) => group.key === "home")?.sections ?? [],
         );
       })
@@ -381,15 +380,8 @@ export default function HeroCMS() {
   // several media; the moment a second slide exists every slide is back to one,
   // because each frame's copy is its own.
   const mediaMax = slideCount > 1 ? 1 : rules.slides.imagesMax;
-  // What the live Hero actually cycles through — one frame per medium. With
-  // several slides this is just the slides; with one it is that slide's media.
-  const frames = heroFrames(content.slides);
-  // Clamped here rather than when a slide or a file is removed, so there is one
-  // place that knows how many frames there are.
-  const activeFrame = Math.min(previewIndex, frames.length - 1);
-
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-ink">Hero CMS</h2>
         <p className="text-sm text-ink-mute">
@@ -416,9 +408,12 @@ export default function HeroCMS() {
         </Link>
       </div>
 
-      <div className="bg-paper border border-line rounded-xl p-6 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* items-start so the preview column can stick instead of stretching to
+          the form's full height. `main` is the scroll container, so `sticky
+          top-0` here follows the page as the form scrolls past it. */}
+      <div className="grid items-start gap-6 xl:grid-cols-4">
+        <aside className="space-y-2 xl:order-last xl:sticky xl:top-0">
+          <div className="flex items-center justify-between gap-3">
             <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
               Preview
             </h3>
@@ -436,306 +431,288 @@ export default function HeroCMS() {
               {hiddenCount ? `Show all (${hiddenCount} hidden)` : "All visible"}
             </button>
           </div>
-          {frames.length > 1 && (
-            <div className="flex gap-1.5">
-              {frames.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setPreviewIndex(i)}
-                  aria-label={`Preview ${i + 1} of ${frames.length}`}
-                  className={`w-6 h-6 rounded text-[11px] font-bold ${
-                    i === activeFrame
-                      ? "bg-info text-white"
-                      : "bg-raise text-ink-mute hover:text-ink"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <HeroPreview
-          variant={variant}
-          content={content}
-          frame={frames[activeFrame]}
-          show={previewShows}
-        />
-        <p className="text-[11px] text-ink-faint">
-          Indicative sketch of layout and focal point — not a pixel-accurate
-          render of the live site. It follows the Visible/Hidden switches below.
-        </p>
-      </div>
+          {/* The real Hero cycles its own frames on its own timer, so the frame
+              picker that used to sit here has nothing left to pick. */}
+          <SitePreview
+            section={PreviewSection.HERO}
+            draft={{
+              heroContent: content,
+              appearance: { heroVariant: variant, visibility },
+            }}
+          />
+          <p className="text-[11px] text-ink-faint leading-relaxed">
+            The live Hero, rendered by the website itself from what is typed
+            here. Nothing is saved until you press Save.
+          </p>
+        </aside>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-paper border border-line rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
-              Hero Slides{" "}
-              <span className="text-ink-faint normal-case font-normal">
-                ({slideCount}/{rules.slides.max})
-              </span>
-            </h3>
-            <button
-              type="button"
-              onClick={addSlide}
-              disabled={slideCount >= rules.slides.max}
-              className="text-xs flex items-center gap-1 text-info disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-4 h-4" /> Add Slide
-            </button>
-          </div>
-
-          {/* The two media rules are not guessable from the form — a picker that
-              takes 6 files on one slide and 1 on two slides just looks broken.
-              So the panel names the mode that is actually active and how to get
-              to the other one, rather than listing both as abstract rules. */}
-          <div className="mb-4 rounded-lg border border-line bg-raise p-3 text-[11px] leading-relaxed text-ink-mute">
-            {slideCount === 1 ? (
-              <p>
-                <strong className="text-ink">Slideshow mode.</strong> With one
-                slide you can add up to {rules.slides.imagesMax} images — the
-                homepage cross-fades them behind this one headline, and shows{" "}
-                <strong>no dots</strong>. Add a second slide to give each image
-                its own headline instead.
-              </p>
-            ) : (
-              <p>
-                <strong className="text-ink">Slide mode.</strong> With{" "}
-                {slideCount} slides each takes <strong>one</strong> image and
-                its own headline, and visitors step between them using the dots.
-                Delete all but one slide to turn the Hero back into a
-                cross-fading slideshow.
-              </p>
-            )}
-            <p className="mt-1.5">
-              A video always fills its slide on its own — a slide is either one
-              video, or images.
-            </p>
-          </div>
-
-          {errors.slides && (
-            <p className="mb-3 text-[11px] text-danger">{errors.slides}</p>
-          )}
-
-          <div className="space-y-4">
-            {content.slides.map((slide, i) => (
-              <div
-                key={i}
-                className="bg-raise border border-line rounded-xl p-4 space-y-4 relative"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-ink-faint uppercase tracking-wider">
-                    Slide {i + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeSlide(i)}
-                    disabled={slideCount <= rules.slides.min}
-                    aria-label={`Remove slide ${i + 1}`}
-                    className="p-1.5 text-ink-faint hover:text-danger disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <InputField
-                  label="Title"
-                  required
-                  value={slide.title}
-                  onChange={(e) => patchSlide(i, { title: e.target.value })}
-                  maxChars={rules.title.max}
-                  error={!!errors[`slides.${i}.title`]}
-                  warning={
-                    slide.title.split(",").length > 2
-                      ? "Only the first comma is used as the split point — everything after it becomes the accent part."
-                      : undefined
-                  }
-                  hint={errors[`slides.${i}.title`] ?? 
-                    <>
-                      Text after the <strong>first comma</strong> renders in the
-                      accent colour — on its own second line in Premium Glass,
-                      inline in Clean Modern and Floating.
-                    </>
-                  }
-                />
-
-                <InputField
-                  label="Subtitle"
-                  value={slide.subtitle}
-                  onChange={(e) => patchSlide(i, { subtitle: e.target.value })}
-                  maxChars={rules.subtitle.max}
-                  error={!!errors[`slides.${i}.subtitle`]}
-                  hint={errors[`slides.${i}.subtitle`]}
-                  multiline
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <SlideMedia
-                    value={slide.images}
-                    max={mediaMax}
-                    error={errors[`slides.${i}.images`]}
-                    onChange={(images) => patchSlide(i, { images })}
-                  />
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-ink-faint uppercase tracking-wider mb-1.5">
-                      Focal point
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink text-sm"
-                      value={slide.pos}
-                      onChange={(e) => patchSlide(i, { pos: e.target.value })}
-                    >
-                      {rules.positions.map((pos) => (
-                        <option key={pos} value={pos}>
-                          {POSITION_LABELS[pos] || pos}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="mt-1 text-[11px] text-ink-faint">
-                      Which part of the media stays visible when it is cropped.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-paper border border-line rounded-xl p-6 space-y-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
+        <form onSubmit={handleSubmit} className="space-y-6 xl:col-span-3">
+          <div className="bg-paper border border-line rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
-                Hero Content
+                Hero Slides{" "}
+                <span className="text-ink-faint normal-case font-normal">
+                  ({slideCount}/{rules.slides.max})
+                </span>
               </h3>
-              {heroSection && (
-                <p className="mt-1 text-[11px] text-ink-faint">
-                  The switch hides the whole Hero, slides included. Nothing is
-                  deleted.
+              <button
+                type="button"
+                onClick={addSlide}
+                disabled={slideCount >= rules.slides.max}
+                className="text-xs flex items-center gap-1 text-info disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" /> Add Slide
+              </button>
+            </div>
+
+            {/* The two media rules are not guessable from the form — a picker that
+                takes 6 files on one slide and 1 on two slides just looks broken.
+                So the panel names the mode that is actually active and how to get
+                to the other one, rather than listing both as abstract rules. */}
+            <div className="mb-4 rounded-lg border border-line bg-raise p-3 text-[11px] leading-relaxed text-ink-mute">
+              {slideCount === 1 ? (
+                <p>
+                  <strong className="text-ink">Slideshow mode.</strong> With one
+                  slide you can add up to {rules.slides.imagesMax} images — the
+                  homepage cross-fades them behind this one headline, and shows{" "}
+                  <strong>no dots</strong>. Add a second slide to give each
+                  image its own headline instead.
+                </p>
+              ) : (
+                <p>
+                  <strong className="text-ink">Slide mode.</strong> With{" "}
+                  {slideCount} slides each takes <strong>one</strong> image and
+                  its own headline, and visitors step between them using the
+                  dots. Delete all but one slide to turn the Hero back into a
+                  cross-fading slideshow.
                 </p>
               )}
+              <p className="mt-1.5">
+                A video always fills its slide on its own — a slide is either
+                one video, or images.
+              </p>
             </div>
-            {heroSection && (
-              <VisibilityToggle
-                visible={isVisible(visibility, "home.hero")}
-                onChange={(v) => patchVisibility("home.hero", v)}
+
+            {errors.slides && (
+              <p className="mb-3 text-[11px] text-danger">{errors.slides}</p>
+            )}
+
+            <div className="space-y-4">
+              {content.slides.map((slide, i) => (
+                <div
+                  key={i}
+                  className="bg-raise border border-line rounded-xl p-4 space-y-4 relative"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-ink-faint uppercase tracking-wider">
+                      Slide {i + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeSlide(i)}
+                      disabled={slideCount <= rules.slides.min}
+                      aria-label={`Remove slide ${i + 1}`}
+                      className="p-1.5 text-ink-faint hover:text-danger disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <InputField
+                    label="Title"
+                    required
+                    value={slide.title}
+                    onChange={(e) => patchSlide(i, { title: e.target.value })}
+                    maxChars={rules.title.max}
+                    error={!!errors[`slides.${i}.title`]}
+                    warning={
+                      slide.title.split(",").length > 2
+                        ? "Only the first comma is used as the split point — everything after it becomes the accent part."
+                        : undefined
+                    }
+                    hint={errors[`slides.${i}.title`]}
+                    tooltip={
+                      <>
+                        Text after the <strong>first comma</strong> renders in
+                        the accent colour — on its own second line in Premium
+                        Glass, inline in Clean Modern and Floating.
+                      </>
+                    }
+                  />
+
+                  <TextArea
+                    label="Subtitle"
+                    value={slide.subtitle}
+                    onChange={(e) =>
+                      patchSlide(i, { subtitle: e.target.value })
+                    }
+                    maxChars={rules.subtitle.max}
+                    error={!!errors[`slides.${i}.subtitle`]}
+                    hint={errors[`slides.${i}.subtitle`]}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <SlideMedia
+                      value={slide.images}
+                      max={mediaMax}
+                      error={errors[`slides.${i}.images`]}
+                      onChange={(images) => patchSlide(i, { images })}
+                    />
+
+                    <SelectField
+                      label="Focal point"
+                      value={slide.pos}
+                      onValueChange={(pos) => patchSlide(i, { pos })}
+                      options={rules.positions.map((pos: string) => ({
+                        value: pos,
+                        label: POSITION_LABELS[pos] || pos,
+                      }))}
+                      hint="Which part of the media stays visible when it is cropped."
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-paper border border-line rounded-xl p-6 space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
+                  Hero Content
+                </h3>
+                {heroSection && (
+                  <p className="mt-1 text-[11px] text-ink-faint">
+                    The switch hides the whole Hero, slides included. Nothing is
+                    deleted.
+                  </p>
+                )}
+              </div>
+              {heroSection && (
+                <VisibilityToggle
+                  visible={isVisible(visibility, "home.hero")}
+                  onChange={(v) => patchVisibility("home.hero", v)}
+                />
+              )}
+            </div>
+
+            <InputField
+              label="Eyebrow"
+              value={content.eyebrow}
+              onChange={(e) => patch({ eyebrow: e.target.value })}
+              maxChars={rules.eyebrow.max}
+              error={!!errors.eyebrow}
+              hint={errors.eyebrow}
+              tooltip="The small kicker above the headline. Floating renders it inside a pill, so it must stay on one line."
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Primary CTA — label"
+                value={content.primaryCta.label}
+                onChange={(e) =>
+                  patch({
+                    primaryCta: {
+                      ...content.primaryCta,
+                      label: e.target.value,
+                    },
+                  })
+                }
+                maxChars={rules.ctaLabel.max}
+                error={!!errors["primaryCta.label"]}
+                hint={errors["primaryCta.label"]}
               />
-            )}
+              <InputField
+                label="Primary CTA — link"
+                value={content.primaryCta.url}
+                onChange={(e) =>
+                  patch({
+                    primaryCta: { ...content.primaryCta, url: e.target.value },
+                  })
+                }
+                error={!!errors["primaryCta.url"]}
+                hint={errors["primaryCta.url"]}
+                tooltip="An anchor (#portfolio), a path (/projects) or a full URL."
+              />
+              <InputField
+                label="Secondary CTA — label"
+                value={content.secondaryCta.label}
+                onChange={(e) =>
+                  patch({
+                    secondaryCta: {
+                      ...content.secondaryCta,
+                      label: e.target.value,
+                    },
+                  })
+                }
+                maxChars={rules.ctaLabel.max}
+                error={!!errors["secondaryCta.label"]}
+                hint={errors["secondaryCta.label"]}
+              />
+              <InputField
+                label="Secondary CTA — link"
+                value={content.secondaryCta.url}
+                onChange={(e) =>
+                  patch({
+                    secondaryCta: {
+                      ...content.secondaryCta,
+                      url: e.target.value,
+                    },
+                  })
+                }
+                error={!!errors["secondaryCta.url"]}
+                hint={errors["secondaryCta.url"]}
+              />
+            </div>
+
+            <TextArea
+              label="Trust strip"
+              value={content.trustStrip}
+              onChange={(e) => patch({ trustStrip: e.target.value })}
+              maxChars={rules.trustStrip.max}
+              error={!!errors.trustStrip}
+              hint={errors.trustStrip}
+              tooltip={
+                <>
+                  Separate each claim with <strong>•</strong>. Premium Glass
+                  scrolls the whole line as a marquee; Clean Modern and Floating
+                  split it into chips of up to {rules.trustStrip.segmentMax}{" "}
+                  characters each.
+                </>
+              }
+            />
+
+            {heroSection?.elements?.length ? (
+              <ElementVisibility
+                elements={heroSection.elements}
+                map={visibility}
+                sectionVisible={isVisible(visibility, "home.hero")}
+                onChange={patchVisibility}
+              />
+            ) : null}
           </div>
 
-          <InputField
-            label="Eyebrow"
-            value={content.eyebrow}
-            onChange={(e) => patch({ eyebrow: e.target.value })}
-            maxChars={rules.eyebrow.max}
-            error={!!errors.eyebrow}
-            hint={errors.eyebrow ?? "The small kicker above the headline. Floating renders it inside a pill, so it must stay on one line."}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField
-              label="Primary CTA — label"
-              value={content.primaryCta.label}
-              onChange={(e) =>
-                patch({
-                  primaryCta: { ...content.primaryCta, label: e.target.value },
-                })
-              }
-              maxChars={rules.ctaLabel.max}
-              error={!!errors["primaryCta.label"]}
-              hint={errors["primaryCta.label"]}
-            />
-            <InputField
-              label="Primary CTA — link"
-              value={content.primaryCta.url}
-              onChange={(e) =>
-                patch({
-                  primaryCta: { ...content.primaryCta, url: e.target.value },
-                })
-              }
-              error={!!errors["primaryCta.url"]}
-              hint={errors["primaryCta.url"] ?? "An anchor (#portfolio), a path (/projects) or a full URL."}
-            />
-            <InputField
-              label="Secondary CTA — label"
-              value={content.secondaryCta.label}
-              onChange={(e) =>
-                patch({
-                  secondaryCta: {
-                    ...content.secondaryCta,
-                    label: e.target.value,
-                  },
-                })
-              }
-              maxChars={rules.ctaLabel.max}
-              error={!!errors["secondaryCta.label"]}
-              hint={errors["secondaryCta.label"]}
-            />
-            <InputField
-              label="Secondary CTA — link"
-              value={content.secondaryCta.url}
-              onChange={(e) =>
-                patch({
-                  secondaryCta: {
-                    ...content.secondaryCta,
-                    url: e.target.value,
-                  },
-                })
-              }
-              error={!!errors["secondaryCta.url"]}
-              hint={errors["secondaryCta.url"]}
-            />
-          </div>
-
-          <InputField
-            label="Trust strip"
-            value={content.trustStrip}
-            onChange={(e) => patch({ trustStrip: e.target.value })}
-            maxChars={rules.trustStrip.max}
-            error={!!errors.trustStrip}
-            multiline
-            hint={errors.trustStrip ?? 
-              <>
-                Separate each claim with <strong>•</strong>. Premium Glass
-                scrolls the whole line as a marquee; Clean Modern and Floating
-                split it into chips of up to {rules.trustStrip.segmentMax}{" "}
-                characters each.
-              </>
-            }
-          />
-
-          {heroSection?.elements?.length ? (
-            <ElementVisibility
-              elements={heroSection.elements}
-              map={visibility}
-              sectionVisible={isVisible(visibility, "home.hero")}
-              onChange={patchVisibility}
-            />
-          ) : null}
-        </div>
-
-        <div className="flex items-center justify-end gap-4">
-          {blocked && (
-            <span className="text-xs text-danger">
-              Fix the highlighted fields before saving.
-            </span>
-          )}
-          <button
-            type="submit"
-            disabled={saving || blocked}
-            className="flex items-center gap-2 px-5 py-2.5 bg-info hover:bg-info text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
+          <div className="flex items-center justify-end gap-4">
+            {blocked && (
+              <span className="text-xs text-danger">
+                Fix the highlighted fields before saving.
+              </span>
             )}
-            Save Changes
-          </button>
-        </div>
-      </form>
+            <button
+              type="submit"
+              disabled={saving || blocked}
+              className="flex items-center gap-2 px-5 py-2.5 bg-info hover:bg-info text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

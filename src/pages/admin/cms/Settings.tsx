@@ -3,12 +3,21 @@ import { cmsApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import { Save, Loader2, AlertCircle } from "lucide-react";
 import BrandingTab from "../../../components/admin/BrandingTab";
-import SharedInputField, { type InputProps } from "../../../components/admin/ui/InputField";
+import SharedInputField, {
+  type InputProps,
+} from "../../../components/admin/ui/InputField";
+import TextArea from "../../../components/admin/ui/TextArea";
+import SelectField from "../../../components/admin/ui/SelectField";
 
 const humanize = (field: string) =>
   field
     .split(".")
-    .map((part) => part.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()).trim())
+    .map((part) =>
+      part
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (c) => c.toUpperCase())
+        .trim(),
+    )
     .join(" → ");
 
 const SectionHeader = ({ title, description }: any) => (
@@ -23,33 +32,6 @@ const SectionHeader = ({ title, description }: any) => (
 // key must not flip the input from controlled to uncontrolled mid-edit.
 const InputField = (props: InputProps) => (
   <SharedInputField {...props} value={props.value ?? ""} />
-);
-
-const SelectField = ({
-  label,
-  value,
-  onChange,
-  options,
-  required = false,
-}: any) => (
-  <div>
-    <label className="block text-xs font-semibold text-ink-mute uppercase tracking-wider mb-2">
-      {label} {required && <span className="text-danger">*</span>}
-    </label>
-    <select
-      required={required}
-      className="w-full px-4 py-2 bg-paper border border-line rounded-lg text-ink text-sm focus:border-info focus:outline-none transition-colors"
-      value={value || ""}
-      onChange={onChange}
-    >
-      <option value="">Select...</option>
-      {options.map((opt: any) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
-  </div>
 );
 
 const CheckboxField = ({ label, checked, onChange }: any) => (
@@ -79,7 +61,9 @@ export default function Settings() {
   // save or reset, which is why the dots only render while changes are pending.
   const setData = (next: any) => {
     setRawData(next);
-    setDirtyTabs((prev) => (prev.includes(activeTab) ? prev : [...prev, activeTab]));
+    setDirtyTabs((prev) =>
+      prev.includes(activeTab) ? prev : [...prev, activeTab],
+    );
   };
 
   // Only what the admin actually touched. PUTting the whole record re-validated
@@ -87,7 +71,9 @@ export default function Settings() {
   const changes = useMemo(() => {
     if (!data || !saved) return {};
     return Object.fromEntries(
-      Object.entries(data).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(saved[key]))
+      Object.entries(data).filter(
+        ([key, value]) => JSON.stringify(value) !== JSON.stringify(saved[key]),
+      ),
     );
   }, [data, saved]);
   const changeCount = Object.keys(changes).length;
@@ -160,7 +146,7 @@ export default function Settings() {
   ];
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
         <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
         <div className="text-sm text-info">
@@ -205,7 +191,8 @@ export default function Settings() {
             <ul className="space-y-0.5">
               {Object.entries(fieldErrors).map(([field, message]) => (
                 <li key={field}>
-                  <span className="font-semibold">{humanize(field)}</span> &mdash; {message}
+                  <span className="font-semibold">{humanize(field)}</span>{" "}
+                  &mdash; {message}
                 </li>
               ))}
             </ul>
@@ -217,7 +204,9 @@ export default function Settings() {
         onSubmit={handleSubmit}
         className="bg-paper border border-line rounded-xl p-6 space-y-6"
       >
-        {activeTab === "branding" && <BrandingTab data={data} setData={setData} />}
+        {activeTab === "branding" && (
+          <BrandingTab data={data} setData={setData} />
+        )}
 
         {/* COMPANY TAB */}
         {activeTab === "company" && (
@@ -273,11 +262,9 @@ export default function Settings() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-ink-mute uppercase tracking-wider mb-2">
-                  Company Description
-                </label>
-                <textarea
-                  className="w-full px-4 py-2 bg-paper border border-line rounded-lg text-ink text-sm focus:border-info focus:outline-none transition-colors"
+                <TextArea
+                  label="Company Description"
+                  labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
                   rows={3}
                   value={data?.companyDescription || ""}
                   onChange={(e) =>
@@ -589,11 +576,13 @@ export default function Settings() {
               </div>
               <SelectField
                 label="CTA Action"
+                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
+                placeholder="Select..."
                 value={data?.primaryCTA?.action}
-                onChange={(e: any) =>
+                onValueChange={(action) =>
                   setData({
                     ...data,
-                    primaryCTA: { ...data.primaryCTA, action: e.target.value },
+                    primaryCTA: { ...data.primaryCTA, action },
                   })
                 }
                 options={[
@@ -635,13 +624,15 @@ export default function Settings() {
               </div>
               <SelectField
                 label="CTA Action"
+                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
+                placeholder="Select..."
                 value={data?.secondaryCTA?.action}
-                onChange={(e: any) =>
+                onValueChange={(action) =>
                   setData({
                     ...data,
                     secondaryCTA: {
                       ...data.secondaryCTA,
-                      action: e.target.value,
+                      action,
                     },
                   })
                 }
@@ -680,19 +671,15 @@ export default function Settings() {
                   setData({ ...data, copyrightText: e.target.value })
                 }
               />
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase tracking-wider mb-2">
-                  Footer Text
-                </label>
-                <textarea
-                  className="w-full px-4 py-2 bg-paper border border-line rounded-lg text-ink text-sm focus:border-info focus:outline-none transition-colors"
-                  rows={2}
-                  value={data?.footerText || ""}
-                  onChange={(e) =>
-                    setData({ ...data, footerText: e.target.value })
-                  }
-                />
-              </div>
+              <TextArea
+                label="Footer Text"
+                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
+                rows={2}
+                value={data?.footerText || ""}
+                onChange={(e) =>
+                  setData({ ...data, footerText: e.target.value })
+                }
+              />
               <InputField
                 label="Privacy Policy URL"
                 value={data?.privacyPolicyUrl}
@@ -725,19 +712,15 @@ export default function Settings() {
                   setData({ ...data, seoDefaultTitle: e.target.value })
                 }
               />
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase tracking-wider mb-2">
-                  Default Meta Description
-                </label>
-                <textarea
-                  className="w-full px-4 py-2 bg-paper border border-line rounded-lg text-ink text-sm focus:border-info focus:outline-none transition-colors"
-                  rows={2}
-                  value={data?.seoDefaultDescription || ""}
-                  onChange={(e) =>
-                    setData({ ...data, seoDefaultDescription: e.target.value })
-                  }
-                />
-              </div>
+              <TextArea
+                label="Default Meta Description"
+                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
+                rows={2}
+                value={data?.seoDefaultDescription || ""}
+                onChange={(e) =>
+                  setData({ ...data, seoDefaultDescription: e.target.value })
+                }
+              />
               <InputField
                 label="Google Analytics ID"
                 value={data?.googleAnalyticsId}
@@ -830,7 +813,9 @@ export default function Settings() {
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                {changeCount ? `Save ${changeCount} change${changeCount > 1 ? "s" : ""}` : "Saved"}
+                {changeCount
+                  ? `Save ${changeCount} change${changeCount > 1 ? "s" : ""}`
+                  : "Saved"}
               </>
             )}
           </button>

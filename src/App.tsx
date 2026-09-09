@@ -1,36 +1,37 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/admin/Login';
-import AdminLayout from './components/admin/Layout';
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Login from "./pages/admin/Login";
+import AdminLayout from "./components/admin/Layout";
 
-import DashboardHome from './pages/admin/DashboardHome';
-import ProjectsList from './pages/admin/projects/ProjectsList';
-import ProjectForm from './pages/admin/projects/ProjectForm';
-import MediaManager from './pages/admin/MediaManager';
+import DashboardHome from "./pages/admin/DashboardHome";
+import ProjectsList from "./pages/admin/projects/ProjectsList";
+import ProjectForm from "./pages/admin/projects/ProjectForm";
+import MediaManager from "./pages/admin/MediaManager";
 
-import HeroCMS from './pages/admin/cms/HeroCMS';
-import AboutCMS from './pages/admin/cms/AboutCMS';
-import StatsCMS from './pages/admin/cms/StatsCMS';
-import ProcessCMS from './pages/admin/cms/ProcessCMS';
-import FeaturesCMS from './pages/admin/cms/FeaturesCMS';
-import PillarsCMS from './pages/admin/cms/PillarsCMS';
-import ServicesCMS from './pages/admin/cms/ServicesCMS';
-import TestimonialsList from './pages/admin/cms/TestimonialsList';
-import ClientsList from './pages/admin/cms/ClientsList';
-import LeadsCRM from './pages/admin/LeadsCRM';
-import Settings from './pages/admin/cms/Settings';
-import Appearance from './pages/admin/cms/Appearance';
-import CTACMS from './pages/admin/cms/CTACMS';
-import AnalyticsDashboard from './pages/admin/analytics/Dashboard';
-import BlogManager from './pages/admin/blog/BlogManager';
-import BlogForm from './pages/admin/blog/BlogForm';
-import TeamManager from './pages/admin/team/TeamManager';
-import TeamForm from './pages/admin/team/TeamForm';
-import FAQManager from './pages/admin/faq/FAQManager';
-import FAQForm from './pages/admin/faq/FAQForm';
-import MediaLibrary from './pages/admin/media/MediaLibrary';
+import HeroCMS from "./pages/admin/cms/HeroCMS";
+import AboutCMS from "./pages/admin/cms/AboutCMS";
+import StatsCMS from "./pages/admin/cms/StatsCMS";
+import ProcessCMS from "./pages/admin/cms/ProcessCMS";
+import FeaturesCMS from "./pages/admin/cms/FeaturesCMS";
+import PillarsCMS from "./pages/admin/cms/PillarsCMS";
+import ServicesCMS from "./pages/admin/cms/ServicesCMS";
+import TestimonialsList from "./pages/admin/cms/TestimonialsList";
+import ClientsList from "./pages/admin/cms/ClientsList";
+import LeadsCRM from "./pages/admin/LeadsCRM";
+import Settings from "./pages/admin/cms/Settings";
+import Appearance from "./pages/admin/cms/Appearance";
+import NavbarCMS from "./pages/admin/cms/NavbarCMS";
+import CTACMS from "./pages/admin/cms/CTACMS";
+import AnalyticsDashboard from "./pages/admin/analytics/Dashboard";
+import BlogManager from "./pages/admin/blog/BlogManager";
+import BlogForm from "./pages/admin/blog/BlogForm";
+import TeamManager from "./pages/admin/team/TeamManager";
+import TeamForm from "./pages/admin/team/TeamForm";
+import FAQManager from "./pages/admin/faq/FAQManager";
+import FAQForm from "./pages/admin/faq/FAQForm";
+import MediaLibrary from "./pages/admin/media/MediaLibrary";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { admin, loading } = useAuth();
@@ -42,9 +43,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
-      <Toaster position="top-right" toastOptions={{
-        style: { background: '#1e293b', color: '#fff' },
-      }} />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: { background: "#1e293b", color: "#fff" },
+        }}
+      />
       <Routes>
         <Route path="/" element={<Navigate to="/admin" replace />} />
 
@@ -52,11 +56,14 @@ function App() {
         <Route path="/admin/login" element={<Login />} />
 
         {/* Admin Dashboard */}
-        <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminLayout />
-          </ProtectedRoute>
-        }>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<DashboardHome />} />
           <Route path="hero" element={<HeroCMS />} />
           <Route path="about" element={<AboutCMS />} />
@@ -78,6 +85,7 @@ function App() {
           <Route path="ctas" element={<CTACMS />} />
           <Route path="settings" element={<Settings />} />
           <Route path="appearance" element={<Appearance />} />
+          <Route path="navbar" element={<NavbarCMS />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="blog" element={<BlogManager />} />
           <Route path="blog/new" element={<BlogForm />} />
