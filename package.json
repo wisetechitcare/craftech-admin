@@ -7,7 +7,9 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -30,10 +32,15 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.1.0",
     "autoprefixer": "^10.5.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.0",
     "oxlint": "^1.79.0",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.19",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "oxlint"
   }
 }
