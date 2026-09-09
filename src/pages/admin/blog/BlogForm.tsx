@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { blogApi } from '../../../services/api';
 import AdminLoading from '../../../components/common/AdminLoading';
+import InputField from '../../../components/admin/ui/InputField';
 import { ArrowLeft } from 'lucide-react';
 
 const BlogForm = () => {
@@ -155,23 +156,17 @@ const BlogForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Title */}
-        <div>
-          <label className="block text-sm font-medium text-ink-soft mb-2">
-            Title *
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            placeholder="Enter blog post title"
-            maxLength={120}
-            className="w-full px-4 py-2 rounded-lg bg-raise text-ink-soft border border-line focus:border-danger outline-none transition-colors"
-          />
-          <p className="text-xs text-ink-faint mt-1">
-            {form.title.length}/120
-          </p>
-        </div>
+        <InputField
+          label="Title"
+          required
+          type="text"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          placeholder="Enter blog post title"
+          maxLength={120}
+          hint={`${form.title.length}/120`}
+        />
 
         {/* Category */}
         <div>
@@ -213,16 +208,14 @@ const BlogForm = () => {
 
         {/* Featured Image */}
         <div>
-          <label className="block text-sm font-medium text-ink-soft mb-2">
-            Featured Image URL *
-          </label>
-          <input
+          <InputField
+            label="Featured Image URL"
+            required
             type="url"
             name="featuredImage"
             value={form.featuredImage}
             onChange={handleChange}
             placeholder="https://..."
-            className="w-full px-4 py-2 rounded-lg bg-raise text-ink-soft border border-line focus:border-danger outline-none transition-colors"
           />
           {form.featuredImage && (
             <img
@@ -235,19 +228,14 @@ const BlogForm = () => {
         </div>
 
         {/* Featured Image Alt */}
-        <div>
-          <label className="block text-sm font-medium text-ink-soft mb-2">
-            Featured Image Alt Text
-          </label>
-          <input
-            type="text"
-            name="featuredImageAlt"
-            value={form.featuredImageAlt}
-            onChange={handleChange}
-            placeholder="Alt text for accessibility"
-            className="w-full px-4 py-2 rounded-lg bg-raise text-ink-soft border border-line focus:border-danger outline-none transition-colors"
-          />
-        </div>
+        <InputField
+          label="Featured Image Alt Text"
+          type="text"
+          name="featuredImageAlt"
+          value={form.featuredImageAlt}
+          onChange={handleChange}
+          placeholder="Alt text for accessibility"
+        />
 
         {/* Content */}
         <div>
@@ -271,23 +259,16 @@ const BlogForm = () => {
         <div className="border-t border-line pt-6">
           <h3 className="text-lg font-bold text-ink mb-4">SEO Optimization</h3>
 
-          <div>
-            <label className="block text-sm font-medium text-ink-soft mb-2">
-              Meta Title (30-60 chars)
-            </label>
-            <input
-              type="text"
-              name="metaTitle"
-              value={form.metaTitle}
-              onChange={handleChange}
-              placeholder="SEO title"
-              maxLength={60}
-              className="w-full px-4 py-2 rounded-lg bg-raise text-ink-soft border border-line focus:border-danger outline-none transition-colors"
-            />
-            <p className="text-xs text-ink-faint mt-1">
-              {form.metaTitle.length}/60
-            </p>
-          </div>
+          <InputField
+            label="Meta Title (30-60 chars)"
+            type="text"
+            name="metaTitle"
+            value={form.metaTitle}
+            onChange={handleChange}
+            placeholder="SEO title"
+            maxLength={60}
+            hint={`${form.metaTitle.length}/60`}
+          />
 
           <div className="mt-4">
             <label className="block text-sm font-medium text-ink-soft mb-2">
@@ -308,28 +289,22 @@ const BlogForm = () => {
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-ink-soft mb-2">
-              Keywords (comma-separated)
-            </label>
-            <input
+            <InputField
+              label="Keywords (comma-separated)"
               type="text"
               value={form.keywords.join(', ')}
               onChange={(e) => handleArrayChange(e, 'keywords')}
               placeholder="keyword1, keyword2, keyword3"
-              className="w-full px-4 py-2 rounded-lg bg-raise text-ink-soft border border-line focus:border-danger outline-none transition-colors"
             />
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-ink-soft mb-2">
-              Tags (comma-separated)
-            </label>
-            <input
+            <InputField
+              label="Tags (comma-separated)"
               type="text"
               value={form.tags.join(', ')}
               onChange={(e) => handleArrayChange(e, 'tags')}
               placeholder="tag1, tag2, tag3"
-              className="w-full px-4 py-2 rounded-lg bg-raise text-ink-soft border border-line focus:border-danger outline-none transition-colors"
             />
           </div>
         </div>

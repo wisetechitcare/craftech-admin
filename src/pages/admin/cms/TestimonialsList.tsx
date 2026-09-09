@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { cmsApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { Loader2, Plus, Trash2, Edit2, X, Star } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 
 export default function TestimonialsList() {
   const [items, setItems] = useState<any[]>([]);
@@ -140,35 +141,28 @@ export default function TestimonialsList() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Author Name</label>
-                  <input
-                    type="text" required
-                    className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                    value={formData.author}
-                    onChange={e => setFormData({ ...formData, author: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Role/Designation</label>
-                  <input
-                    type="text" required
-                    className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                    value={formData.role}
-                    onChange={e => setFormData({ ...formData, role: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Company (Optional)</label>
-                <input
+                <InputField
+                  label="Author Name"
+                  required
                   type="text"
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                  value={formData.company}
-                  onChange={e => setFormData({ ...formData, company: e.target.value })}
+                  value={formData.author}
+                  onChange={e => setFormData({ ...formData, author: e.target.value })}
+                />
+                <InputField
+                  label="Role/Designation"
+                  required
+                  type="text"
+                  value={formData.role}
+                  onChange={e => setFormData({ ...formData, role: e.target.value })}
                 />
               </div>
+
+              <InputField
+                label="Company (Optional)"
+                type="text"
+                value={formData.company}
+                onChange={e => setFormData({ ...formData, company: e.target.value })}
+              />
 
               <div>
                 <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Testimonial Text</label>
@@ -191,15 +185,12 @@ export default function TestimonialsList() {
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n} Stars</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Avatar URL (Optional)</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                    value={formData.image}
-                    onChange={e => setFormData({ ...formData, image: e.target.value })}
-                  />
-                </div>
+                <InputField
+                  label="Avatar URL (Optional)"
+                  type="text"
+                  value={formData.image}
+                  onChange={e => setFormData({ ...formData, image: e.target.value })}
+                />
               </div>
 
               <div className="pt-4 flex gap-3">

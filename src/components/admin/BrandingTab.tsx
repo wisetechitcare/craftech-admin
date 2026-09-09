@@ -109,6 +109,11 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
   // Remounts FileUpload once a logo is stored, clearing the file it staged —
   // the "Current logo" panel beside it is what shows the result.
   const [slot, setSlot] = useState<number>(0);
+  // Owned here so the array handed to FileUpload keeps the same reference across
+  // renders. An inline `[]` or `logoUrl ? [logoUrl] : []` is a new array every
+  // render, and FileUpload mirrors this prop into state on every change.
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
   const [options, setOptions] = useState<ThemeOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState<boolean>(false);
 
@@ -179,9 +184,10 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
           acceptTypes={{ 'image/*': ['.jpg', '.jpeg', '.png', '.webp'] }}
           maxFiles={1}
           maxSizeMB={5}
-          busy={uploading}
-          label={<>Drag and drop your logo, or <span className="underline">browse files</span></>}
-          hint="JPG, PNG or WebP up to 5MB — its colours become the theme below."
+          existingImages={existingImageUrls}
+          onExistingImagesChange={setExistingImageUrls}
+          deletedImages={deletedImageUrls}
+          onDeletedImagesChange={setDeletedImageUrls}
           onFilesChange={handleLogo}
         />
         {data?.logoUrl && (
@@ -191,6 +197,8 @@ export default function BrandingTab({ data, setData }: BrandingTabProps) {
           </div>
         )}
       </div>
+
+      {uploading && <p className="text-xs text-ink-mute">Uploading the logo…</p>}
 
       {palette.length > 0 && (
         <div className="space-y-3">

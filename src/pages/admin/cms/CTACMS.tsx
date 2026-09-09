@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cmsApi } from '../../../services/api';
 import toast from 'react-hot-toast';
+import InputField from '../../../components/admin/ui/InputField';
 
 const CTACMS = () => {
   const [ctas, setCtas] = useState<any[]>([]);
@@ -72,15 +73,12 @@ const CTACMS = () => {
 
               {isEditing ? (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-ink-soft uppercase mb-2">Primary Button Text</label>
-                    <input
-                      type="text"
-                      value={editData.primaryText || ''}
-                      onChange={(e) => handleInputChange('primaryText', e.target.value)}
-                      className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink text-sm"
-                    />
-                  </div>
+                  <InputField
+                    label="Primary Button Text"
+                    type="text"
+                    value={editData.primaryText || ''}
+                    onChange={(e) => handleInputChange('primaryText', e.target.value)}
+                  />
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -95,16 +93,13 @@ const CTACMS = () => {
                         <option value="link">External Link</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-ink-soft uppercase mb-2">Primary URL</label>
-                      <input
-                        type="text"
-                        value={editData.primaryUrl || ''}
-                        onChange={(e) => handleInputChange('primaryUrl', e.target.value)}
-                        placeholder="#contact or https://..."
-                        className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink text-sm"
-                      />
-                    </div>
+                    <InputField
+                      label="Primary URL"
+                      type="text"
+                      value={editData.primaryUrl || ''}
+                      onChange={(e) => handleInputChange('primaryUrl', e.target.value)}
+                      placeholder="#contact or https://..."
+                    />
                   </div>
 
                   <div className="flex gap-2 pt-4">

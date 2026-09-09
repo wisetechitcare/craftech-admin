@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { cmsApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Edit2, X, Loader2 } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 import { faIcon } from '../../../utils/faIcon';
 
 export default function FeaturesCMS() {
@@ -109,27 +110,22 @@ export default function FeaturesCMS() {
               <button onClick={() => setModalOpen(false)} className="text-ink-mute hover:text-ink"><X /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Icon (FontAwesome Class, e.g. fa-gear)</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink font-mono text-sm"
-                  placeholder="fa-gear"
-                  value={currentFeature.icon}
-                  onChange={e => setCurrentFeature({ ...currentFeature, icon: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Title</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                  value={currentFeature.title}
-                  onChange={e => setCurrentFeature({ ...currentFeature, title: e.target.value })}
-                />
-              </div>
+              <InputField
+                label="Icon (FontAwesome Class, e.g. fa-gear)"
+                required
+                type="text"
+                className="font-mono"
+                placeholder="fa-gear"
+                value={currentFeature.icon}
+                onChange={e => setCurrentFeature({ ...currentFeature, icon: e.target.value })}
+              />
+              <InputField
+                label="Title"
+                required
+                type="text"
+                value={currentFeature.title}
+                onChange={e => setCurrentFeature({ ...currentFeature, title: e.target.value })}
+              />
               <div>
                 <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Description</label>
                 <textarea

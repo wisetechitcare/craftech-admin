@@ -3,6 +3,7 @@ import { cmsApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import { Save, Loader2, AlertCircle } from "lucide-react";
 import BrandingTab from "../../../components/admin/BrandingTab";
+import SharedInputField, { type InputProps } from "../../../components/admin/ui/InputField";
 
 const humanize = (field: string) =>
   field
@@ -17,27 +18,11 @@ const SectionHeader = ({ title, description }: any) => (
   </div>
 );
 
-const InputField = ({
-  label,
-  value,
-  onChange,
-  type = "text",
-  placeholder,
-  required = false,
-}: any) => (
-  <div>
-    <label className="block text-xs font-semibold text-ink-mute uppercase tracking-wider mb-2">
-      {label} {required && <span className="text-danger">*</span>}
-    </label>
-    <input
-      type={type}
-      required={required}
-      placeholder={placeholder}
-      className="w-full px-4 py-2 bg-paper border border-line rounded-lg text-ink text-sm focus:border-info focus:outline-none transition-colors"
-      value={value || ""}
-      onChange={onChange}
-    />
-  </div>
+// The shared field, plus the one thing this screen needs that it does not do:
+// every value here is read off a partially-loaded CMS document, so an absent
+// key must not flip the input from controlled to uncontrolled mid-edit.
+const InputField = (props: InputProps) => (
+  <SharedInputField {...props} value={props.value ?? ""} />
 );
 
 const SelectField = ({
@@ -516,44 +501,46 @@ export default function Settings() {
                     <label className="block text-xs font-semibold text-ink-mute tracking-wider mb-1 capitalize">
                       {day}
                     </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="time"
-                        className="flex-1 px-3 py-2 bg-paper border border-line rounded text-ink text-sm"
-                        value={data?.businessHours?.[day]?.open || "10:00"}
-                        onChange={(e) =>
-                          setData({
-                            ...data,
-                            businessHours: {
-                              ...data.businessHours,
-                              [day]: {
-                                ...data.businessHours[day],
-                                open: e.target.value,
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <InputField
+                          type="time"
+                          value={data?.businessHours?.[day]?.open || "10:00"}
+                          onChange={(e) =>
+                            setData({
+                              ...data,
+                              businessHours: {
+                                ...data.businessHours,
+                                [day]: {
+                                  ...data.businessHours[day],
+                                  open: e.target.value,
+                                },
                               },
-                            },
-                          })
-                        }
-                        disabled={!data?.businessHours?.[day]?.isOpen}
-                      />
+                            })
+                          }
+                          disabled={!data?.businessHours?.[day]?.isOpen}
+                        />
+                      </div>
                       <span className="text-ink-mute text-sm">-</span>
-                      <input
-                        type="time"
-                        className="flex-1 px-3 py-2 bg-paper border border-line rounded text-ink text-sm"
-                        value={data?.businessHours?.[day]?.close || "18:00"}
-                        onChange={(e) =>
-                          setData({
-                            ...data,
-                            businessHours: {
-                              ...data.businessHours,
-                              [day]: {
-                                ...data.businessHours[day],
-                                close: e.target.value,
+                      <div className="flex-1">
+                        <InputField
+                          type="time"
+                          value={data?.businessHours?.[day]?.close || "18:00"}
+                          onChange={(e) =>
+                            setData({
+                              ...data,
+                              businessHours: {
+                                ...data.businessHours,
+                                [day]: {
+                                  ...data.businessHours[day],
+                                  close: e.target.value,
+                                },
                               },
-                            },
-                          })
-                        }
-                        disabled={!data?.businessHours?.[day]?.isOpen}
-                      />
+                            })
+                          }
+                          disabled={!data?.businessHours?.[day]?.isOpen}
+                        />
+                      </div>
                     </div>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -686,19 +673,13 @@ export default function Settings() {
           <>
             <SectionHeader title="Footer Configuration" />
             <div className="space-y-5">
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase tracking-wider mb-2">
-                  Copyright Text
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 bg-paper border border-line rounded-lg text-ink text-sm focus:border-info focus:outline-none transition-colors"
-                  value={data?.copyrightText || ""}
-                  onChange={(e) =>
-                    setData({ ...data, copyrightText: e.target.value })
-                  }
-                />
-              </div>
+              <InputField
+                label="Copyright Text"
+                value={data?.copyrightText}
+                onChange={(e) =>
+                  setData({ ...data, copyrightText: e.target.value })
+                }
+              />
               <div>
                 <label className="block text-xs font-semibold text-ink-mute uppercase tracking-wider mb-2">
                   Footer Text

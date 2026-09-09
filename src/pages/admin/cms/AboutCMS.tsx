@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { Save, Loader2, Plus, Image as ImageIcon, Palette, Eye } from 'lucide-react';
 
 import AboutPreview from '../../../components/admin/ui/AboutPreview';
-import HeroField from '../../../components/admin/ui/HeroField';
 import ListRow from '../../../components/admin/ui/ListRow';
 import MediaPickerModal from '../../../components/admin/ui/MediaPickerModal';
 import {
@@ -16,6 +15,7 @@ import {
 } from '../../../components/admin/ui/VisibilityToggle';
 
 import { aboutApi, appearanceApi } from '../../../services/api';
+import InputField from '../../../components/admin/ui/InputField';
 import {
   ABOUT_VARIANT_LABELS,
   EMPTY_CAPABILITY,
@@ -81,20 +81,21 @@ interface HeadFieldsProps {
 /** The eyebrow + heading every section on the page carries. */
 const HeadFields = ({ section, rules, errors, path, onChange }: HeadFieldsProps) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <HeroField
+    <InputField
       label="Section label"
       value={section.label}
-      onChange={(v) => onChange({ label: v })}
-      max={rules.label.max}
-      error={errors[`${path}.label`]}
-      helper="The small kicker above the heading."
+      onChange={(e) => onChange({ label: e.target.value })}
+      maxChars={rules.label.max}
+      error={!!errors[`${path}.label`]}
+      hint={errors[`${path}.label`] ?? "The small kicker above the heading."}
     />
-    <HeroField
+    <InputField
       label="Section heading"
       value={section.heading}
-      onChange={(v) => onChange({ heading: v })}
-      max={rules.heading.max}
-      error={errors[`${path}.heading`]}
+      onChange={(e) => onChange({ heading: e.target.value })}
+      maxChars={rules.heading.max}
+      error={!!errors[`${path}.heading`]}
+      hint={errors[`${path}.heading`]}
     />
   </div>
 );
@@ -331,44 +332,46 @@ export default function AboutCMS() {
           toggle={sectionToggle('about.story')}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <HeroField
+            <InputField
               label="Section label"
               value={story.label}
-              onChange={(v) => patchSection('story', { label: v })}
-              max={rules.label.max}
-              error={errors['story.label']}
-              helper="The kicker above the heading. Also labels the image caption."
+              onChange={(e) => patchSection('story', { label: e.target.value })}
+              maxChars={rules.label.max}
+              error={!!errors['story.label']}
+              hint={errors['story.label'] ?? "The kicker above the heading. Also labels the image caption."}
             />
-            <HeroField
+            <InputField
               label="Heading"
               value={story.heading}
-              onChange={(v) => patchSection('story', { heading: v })}
-              max={rules.heading.max}
-              error={errors['story.heading']}
-              helper="Text after the first comma renders in the accent colour; with no comma, the last two words do."
+              onChange={(e) => patchSection('story', { heading: e.target.value })}
+              maxChars={rules.heading.max}
+              error={!!errors['story.heading']}
+              hint={errors['story.heading'] ?? "Text after the first comma renders in the accent colour; with no comma, the last two words do."}
             />
           </div>
-          <HeroField
+          <InputField
             label="Description"
             value={story.description}
-            onChange={(v) => patchSection('story', { description: v })}
-            max={rules.storyDescription.max}
-            error={errors['story.description']}
+            onChange={(e) => patchSection('story', { description: e.target.value })}
+            maxChars={rules.storyDescription.max}
+            error={!!errors['story.description']}
+            hint={errors['story.description']}
             multiline
             rows={4}
           />
           <div>
             <label className="block text-[10px] font-bold text-ink-faint uppercase tracking-wider mb-1.5">Image</label>
             <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="https://…"
-                className={`flex-1 min-w-0 px-3 py-2 bg-paper border rounded-lg text-ink text-sm ${
-                  errors['story.image'] ? 'border-danger' : 'border-line'
-                }`}
-                value={story.image}
-                onChange={(e) => patchSection('story', { image: e.target.value })}
-              />
+              <div className="flex-1 min-w-0">
+                <InputField
+                  type="text"
+                  placeholder="https://…"
+                  error={!!errors['story.image']}
+                  hint={errors['story.image']}
+                  value={story.image}
+                  onChange={(e) => patchSection('story', { image: e.target.value })}
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => setPicker(true)}
@@ -377,15 +380,14 @@ export default function AboutCMS() {
                 <ImageIcon className="w-4 h-4" /> Browse
               </button>
             </div>
-            {errors['story.image'] && <p className="mt-1 text-[11px] text-danger">{errors['story.image']}</p>}
           </div>
-          <HeroField
+          <InputField
             label="Image caption"
             value={story.caption}
-            onChange={(v) => patchSection('story', { caption: v })}
-            max={rules.caption.max}
-            error={errors['story.caption']}
-            helper="Printed over the image. Kept short — Floating sets it in large display type inside a narrow card."
+            onChange={(e) => patchSection('story', { caption: e.target.value })}
+            maxChars={rules.caption.max}
+            error={!!errors['story.caption']}
+            hint={errors['story.caption'] ?? "Printed over the image. Kept short — Floating sets it in large display type inside a narrow card."}
           />
           {elementToggles('about.story')}
         </SectionCard>
@@ -419,19 +421,21 @@ export default function AboutCMS() {
                 onRemove={(index) => patch({ stats: removeAt(stats, index) })}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <HeroField
+                  <InputField
                     label="Value"
                     value={stat.value}
-                    onChange={(v) => patch({ stats: patchAt(stats, i, { value: v }) })}
-                    max={rules.stat.value.max}
-                    error={errors[`stats.${i}.value`]}
+                    onChange={(e) => patch({ stats: patchAt(stats, i, { value: e.target.value }) })}
+                    maxChars={rules.stat.value.max}
+                    error={!!errors[`stats.${i}.value`]}
+                    hint={errors[`stats.${i}.value`]}
                   />
-                  <HeroField
+                  <InputField
                     label="Label"
                     value={stat.label}
-                    onChange={(v) => patch({ stats: patchAt(stats, i, { label: v }) })}
-                    max={rules.stat.label.max}
-                    error={errors[`stats.${i}.label`]}
+                    onChange={(e) => patch({ stats: patchAt(stats, i, { label: e.target.value }) })}
+                    maxChars={rules.stat.label.max}
+                    error={!!errors[`stats.${i}.label`]}
+                    hint={errors[`stats.${i}.label`]}
                   />
                 </div>
               </ListRow>
@@ -452,23 +456,23 @@ export default function AboutCMS() {
             path="whoWeAre"
             onChange={(changes) => patchSection('whoWeAre', changes)}
           />
-          <HeroField
+          <InputField
             label="Description"
             value={whoWeAre.description}
-            onChange={(v) => patchSection('whoWeAre', { description: v })}
-            max={rules.quote.max}
-            error={errors['whoWeAre.description']}
+            onChange={(e) => patchSection('whoWeAre', { description: e.target.value })}
+            maxChars={rules.quote.max}
+            error={!!errors['whoWeAre.description']}
             multiline
             rows={3}
-            helper="Set as a pull quote in every layout."
+            hint={errors['whoWeAre.description'] ?? "Set as a pull quote in every layout."}
           />
-          <HeroField
+          <InputField
             label="Attribution"
             value={whoWeAre.attribution}
-            onChange={(v) => patchSection('whoWeAre', { attribution: v })}
-            max={rules.attribution.max}
-            error={errors['whoWeAre.attribution']}
-            helper="Who the statement is from. Leave empty to hide the line."
+            onChange={(e) => patchSection('whoWeAre', { attribution: e.target.value })}
+            maxChars={rules.attribution.max}
+            error={!!errors['whoWeAre.attribution']}
+            hint={errors['whoWeAre.attribution'] ?? "Who the statement is from. Leave empty to hide the line."}
           />
 
           <div className="pt-1 space-y-4">
@@ -500,19 +504,21 @@ export default function AboutCMS() {
                 onRemove={(index) => patchSection('whoWeAre', { details: removeAt(whoWeAre.details, index) })}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <HeroField
+                  <InputField
                     label="Label"
                     value={detail.label}
-                    onChange={(v) => patchSection('whoWeAre', { details: patchAt(whoWeAre.details, i, { label: v }) })}
-                    max={rules.detail.label.max}
-                    error={errors[`whoWeAre.details.${i}.label`]}
+                    onChange={(e) => patchSection('whoWeAre', { details: patchAt(whoWeAre.details, i, { label: e.target.value }) })}
+                    maxChars={rules.detail.label.max}
+                    error={!!errors[`whoWeAre.details.${i}.label`]}
+                    hint={errors[`whoWeAre.details.${i}.label`]}
                   />
-                  <HeroField
+                  <InputField
                     label="Value"
                     value={detail.value}
-                    onChange={(v) => patchSection('whoWeAre', { details: patchAt(whoWeAre.details, i, { value: v }) })}
-                    max={rules.detail.value.max}
-                    error={errors[`whoWeAre.details.${i}.value`]}
+                    onChange={(e) => patchSection('whoWeAre', { details: patchAt(whoWeAre.details, i, { value: e.target.value }) })}
+                    maxChars={rules.detail.value.max}
+                    error={!!errors[`whoWeAre.details.${i}.value`]}
+                    hint={errors[`whoWeAre.details.${i}.value`]}
                   />
                 </div>
               </ListRow>
@@ -553,27 +559,29 @@ export default function AboutCMS() {
                 onRemove={(index) => patchSection('values', { items: removeAt(values.items, index) })}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <HeroField
+                  <InputField
                     label="Title"
                     value={value.title}
-                    onChange={(v) => patchSection('values', { items: patchAt(values.items, i, { title: v }) })}
-                    max={rules.item.title.max}
-                    error={errors[`values.items.${i}.title`]}
+                    onChange={(e) => patchSection('values', { items: patchAt(values.items, i, { title: e.target.value }) })}
+                    maxChars={rules.item.title.max}
+                    error={!!errors[`values.items.${i}.title`]}
+                    hint={errors[`values.items.${i}.title`]}
                   />
-                  <HeroField
+                  <InputField
                     label="Icon"
                     value={value.icon}
-                    onChange={(v) => patchSection('values', { items: patchAt(values.items, i, { icon: v }) })}
-                    error={errors[`values.items.${i}.icon`]}
-                    helper="Font Awesome name, e.g. shield-halved. Leave empty for the default."
+                    onChange={(e) => patchSection('values', { items: patchAt(values.items, i, { icon: e.target.value }) })}
+                    error={!!errors[`values.items.${i}.icon`]}
+                    hint={errors[`values.items.${i}.icon`] ?? "Font Awesome name, e.g. shield-halved. Leave empty for the default."}
                   />
                 </div>
-                <HeroField
+                <InputField
                   label="Description"
                   value={value.description}
-                  onChange={(v) => patchSection('values', { items: patchAt(values.items, i, { description: v }) })}
-                  max={rules.item.description.max}
-                  error={errors[`values.items.${i}.description`]}
+                  onChange={(e) => patchSection('values', { items: patchAt(values.items, i, { description: e.target.value }) })}
+                  maxChars={rules.item.description.max}
+                  error={!!errors[`values.items.${i}.description`]}
+                  hint={errors[`values.items.${i}.description`]}
                   multiline
                 />
               </ListRow>
@@ -620,41 +628,43 @@ export default function AboutCMS() {
                 onRemove={(index) => patchSection('whatWeDo', { items: removeAt(whatWeDo.items, index) })}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <HeroField
+                  <InputField
                     label="Title"
                     value={item.title}
-                    onChange={(v) => patchSection('whatWeDo', { items: patchAt(whatWeDo.items, i, { title: v }) })}
-                    max={rules.item.title.max}
-                    error={errors[`whatWeDo.items.${i}.title`]}
+                    onChange={(e) => patchSection('whatWeDo', { items: patchAt(whatWeDo.items, i, { title: e.target.value }) })}
+                    maxChars={rules.item.title.max}
+                    error={!!errors[`whatWeDo.items.${i}.title`]}
+                    hint={errors[`whatWeDo.items.${i}.title`]}
                   />
-                  <HeroField
+                  <InputField
                     label="Icon"
                     value={item.icon}
-                    onChange={(v) => patchSection('whatWeDo', { items: patchAt(whatWeDo.items, i, { icon: v }) })}
-                    error={errors[`whatWeDo.items.${i}.icon`]}
-                    helper="Font Awesome name, e.g. layer-group."
+                    onChange={(e) => patchSection('whatWeDo', { items: patchAt(whatWeDo.items, i, { icon: e.target.value }) })}
+                    error={!!errors[`whatWeDo.items.${i}.icon`]}
+                    hint={errors[`whatWeDo.items.${i}.icon`] ?? "Font Awesome name, e.g. layer-group."}
                   />
                 </div>
-                <HeroField
+                <InputField
                   label="Description"
                   value={item.description}
-                  onChange={(v) => patchSection('whatWeDo', { items: patchAt(whatWeDo.items, i, { description: v }) })}
-                  max={rules.item.description.max}
-                  error={errors[`whatWeDo.items.${i}.description`]}
+                  onChange={(e) => patchSection('whatWeDo', { items: patchAt(whatWeDo.items, i, { description: e.target.value }) })}
+                  maxChars={rules.item.description.max}
+                  error={!!errors[`whatWeDo.items.${i}.description`]}
+                  hint={errors[`whatWeDo.items.${i}.description`]}
                   multiline
                 />
-                <HeroField
+                <InputField
                   label="Tags"
                   value={item.tags.join(', ')}
-                  onChange={(v) =>
+                  onChange={(e) =>
                     patchSection('whatWeDo', {
                       items: patchAt(whatWeDo.items, i, {
-                        tags: v.split(',').map((tag) => tag.trim()).filter(Boolean).slice(0, rules.lists.tags.max),
+                        tags: e.target.value.split(',').map((tag) => tag.trim()).filter(Boolean).slice(0, rules.lists.tags.max),
                       }),
                     })
                   }
-                  error={errors[`whatWeDo.items.${i}.tags`] || errors[`whatWeDo.items.${i}.tags.0`]}
-                  helper={`Comma-separated, up to ${rules.lists.tags.max}. Clean Modern shows the first two.`}
+                  error={!!(errors[`whatWeDo.items.${i}.tags`] || errors[`whatWeDo.items.${i}.tags.0`])}
+                  hint={(errors[`whatWeDo.items.${i}.tags`] || errors[`whatWeDo.items.${i}.tags.0`]) ?? `Comma-separated, up to ${rules.lists.tags.max}. Clean Modern shows the first two.`}
                 />
               </ListRow>
             ))}
@@ -700,27 +710,29 @@ export default function AboutCMS() {
                 onRemove={(index) => patchSection('whyChooseUs', { items: removeAt(whyChooseUs.items, index) })}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <HeroField
+                  <InputField
                     label="Title"
                     value={item.title}
-                    onChange={(v) => patchSection('whyChooseUs', { items: patchAt(whyChooseUs.items, i, { title: v }) })}
-                    max={rules.item.title.max}
-                    error={errors[`whyChooseUs.items.${i}.title`]}
+                    onChange={(e) => patchSection('whyChooseUs', { items: patchAt(whyChooseUs.items, i, { title: e.target.value }) })}
+                    maxChars={rules.item.title.max}
+                    error={!!errors[`whyChooseUs.items.${i}.title`]}
+                    hint={errors[`whyChooseUs.items.${i}.title`]}
                   />
-                  <HeroField
+                  <InputField
                     label="Icon"
                     value={item.icon}
-                    onChange={(v) => patchSection('whyChooseUs', { items: patchAt(whyChooseUs.items, i, { icon: v }) })}
-                    error={errors[`whyChooseUs.items.${i}.icon`]}
-                    helper="Font Awesome name, e.g. circle-check."
+                    onChange={(e) => patchSection('whyChooseUs', { items: patchAt(whyChooseUs.items, i, { icon: e.target.value }) })}
+                    error={!!errors[`whyChooseUs.items.${i}.icon`]}
+                    hint={errors[`whyChooseUs.items.${i}.icon`] ?? "Font Awesome name, e.g. circle-check."}
                   />
                 </div>
-                <HeroField
+                <InputField
                   label="Description"
                   value={item.description}
-                  onChange={(v) => patchSection('whyChooseUs', { items: patchAt(whyChooseUs.items, i, { description: v }) })}
-                  max={rules.item.description.max}
-                  error={errors[`whyChooseUs.items.${i}.description`]}
+                  onChange={(e) => patchSection('whyChooseUs', { items: patchAt(whyChooseUs.items, i, { description: e.target.value }) })}
+                  maxChars={rules.item.description.max}
+                  error={!!errors[`whyChooseUs.items.${i}.description`]}
+                  hint={errors[`whyChooseUs.items.${i}.description`]}
                   multiline
                 />
               </ListRow>
@@ -767,30 +779,32 @@ export default function AboutCMS() {
                 onRemove={(index) => patchSection('howWeWork', { steps: removeAt(howWeWork.steps, index) })}
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <HeroField
+                  <InputField
                     label="Number"
                     value={step.number}
-                    onChange={(v) => patchSection('howWeWork', { steps: patchAt(howWeWork.steps, i, { number: v }) })}
-                    max={rules.step.number.max}
-                    error={errors[`howWeWork.steps.${i}.number`]}
-                    helper='Printed as written — "01" reads better than "1".'
+                    onChange={(e) => patchSection('howWeWork', { steps: patchAt(howWeWork.steps, i, { number: e.target.value }) })}
+                    maxChars={rules.step.number.max}
+                    error={!!errors[`howWeWork.steps.${i}.number`]}
+                    hint={errors[`howWeWork.steps.${i}.number`] ?? 'Printed as written — "01" reads better than "1".'}
                   />
                   <div className="md:col-span-2">
-                    <HeroField
+                    <InputField
                       label="Title"
                       value={step.title}
-                      onChange={(v) => patchSection('howWeWork', { steps: patchAt(howWeWork.steps, i, { title: v }) })}
-                      max={rules.step.title.max}
-                      error={errors[`howWeWork.steps.${i}.title`]}
+                      onChange={(e) => patchSection('howWeWork', { steps: patchAt(howWeWork.steps, i, { title: e.target.value }) })}
+                      maxChars={rules.step.title.max}
+                      error={!!errors[`howWeWork.steps.${i}.title`]}
+                      hint={errors[`howWeWork.steps.${i}.title`]}
                     />
                   </div>
                 </div>
-                <HeroField
+                <InputField
                   label="Description"
                   value={step.description}
-                  onChange={(v) => patchSection('howWeWork', { steps: patchAt(howWeWork.steps, i, { description: v }) })}
-                  max={rules.step.description.max}
-                  error={errors[`howWeWork.steps.${i}.description`]}
+                  onChange={(e) => patchSection('howWeWork', { steps: patchAt(howWeWork.steps, i, { description: e.target.value }) })}
+                  maxChars={rules.step.description.max}
+                  error={!!errors[`howWeWork.steps.${i}.description`]}
+                  hint={errors[`howWeWork.steps.${i}.description`]}
                   multiline
                 />
               </ListRow>
@@ -811,29 +825,30 @@ export default function AboutCMS() {
             path="cta"
             onChange={(changes) => patchSection('cta', changes)}
           />
-          <HeroField
+          <InputField
             label="Text"
             value={cta.description}
-            onChange={(v) => patchSection('cta', { description: v })}
-            max={rules.ctaDescription.max}
-            error={errors['cta.description']}
+            onChange={(e) => patchSection('cta', { description: e.target.value })}
+            maxChars={rules.ctaDescription.max}
+            error={!!errors['cta.description']}
             multiline
-            helper="Optional — leave empty to show the heading and buttons alone."
+            hint={errors['cta.description'] ?? "Optional — leave empty to show the heading and buttons alone."}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <HeroField
+            <InputField
               label="Primary button — label"
               value={cta.primary.label}
-              onChange={(v) => patchSection('cta', { primary: { ...cta.primary, label: v } })}
-              max={rules.ctaLabel.max}
-              error={errors['cta.primary.label']}
+              onChange={(e) => patchSection('cta', { primary: { ...cta.primary, label: e.target.value } })}
+              maxChars={rules.ctaLabel.max}
+              error={!!errors['cta.primary.label']}
+              hint={errors['cta.primary.label']}
             />
-            <HeroField
+            <InputField
               label="Primary button — link"
               value={cta.primary.url}
-              onChange={(v) => patchSection('cta', { primary: { ...cta.primary, url: v } })}
-              error={errors['cta.primary.url']}
-              helper="An anchor on the home page (/#contact), a path (/projects) or a full URL."
+              onChange={(e) => patchSection('cta', { primary: { ...cta.primary, url: e.target.value } })}
+              error={!!errors['cta.primary.url']}
+              hint={errors['cta.primary.url'] ?? "An anchor on the home page (/#contact), a path (/projects) or a full URL."}
             />
           </div>
 
@@ -850,18 +865,20 @@ export default function AboutCMS() {
 
           {cta.secondary && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <HeroField
+              <InputField
                 label="Secondary button — label"
                 value={cta.secondary.label}
-                onChange={(v) => patchSection('cta', { secondary: { ...cta.secondary!, label: v } })}
-                max={rules.ctaLabel.max}
-                error={errors['cta.secondary.label']}
+                onChange={(e) => patchSection('cta', { secondary: { ...cta.secondary!, label: e.target.value } })}
+                maxChars={rules.ctaLabel.max}
+                error={!!errors['cta.secondary.label']}
+                hint={errors['cta.secondary.label']}
               />
-              <HeroField
+              <InputField
                 label="Secondary button — link"
                 value={cta.secondary.url}
-                onChange={(v) => patchSection('cta', { secondary: { ...cta.secondary!, url: v } })}
-                error={errors['cta.secondary.url']}
+                onChange={(e) => patchSection('cta', { secondary: { ...cta.secondary!, url: e.target.value } })}
+                error={!!errors['cta.secondary.url']}
+                hint={errors['cta.secondary.url']}
               />
             </div>
           )}

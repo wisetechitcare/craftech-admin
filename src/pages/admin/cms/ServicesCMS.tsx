@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { contentApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { Loader2, Plus, Trash2, Edit2, X, Cog } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 import { faIcon } from '../../../utils/faIcon';
 
 export default function ServicesCMS() {
@@ -152,25 +153,21 @@ export default function ServicesCMS() {
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-semibold text-ink-mute uppercase tracking-widest mb-2">Title</label>
-                  <input
-                    type="text" required
-                    className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink focus:border-ok transition-colors"
-                    value={formData.title}
-                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold text-ink-mute uppercase tracking-widest mb-2">FA Icon Class</label>
-                  <input
-                    type="text" required
-                    placeholder="fa-building-shield"
-                    className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink focus:border-ok transition-colors"
-                    value={formData.icon}
-                    onChange={e => setFormData({ ...formData, icon: e.target.value })}
-                  />
-                </div>
+                <InputField
+                  label="Title"
+                  required
+                  type="text"
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                />
+                <InputField
+                  label="FA Icon Class"
+                  required
+                  type="text"
+                  placeholder="fa-building-shield"
+                  value={formData.icon}
+                  onChange={e => setFormData({ ...formData, icon: e.target.value })}
+                />
               </div>
 
               <div>
@@ -183,27 +180,21 @@ export default function ServicesCMS() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-semibold text-ink-mute uppercase tracking-widest mb-2">Key Features (Comma separated)</label>
-                <input
-                  type="text"
-                  placeholder="Structural Engineering, MEP, Turn-key, etc."
-                  className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink focus:border-ok transition-colors"
-                  value={formData.features}
-                  onChange={e => setFormData({ ...formData, features: e.target.value })}
-                />
-              </div>
+              <InputField
+                label="Key Features (Comma separated)"
+                type="text"
+                placeholder="Structural Engineering, MEP, Turn-key, etc."
+                value={formData.features}
+                onChange={e => setFormData({ ...formData, features: e.target.value })}
+              />
 
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-semibold text-ink-mute uppercase tracking-widest mb-2">Display Order</label>
-                  <input
-                    type="number"
-                    className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink focus:border-ok transition-colors"
-                    value={formData.order}
-                    onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                  />
-                </div>
+                <InputField
+                  label="Display Order"
+                  type="number"
+                  value={formData.order}
+                  onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) })}
+                />
                 <div className="flex items-end pb-1">
                    <label className="flex items-center gap-3 cursor-pointer group">
                       <div className="relative">

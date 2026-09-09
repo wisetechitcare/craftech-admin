@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, ArrowLeft, Plus, X } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 import { teamApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 
@@ -45,12 +46,14 @@ const TeamForm = () => {
   const [newExpertise, setNewExpertise] = useState('');
   const [newCert, setNewCert] = useState('');
 
+  // Typed off the schema so `errors.x` is a FieldError, not the loose union
+  // `useForm<any>` produces — the fields read `.message` off it.
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<any>({
+  } = useForm<z.input<typeof teamValidationSchema>>({
     resolver: zodResolver(teamValidationSchema),
     defaultValues: {
       active: true,
@@ -163,27 +166,25 @@ const TeamForm = () => {
         <div className="bg-paper rounded-2xl p-8 space-y-6">
           {/* Name & Role */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-bold text-ink-soft mb-2">Name *</label>
-              <input
-                type="text"
-                {...register('name')}
-                className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="Full name"
-              />
-              {errors.name && <p className="text-danger text-sm mt-1">{errors.name.message as string}</p>}
-            </div>
+            <InputField
+              label="Name"
+              required
+              type="text"
+              {...register('name')}
+              error={!!errors.name}
+              hint={errors.name?.message as string}
+              placeholder="Full name"
+            />
 
-            <div>
-              <label className="block text-sm font-bold text-ink-soft mb-2">Role *</label>
-              <input
-                type="text"
-                {...register('role')}
-                className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="Job title"
-              />
-              {errors.role && <p className="text-danger text-sm mt-1">{errors.role.message as string}</p>}
-            </div>
+            <InputField
+              label="Role"
+              required
+              type="text"
+              {...register('role')}
+              error={!!errors.role}
+              hint={errors.role?.message as string}
+              placeholder="Job title"
+            />
           </div>
 
           {/* Department */}
@@ -223,84 +224,79 @@ const TeamForm = () => {
           </div>
 
           {/* Image */}
-          <div>
-            <label className="block text-sm font-bold text-ink-soft mb-2">Image URL</label>
-            <input
-              type="url"
-              {...register('image')}
-              className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-              placeholder="https://..."
-            />
-          </div>
+          <InputField
+            label="Image URL"
+            type="url"
+            {...register('image')}
+            error={!!errors.image}
+            hint={errors.image?.message as string}
+            placeholder="https://..."
+          />
 
           {/* Contact Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-bold text-ink-soft mb-2">Email</label>
-              <input
-                type="email"
-                {...register('email')}
-                className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="email@example.com"
-              />
-            </div>
+            <InputField
+              label="Email"
+              type="email"
+              {...register('email')}
+              error={!!errors.email}
+              hint={errors.email?.message as string}
+              placeholder="email@example.com"
+            />
 
-            <div>
-              <label className="block text-sm font-bold text-ink-soft mb-2">Phone</label>
-              <input
-                type="tel"
-                {...register('phone')}
-                className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="+91 93248 77493"
-              />
-            </div>
+            <InputField
+              label="Phone"
+              type="tel"
+              {...register('phone')}
+              error={!!errors.phone}
+              hint={errors.phone?.message as string}
+              placeholder="+91 93248 77493"
+            />
           </div>
 
           {/* Social Links */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-bold text-ink-soft mb-2">LinkedIn URL</label>
-              <input
-                type="url"
-                {...register('linkedin')}
-                className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="https://linkedin.com/in/..."
-              />
-            </div>
+            <InputField
+              label="LinkedIn URL"
+              type="url"
+              {...register('linkedin')}
+              error={!!errors.linkedin}
+              hint={errors.linkedin?.message as string}
+              placeholder="https://linkedin.com/in/..."
+            />
 
-            <div>
-              <label className="block text-sm font-bold text-ink-soft mb-2">Twitter URL</label>
-              <input
-                type="url"
-                {...register('twitter')}
-                className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="https://twitter.com/..."
-              />
-            </div>
+            <InputField
+              label="Twitter URL"
+              type="url"
+              {...register('twitter')}
+              error={!!errors.twitter}
+              hint={errors.twitter?.message as string}
+              placeholder="https://twitter.com/..."
+            />
           </div>
 
           {/* Experience */}
-          <div>
-            <label className="block text-sm font-bold text-ink-soft mb-2">Years of Experience</label>
-            <input
-              type="number"
-              {...register('yearsOfExperience', { valueAsNumber: true })}
-              className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-              placeholder="10"
-            />
-          </div>
+          <InputField
+            label="Years of Experience"
+            type="number"
+            {...register('yearsOfExperience', { valueAsNumber: true })}
+            error={!!errors.yearsOfExperience}
+            hint={errors.yearsOfExperience?.message as string}
+            placeholder="10"
+          />
 
           {/* Expertise */}
           <div>
             <label className="block text-sm font-bold text-ink-soft mb-2">Expertise</label>
             <div className="flex gap-2 mb-3">
-              <input
-                type="text"
-                value={newExpertise}
-                onChange={(e) => setNewExpertise(e.target.value)}
-                className="flex-1 px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="Add expertise skill"
-              />
+              <div className="flex-1">
+                <InputField
+                  type="text"
+                  value={newExpertise}
+                  onChange={(e) => setNewExpertise(e.target.value)}
+                  placeholder="Add expertise skill"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -334,13 +330,14 @@ const TeamForm = () => {
           <div>
             <label className="block text-sm font-bold text-ink-soft mb-2">Certifications</label>
             <div className="flex gap-2 mb-3">
-              <input
-                type="text"
-                value={newCert}
-                onChange={(e) => setNewCert(e.target.value)}
-                className="flex-1 px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="Add certification"
-              />
+              <div className="flex-1">
+                <InputField
+                  type="text"
+                  value={newCert}
+                  onChange={(e) => setNewCert(e.target.value)}
+                  placeholder="Add certification"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => {

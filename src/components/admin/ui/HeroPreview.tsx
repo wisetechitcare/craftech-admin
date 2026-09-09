@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { isHeroVideo, type HeroContent, type HeroVariant } from '../../../types/hero';
+import { isHeroVideo, type HeroContent, type HeroFrame, type HeroVariant } from '../../../types/hero';
 
 /**
  * A scaled sketch of the live Hero: the selected variant's arrangement, the
- * chosen slide's media at its chosen focal point, and the real copy.
+ * chosen frame's medium at its chosen focal point, and the real copy.
  *
  * It is a sketch on purpose — the website's Hero is a Next.js client component
  * with framer-motion, a particle canvas and the site's own theme tokens, none
@@ -16,7 +16,10 @@ import { isHeroVideo, type HeroContent, type HeroVariant } from '../../../types/
 interface HeroPreviewProps {
   variant: HeroVariant;
   content: HeroContent;
-  slideIndex: number;
+  /** The one frame being previewed. The parent picks it, because a single-slide
+   *  Hero has one frame per medium and there is no index into `content.slides`
+   *  that names them. */
+  frame?: HeroFrame;
   /** Reads appearance.visibility the way the live Hero does — absent means
    *  visible. Hidden parts are left out rather than greyed: the sketch answers
    *  "what will the page look like". */
@@ -35,11 +38,10 @@ const Title = ({ title }: { title: string }) => {
   );
 };
 
-export default function HeroPreview({ variant, content, slideIndex, show }: HeroPreviewProps) {
-  const slide = content.slides[slideIndex];
+export default function HeroPreview({ variant, content, frame: slide, show }: HeroPreviewProps) {
   if (!slide) return null;
 
-  // One element, used by all three arrangements below — so a video slide
+  // One element, used by all three arrangements below — so a video frame
   // previews as a video in every variant, not just the one that was updated.
   const media = isHeroVideo(slide.image) ? (
     <video

@@ -12,13 +12,28 @@ export const isHeroVideo = (url?: string): boolean =>
   /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(url ?? '');
 
 export interface HeroSlide {
-  /** Image OR video URL. Named `image` because that is the stored field; video
-   *  support was added without changing the write contract. */
+  /** The slide's backdrop media, in display order — images, or one video. More
+   *  than one is only accepted when this is the ONLY slide: the live Hero
+   *  rotates them behind a headline that never changes. With several slides
+   *  each takes exactly one, because its copy changes along with it. */
+  images: string[];
+  pos: string;
+  title: string;
+  subtitle: string;
+}
+
+/** One frame of the live Hero: a single medium and the copy shown over it. The
+ *  site flattens slides into these to cycle through; heroFrames does the same
+ *  so the preview steps through exactly what a visitor sees. */
+export interface HeroFrame {
   image: string;
   pos: string;
   title: string;
   subtitle: string;
 }
+
+export const heroFrames = (slides: HeroSlide[]): HeroFrame[] =>
+  slides.flatMap(({ images, ...copy }) => images.map((image) => ({ ...copy, image })));
 
 export interface HeroCta {
   label: string;
@@ -39,7 +54,9 @@ export interface HeroRules {
   eyebrow: { max: number };
   ctaLabel: { max: number };
   trustStrip: { max: number; segmentMax: number };
-  slides: { min: number; max: number };
+  /** `imagesMax` is how many images a single-slide Hero may cross-fade through.
+   *  A video has no count: it always stands alone on its slide. */
+  slides: { min: number; max: number; imagesMax: number };
   positions: string[];
 }
 

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, ArrowLeft, Plus, X } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 import { faqApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 
@@ -34,12 +35,13 @@ const FAQForm = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [newKeyword, setNewKeyword] = useState('');
 
+  // Typed off the schema so `errors.x` is a FieldError InputField accepts.
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<any>({
+  } = useForm<z.input<typeof faqValidationSchema>>({
     resolver: zodResolver(faqValidationSchema),
     defaultValues: {
       published: true,
@@ -157,28 +159,28 @@ const FAQForm = () => {
               {errors.category && <p className="text-danger text-sm mt-1">{errors.category.message as string}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-ink-soft mb-2">Order</label>
-              <input
-                type="number"
-                {...register('order', { valueAsNumber: true })}
-                className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="Display order"
-              />
-            </div>
+            <InputField
+              label="Order"
+              type="number"
+              {...register('order', { valueAsNumber: true })}
+              error={!!errors.order}
+              hint={errors.order?.message as string}
+              placeholder="Display order"
+            />
           </div>
 
           {/* Keywords */}
           <div>
             <label className="block text-sm font-bold text-ink-soft mb-2">Keywords (SEO)</label>
             <div className="flex gap-2 mb-3">
-              <input
-                type="text"
-                value={newKeyword}
-                onChange={(e) => setNewKeyword(e.target.value)}
-                className="flex-1 px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
-                placeholder="Add keyword"
-              />
+              <div className="flex-1">
+                <InputField
+                  type="text"
+                  value={newKeyword}
+                  onChange={(e) => setNewKeyword(e.target.value)}
+                  placeholder="Add keyword"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => {

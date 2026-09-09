@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { cmsApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { Loader2, Plus, Trash2, Edit2, Link as LinkIcon, X } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 
 export default function ClientsList() {
   const [items, setItems] = useState<any[]>([]);
@@ -121,37 +122,30 @@ export default function ClientsList() {
               <button onClick={() => setModalOpen(false)} className="text-ink-mute hover:text-ink"><X /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Client Name</label>
-                <input
-                  type="text" required
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
+              <InputField
+                label="Client Name"
+                required
+                type="text"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Logo URL</label>
-                <input
-                  type="text" required
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                  value={formData.logo}
-                  onChange={e => setFormData({ ...formData, logo: e.target.value })}
-                  placeholder="https://res.cloudinary.com/..."
-                />
-              </div>
+              <InputField
+                label="Logo URL"
+                required
+                type="text"
+                value={formData.logo}
+                onChange={e => setFormData({ ...formData, logo: e.target.value })}
+                placeholder="https://res.cloudinary.com/..."
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Website (Optional)</label>
-                <input
-                  type="url"
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                  value={formData.website}
-                  onChange={e => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
+              <InputField
+                label="Website (Optional)"
+                type="url"
+                value={formData.website}
+                onChange={e => setFormData({ ...formData, website: e.target.value })}
+                placeholder="https://..."
+              />
 
               <div className="pt-4 flex gap-3">
                 <button type="submit" className="flex-1 py-3 bg-info hover:bg-info text-white font-bold rounded-xl transition-all">

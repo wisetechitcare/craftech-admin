@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Save, Loader2, Plus, Trash2 } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 
 import { cmsApi } from '../../../services/api';
 
@@ -9,7 +10,6 @@ interface Stat {
   value: string;
 }
 
-const INPUT = 'px-3 py-2 bg-paper border border-line rounded-lg text-ink text-sm';
 
 /**
  * The homepage metrics counters, split out of the old "Hero & Stats" page.
@@ -70,10 +70,14 @@ export default function StatsCMS() {
         <div className="space-y-3">
           {stats.map((stat, i) => (
             <div key={i} className="flex items-center gap-3">
-              <input type="text" placeholder="Value (e.g. 25)" className={`${INPUT} w-1/3`}
-                value={stat.value} onChange={(e) => update(i, 'value', e.target.value)} />
-              <input type="text" placeholder="Label (e.g. Projects Executed)" className={`${INPUT} flex-1`}
-                value={stat.label} onChange={(e) => update(i, 'label', e.target.value)} />
+              <div className="w-1/3">
+                <InputField type="text" placeholder="Value (e.g. 25)"
+                  value={stat.value} onChange={(e) => update(i, 'value', e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <InputField type="text" placeholder="Label (e.g. Projects Executed)"
+                  value={stat.label} onChange={(e) => update(i, 'label', e.target.value)} />
+              </div>
               <button type="button" aria-label={`Remove stat ${i + 1}`}
                 onClick={() => setStats((prev) => prev.filter((_, idx) => idx !== i))}
                 className="p-2 text-ink-mute hover:text-danger transition-colors">

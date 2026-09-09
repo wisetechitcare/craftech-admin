@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { projectsApi, uploadApi } from '../../../services/api';
 import ImageDropzone from '../../../components/admin/ui/ImageDropzone';
+import InputField from '../../../components/admin/ui/InputField';
 import VideoDropzone from '../../../components/admin/ui/VideoDropzone';
 import ConfirmModal from '../../../components/admin/ui/ConfirmModal';
 import toast from 'react-hot-toast';
@@ -374,18 +375,15 @@ export default function ProjectForm() {
               }
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Title *">
-                  <input
-                    style={fieldStyle}
+                <div className="sm:col-span-2">
+                  <InputField
+                    label="Title"
+                    required
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    required
                     placeholder="e.g. Luxury Tower Dubai"
-                    onFocus={e => e.target.style.borderColor = 'rgba(196,27,31,0.5)'}
-                    onBlur={e => e.target.style.borderColor = '#dfe6ee'}
-                    className="sm:col-span-2"
                   />
-                </Field>
+                </div>
 
                 <Field label="Category *">
                   <select
@@ -399,42 +397,31 @@ export default function ProjectForm() {
                   </select>
                 </Field>
 
-                <Field label="Client *">
-                  <input
-                    style={fieldStyle}
-                    value={form.client}
-                    onChange={(e) => setForm({ ...form, client: e.target.value })}
-                    required
-                    placeholder="Client name"
-                    onFocus={e => e.target.style.borderColor = 'rgba(196,27,31,0.5)'}
-                    onBlur={e => e.target.style.borderColor = '#dfe6ee'}
-                  />
-                </Field>
+                <InputField
+                  label="Client"
+                  required
+                  value={form.client}
+                  onChange={(e) => setForm({ ...form, client: e.target.value })}
+                  placeholder="Client name"
+                />
 
-                <Field label="Year *">
-                  <input
-                    type="number"
-                    style={fieldStyle}
-                    min="2000" max="2100"
-                    value={form.year}
-                    onChange={(e) => setForm({ ...form, year: e.target.value })}
-                    required
-                    onFocus={e => e.target.style.borderColor = 'rgba(196,27,31,0.5)'}
-                    onBlur={e => e.target.style.borderColor = '#dfe6ee'}
-                  />
-                </Field>
+                <InputField
+                  label="Year"
+                  required
+                  type="number"
+                  min="2000"
+                  max="2100"
+                  value={form.year}
+                  onChange={(e) => setForm({ ...form, year: e.target.value })}
+                />
 
-                <Field label="Location *">
-                  <input
-                    style={fieldStyle}
-                    value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    required
-                    placeholder="City, Country"
-                    onFocus={e => e.target.style.borderColor = 'rgba(196,27,31,0.5)'}
-                    onBlur={e => e.target.style.borderColor = '#dfe6ee'}
-                  />
-                </Field>
+                <InputField
+                  label="Location"
+                  required
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  placeholder="City, Country"
+                />
 
                 <div className="sm:col-span-2">
                   <Field label="Description *">
@@ -452,19 +439,13 @@ export default function ProjectForm() {
 
                 {isNew && (
                   <div className="sm:col-span-2">
-                    <Field label="Initial Thumbnail URL">
-                      <input
-                        style={fieldStyle}
-                        placeholder="https://res.cloudinary.com/... (optional, upload after creating)"
-                        value={form.thumbnail}
-                        onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
-                        onFocus={e => e.target.style.borderColor = 'rgba(196,27,31,0.5)'}
-                        onBlur={e => e.target.style.borderColor = '#dfe6ee'}
-                      />
-                      <p className="text-xs mt-1.5" style={{ color: '#7386a0' }}>
-                        You can drag & drop a thumbnail after creating the project.
-                      </p>
-                    </Field>
+                    <InputField
+                      label="Initial Thumbnail URL"
+                      placeholder="https://res.cloudinary.com/... (optional, upload after creating)"
+                      value={form.thumbnail}
+                      onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+                      hint="You can drag & drop a thumbnail after creating the project."
+                    />
                   </div>
                 )}
 
@@ -603,16 +584,13 @@ export default function ProjectForm() {
                 Upload New Video
               </p>
 
-              <Field label="Video Label *">
-                <input
-                  style={fieldStyle}
-                  placeholder="e.g. Project Walkthrough, Site Aerial"
-                  value={videoLabel}
-                  onChange={(e) => setVideoLabel(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = 'rgba(124,58,237,0.5)'}
-                  onBlur={e => e.target.style.borderColor = '#dfe6ee'}
-                />
-              </Field>
+              <InputField
+                label="Video Label"
+                required
+                placeholder="e.g. Project Walkthrough, Site Aerial"
+                value={videoLabel}
+                onChange={(e) => setVideoLabel(e.target.value)}
+              />
 
               <VideoDropzone
                 onSelect={(f: File) => setVideoFile(f)}
