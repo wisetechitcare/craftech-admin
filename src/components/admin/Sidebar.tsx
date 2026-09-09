@@ -5,7 +5,7 @@ import {
   LayoutDashboard, FolderOpen, Settings, LogOut,
   Building2, Video, X, Users, MessageSquare,
   Image as ImageIcon, Home, Layers, Star, ChevronRight,
-  Cpu, FileText, Briefcase, BookOpen, BarChart3, HelpCircle, Palette
+  Cpu, FileText, Briefcase, BookOpen, BarChart3, HelpCircle, Palette, Info
 } from 'lucide-react';
 
 interface NavItem {
@@ -25,7 +25,9 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Content',
     items: [
-      { to: '/admin/home', icon: Home, label: 'Hero & Stats' },
+      { to: '/admin/hero', icon: Home, label: 'Hero' },
+      { to: '/admin/about', icon: Info, label: 'About' },
+      { to: '/admin/stats', icon: BarChart3, label: 'Statistics' },
       { to: '/admin/process', icon: Layers, label: 'Process Blueprint' },
       { to: '/admin/features', icon: Star, label: 'Why Features' },
       { to: '/admin/pillars', icon: Cpu, label: 'Core Pillars' },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { contentApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { Loader2, Plus, Trash2, Edit2, X, Info } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 import { faIcon } from '../../../utils/faIcon';
 
 export default function PillarsCMS() {
@@ -126,25 +127,21 @@ export default function PillarsCMS() {
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-semibold text-ink-mute uppercase tracking-widest mb-2">Pillar Title</label>
-                  <input
-                    type="text" required
-                    className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink focus:border-navy transition-colors"
-                    value={formData.title}
-                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold text-ink-mute uppercase tracking-widest mb-2">FontAwesome Icon</label>
-                  <input
-                    type="text" required
-                    placeholder="fa-shield-halved"
-                    className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink focus:border-navy transition-colors"
-                    value={formData.icon}
-                    onChange={e => setFormData({ ...formData, icon: e.target.value })}
-                  />
-                </div>
+                <InputField
+                  label="Pillar Title"
+                  required
+                  type="text"
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                />
+                <InputField
+                  label="FontAwesome Icon"
+                  required
+                  type="text"
+                  placeholder="fa-shield-halved"
+                  value={formData.icon}
+                  onChange={e => setFormData({ ...formData, icon: e.target.value })}
+                />
               </div>
 
               <div>
@@ -157,15 +154,12 @@ export default function PillarsCMS() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-semibold text-ink-mute uppercase tracking-widest mb-2">Display Order</label>
-                <input
-                  type="number"
-                  className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink focus:border-navy transition-colors"
-                  value={formData.order}
-                  onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                />
-              </div>
+              <InputField
+                label="Display Order"
+                type="number"
+                value={formData.order}
+                onChange={e => setFormData({ ...formData, order: parseInt(e.target.value) })}
+              />
 
               <div className="pt-4 flex gap-4">
                 <button type="submit" className="flex-1 py-4 bg-navy hover:bg-navy-light text-white font-semibold rounded-2xl transition-all shadow-lg shadow-indigo-500/20">

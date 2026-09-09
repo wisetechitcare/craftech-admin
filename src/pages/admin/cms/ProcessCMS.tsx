@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { cmsApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { Loader2, Plus, Trash2, Edit2, X } from 'lucide-react';
+import InputField from '../../../components/admin/ui/InputField';
 
 export default function ProcessCMS() {
   const [steps, setSteps] = useState<any[]>([]);
@@ -106,26 +107,20 @@ export default function ProcessCMS() {
               <button onClick={() => setModalOpen(false)} className="text-ink-mute hover:text-ink"><X /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Step Number (e.g. 01)</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                  value={currentStep.number}
-                  onChange={e => setCurrentStep({ ...currentStep, number: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Title</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 bg-paper border border-line rounded-lg text-ink"
-                  value={currentStep.title}
-                  onChange={e => setCurrentStep({ ...currentStep, title: e.target.value })}
-                />
-              </div>
+              <InputField
+                label="Step Number (e.g. 01)"
+                required
+                type="text"
+                value={currentStep.number}
+                onChange={e => setCurrentStep({ ...currentStep, number: e.target.value })}
+              />
+              <InputField
+                label="Title"
+                required
+                type="text"
+                value={currentStep.title}
+                onChange={e => setCurrentStep({ ...currentStep, title: e.target.value })}
+              />
               <div>
                 <label className="block text-xs font-semibold text-ink-mute uppercase mb-2">Description</label>
                 <textarea

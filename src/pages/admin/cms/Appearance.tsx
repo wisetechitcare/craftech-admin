@@ -179,7 +179,15 @@ export default function Appearance() {
     e.preventDefault();
     setSaving(true);
     try {
-      await appearanceApi.update(data);
+      // Only the three fields this form edits. It used to PUT back the whole
+      // record it fetched, which quietly re-wrote `visibility` from a copy that
+      // could be minutes stale — leaving this page open while someone hid a
+      // section in About CMS, then saving a variant here, silently unhid it.
+      await appearanceApi.update({
+        navbarVariant: data.navbarVariant,
+        heroVariant: data.heroVariant,
+        aboutVariant: data.aboutVariant,
+      });
       toast.success("Appearance saved successfully");
     } catch (err) {
       toast.error("Failed to save appearance");
@@ -201,7 +209,8 @@ export default function Appearance() {
         <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
         <div className="text-sm text-info">
           Controls which Navbar, Hero, and About style renders on the live site.
-          Updates reflect immediately (no redeploy needed).
+          Which sections a page draws is set in that page's own CMS. Updates
+          reflect immediately (no redeploy needed).
         </div>
       </div>
 

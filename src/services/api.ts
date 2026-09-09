@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+import type { AboutContent, AboutResponse } from '../types/about';
+import type { HeroContent, HeroResponse } from '../types/hero';
+
 const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({ baseURL: BASE_URL });
@@ -66,6 +69,13 @@ export const uploadApi = {
     }),
   highlightVideo: (formData: FormData, onProgress?: any) =>
     api.post('/upload/highlights/video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: onProgress,
+    }),
+  // Any CMS slot that takes an image or a video; the server picks Cloudinary's
+  // resource type from the file. `folder` groups the asset (e.g. 'hero').
+  cmsMedia: (folder: string, formData: FormData, onProgress?: any) =>
+    api.post(`/upload/cms?folder=${folder}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: onProgress,
     }),
@@ -144,6 +154,20 @@ export const cmsApi = {
 export const appearanceApi = {
   get: () => api.get('/cms/appearance'),
   update: (data: any) => api.put('/cms/appearance', data),
+};
+
+// ── About (own domain: the whole /about page in one document). Writes only
+//    home.aboutPage, so it can never clobber Hero or Stats on the same row. ──
+export const aboutApi = {
+  get: () => api.get<{ success: boolean; data: AboutResponse }>('/cms/about'),
+  update: (data: AboutContent) => api.put<{ success: boolean; data: AboutResponse }>('/cms/about', data),
+};
+
+// ── Hero (own domain: slides + copy + CTAs). A Hero write touches only Hero
+//    fields, so it can never clobber About/Stats sharing the same Home row. ──
+export const heroApi = {
+  get: () => api.get<{ success: boolean; data: HeroResponse }>('/cms/hero'),
+  update: (data: HeroContent) => api.put<{ success: boolean; data: HeroResponse }>('/cms/hero', data),
 };
 
 // ── Blog ────────────────────────────────────────────────────────────────────

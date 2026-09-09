@@ -37,6 +37,22 @@ export default {
         warn: '#a86a00',
         info: '#1d5fd0',
         danger: '#c0271f',
+
+        // Scales the shared form controls reference by name. Mapped onto the
+        // admin identity above rather than a second palette, so `brand-500`
+        // and `info` are the same blue and `error-500` is `danger`.
+        brand: {
+          25: '#f4f8fe',
+          300: '#8fb3f0',
+          500: '#1d5fd0',
+          800: '#123a80',
+        },
+        error: {
+          300: '#e7a49e',
+          400: '#d4564c',
+          500: '#c0271f',
+          800: '#7a1913',
+        },
       },
 
       fontFamily: {
@@ -67,6 +83,7 @@ export default {
 
       boxShadow: {
         premium: '0 20px 40px rgba(0, 0, 0, 0.15)',
+        'theme-xs': '0 1px 2px rgba(10, 38, 71, 0.05)',
       },
 
       borderRadius: {
@@ -83,6 +100,13 @@ export default {
   },
 
   plugins: [
+    function ({ addUtilities }) {
+      // Tailwind v4 spelling, used by the shared form controls. v3 calls the
+      // same thing `outline-none`.
+      addUtilities({
+        '.outline-hidden': { outline: '2px solid transparent', 'outline-offset': '2px' },
+      });
+    },
     function ({ addComponents }) {
       addComponents({
         '.section': { '@apply py-14 md:py-20': {} },

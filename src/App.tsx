@@ -10,7 +10,9 @@ import ProjectsList from './pages/admin/projects/ProjectsList';
 import ProjectForm from './pages/admin/projects/ProjectForm';
 import MediaManager from './pages/admin/MediaManager';
 
-import HomeCMS from './pages/admin/cms/HomeCMS';
+import HeroCMS from './pages/admin/cms/HeroCMS';
+import AboutCMS from './pages/admin/cms/AboutCMS';
+import StatsCMS from './pages/admin/cms/StatsCMS';
 import ProcessCMS from './pages/admin/cms/ProcessCMS';
 import FeaturesCMS from './pages/admin/cms/FeaturesCMS';
 import PillarsCMS from './pages/admin/cms/PillarsCMS';
@@ -56,7 +58,11 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<DashboardHome />} />
-          <Route path="home" element={<HomeCMS />} />
+          <Route path="hero" element={<HeroCMS />} />
+          <Route path="about" element={<AboutCMS />} />
+          <Route path="stats" element={<StatsCMS />} />
+          {/* The old combined page split into the three above; keep bookmarks working. */}
+          <Route path="home" element={<Navigate to="/admin/hero" replace />} />
           <Route path="process" element={<ProcessCMS />} />
           <Route path="features" element={<FeaturesCMS />} />
           <Route path="pillars" element={<PillarsCMS />} />

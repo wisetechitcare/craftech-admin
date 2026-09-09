@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Eye, Plus } from 'lucide-react';
 import { mediaApi } from '../../../services/api';
+import InputField from '../../../components/admin/ui/InputField';
 import toast from 'react-hot-toast';
 
 const MediaLibrary = () => {
@@ -181,20 +182,18 @@ const MediaLibrary = () => {
               <h3 className="text-2xl font-semibold text-ink">Upload Media</h3>
 
               <div className="space-y-4">
-                <input
+                <InputField
                   type="text"
                   placeholder="Media name"
                   value={uploadData.name}
                   onChange={(e) => setUploadData({ ...uploadData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
                 />
 
-                <input
+                <InputField
                   type="url"
                   placeholder="Image URL"
                   value={uploadData.url}
                   onChange={(e) => setUploadData({ ...uploadData, url: e.target.value })}
-                  className="w-full px-4 py-3 bg-raise border border-line rounded-lg text-ink focus:border-accent focus:outline-none"
                 />
 
                 <select

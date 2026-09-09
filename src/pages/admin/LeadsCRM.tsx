@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { cmsApi } from '../../services/api';
 import AdminLoading from '../../components/common/AdminLoading';
+import InputField from '../../components/admin/ui/InputField';
 
 const LeadsCRM = () => {
   const [leads, setLeads] = useState<any>({});
@@ -163,17 +164,14 @@ const LeadsCRM = () => {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <div className="text-xs font-bold text-mid uppercase mb-2">Assigned To</div>
-                  <input
-                    type="text"
-                    value={selectedLead.assignedTo || ''}
-                    onChange={e => setSelectedLead({ ...selectedLead, assignedTo: e.target.value })}
-                    onBlur={() => updateLeadNotes(selectedLead._id, selectedLead.notes)}
-                    className="w-full px-3 py-2 border border-line rounded-lg text-sm"
-                    placeholder="Sales rep name"
-                  />
-                </div>
+                <InputField
+                  label="Assigned To"
+                  type="text"
+                  value={selectedLead.assignedTo || ''}
+                  onChange={e => setSelectedLead({ ...selectedLead, assignedTo: e.target.value })}
+                  onBlur={() => updateLeadNotes(selectedLead._id, selectedLead.notes)}
+                  placeholder="Sales rep name"
+                />
               </div>
 
               {/* Notes */}

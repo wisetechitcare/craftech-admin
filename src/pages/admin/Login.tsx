@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Lock, Loader2 } from 'lucide-react';
+import InputField from '../../components/admin/ui/InputField';
 
 // ponytail: demo creds inline — move to VITE_ env vars if the demo login outlives dev
 const DEMO = { email: 'admin@craftechengineers.com', password: 'Admin123' };
@@ -11,7 +12,6 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
-  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const signIn = async (email: string, password: string) => {
@@ -46,44 +46,25 @@ export default function Login() {
         <div className="card">
           <div className="card-body">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="label">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
-                  <input
-                    type="email"
-                    className="input pl-10"
-                    placeholder="Email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-              </div>
+              <InputField
+                label="Email Address"
+                required
+                type="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                autoComplete="email"
+              />
 
-              <div>
-                <label className="label">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-faint" />
-                  <input
-                    type={showPw ? 'text' : 'password'}
-                    className="input pl-10 pr-10"
-                    placeholder="Password"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw(!showPw)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink-soft"
-                  >
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+              <InputField
+                label="Password"
+                required
+                type="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                autoComplete="current-password"
+              />
 
               <button type="submit" className="btn-primary w-full justify-center py-2.5" disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
