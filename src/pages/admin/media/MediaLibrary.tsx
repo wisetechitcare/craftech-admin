@@ -161,7 +161,7 @@ const MediaLibrary = () => {
               </div>
 
               {/* Info */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-linear-to-t from-black/80 to-transparent">
                 <p className="text-ink text-[0.75rem] font-bold truncate">
                   {item.name}
                 </p>

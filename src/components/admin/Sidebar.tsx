@@ -44,6 +44,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Content",
     items: [
+      { to: "/admin/navbar", icon: Menu, label: "Navbar" },
       { to: "/admin/hero", icon: Home, label: "Hero" },
       { to: "/admin/about", icon: Info, label: "About" },
       { to: "/admin/stats", icon: BarChart3, label: "Statistics" },
@@ -85,7 +86,6 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "System",
     items: [
       { to: "/admin/appearance", icon: Palette, label: "Appearance" },
-      { to: "/admin/navbar", icon: Menu, label: "Navbar" },
       { to: "/admin/settings", icon: Settings, label: "Settings" },
     ],
   },
@@ -130,7 +130,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-line-2">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[10px] bg-accent flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-[10px] bg-accent flex items-center justify-center shrink-0">
               <span className="text-xs font-bold text-white tracking-wider">
                 CT
               </span>
@@ -183,7 +183,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                           <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r bg-accent" />
                         )}
                         <Icon
-                          className={`w-[17px] h-[17px] flex-shrink-0 ${isActive ? "text-accent" : "text-ink-faint group-hover:text-ink-mute"}`}
+                          className={`w-[17px] h-[17px] shrink-0 ${isActive ? "text-accent" : "text-ink-faint group-hover:text-ink-mute"}`}
                         />
                         <span className="flex-1 truncate">{label}</span>
                         {isActive && (
@@ -201,7 +201,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* User Info */}
         <div className="px-3 pb-3 pt-3 border-t border-line-2">
           <div className="flex items-center gap-3 px-2.5 py-2 rounded-[10px] bg-raise mb-1">
-            <div className="w-8 h-8 rounded-[10px] bg-navy flex items-center justify-center flex-shrink-0 text-[0.7rem] font-bold text-white">
+            <div className="w-8 h-8 rounded-[10px] bg-navy flex items-center justify-center shrink-0 text-[0.7rem] font-bold text-white">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
@@ -215,9 +215,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-2.5 py-2 rounded-[10px] text-[0.83rem] font-medium text-ink-mute hover:bg-danger/[0.06] hover:text-danger transition-colors"
+            className="flex items-center gap-3 w-full px-2.5 py-2 rounded-[10px] text-[0.83rem] font-medium text-ink-mute hover:bg-danger/6 hover:text-danger transition-colors"
           >
-            <LogOut className="w-[17px] h-[17px] flex-shrink-0" />
+            <LogOut className="w-[17px] h-[17px] shrink-0" />
             <span>Sign out</span>
           </button>
         </div>

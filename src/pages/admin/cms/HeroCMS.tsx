@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import type { Accept } from "react-dropzone";
-import { Save, Loader2, Plus, Trash2, Palette, Eye } from "lucide-react";
+import { Save, Loader2, Plus, Palette, Eye } from "lucide-react";
 
 import FileUpload from "../../../components/admin/ui/FileUpload";
 import InputField from "../../../components/admin/ui/InputField";
+import ListRow from "@/components/admin/ui/ListRow";
 import TextArea from "../../../components/admin/ui/TextArea";
 import SelectField from "../../../components/admin/ui/SelectField";
 import SitePreview, { PreviewSection } from "@/components/admin/ui/SitePreview";
@@ -17,6 +18,7 @@ import {
   type VisibilitySection,
 } from "../../../components/admin/ui/VisibilityToggle";
 
+import { DragList } from "@/lib/constants/drag-lists";
 import { appearanceApi, heroApi, uploadApi } from "../../../services/api";
 import {
   HERO_VARIANT_LABELS,
@@ -28,6 +30,7 @@ import {
   type HeroSlide,
   type HeroVariant,
 } from "../../../types/hero";
+import { move, removeAt } from "@/utils/utils";
 
 const EMPTY_SLIDE: HeroSlide = {
   images: [],
@@ -198,15 +201,17 @@ function SlideMedia({
 
   return (
     <div>
-      <label className="block text-[10px] font-bold text-ink-faint uppercase tracking-wider mb-1.5">
+      {/* Same label style as InputField and SelectField — this sits between
+          them on the card and used to be the one field labelled differently. */}
+      <label className="mb-2 block text-sm font-medium text-black">
         Media{" "}
         {max > 1 && !hasVideo && (
-          <span className="normal-case font-normal text-ink-faint">
+          <span className="font-normal text-ink-faint">
             ({value.length}/{max} images)
           </span>
         )}
         {hasVideo && (
-          <span className="normal-case font-normal text-ink-faint">
+          <span className="font-normal text-ink-faint">
             (video — fills the slide)
           </span>
         )}
@@ -319,9 +324,14 @@ export default function HeroCMS() {
 
   const removeSlide = (index: number) =>
     setContent((prev) =>
-      prev
-        ? { ...prev, slides: prev.slides.filter((_, i) => i !== index) }
-        : prev,
+      prev ? { ...prev, slides: removeAt(prev.slides, index) } : prev,
+    );
+
+  // Slides are stored in the order they are written, so a move is the whole
+  // change and the existing save writes it with the rest of the document.
+  const moveSlide = (from: number, to: number) =>
+    setContent((prev) =>
+      prev ? { ...prev, slides: move(prev.slides, from, to) } : prev,
     );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -394,7 +404,7 @@ export default function HeroCMS() {
           limits below depend on how much room that layout leaves for text. */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
         <div className="flex items-center gap-3 text-sm text-info">
-          <Palette className="w-5 h-5 flex-shrink-0" />
+          <Palette className="w-5 h-5 shrink-0" />
           <span>
             Hero style: <strong>{HERO_VARIANT_LABELS[variant]}</strong> —
             character limits below are set by this layout.
@@ -499,25 +509,16 @@ export default function HeroCMS() {
 
             <div className="space-y-4">
               {content.slides.map((slide, i) => (
-                <div
+                <ListRow
                   key={i}
-                  className="bg-raise border border-line rounded-xl p-4 space-y-4 relative"
+                  title="Slide"
+                  index={i}
+                  count={slideCount}
+                  listId={DragList.HERO_SLIDES}
+                  canRemove={slideCount > rules.slides.min}
+                  onMove={moveSlide}
+                  onRemove={removeSlide}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-ink-faint uppercase tracking-wider">
-                      Slide {i + 1}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeSlide(i)}
-                      disabled={slideCount <= rules.slides.min}
-                      aria-label={`Remove slide ${i + 1}`}
-                      className="p-1.5 text-ink-faint hover:text-danger disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
                   <InputField
                     label="Title"
                     required
@@ -550,27 +551,28 @@ export default function HeroCMS() {
                     error={!!errors[`slides.${i}.subtitle`]}
                     hint={errors[`slides.${i}.subtitle`]}
                   />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <SlideMedia
-                      value={slide.images}
-                      max={mediaMax}
-                      error={errors[`slides.${i}.images`]}
-                      onChange={(images) => patchSlide(i, { images })}
-                    />
-
-                    <SelectField
-                      label="Focal point"
-                      value={slide.pos}
-                      onValueChange={(pos) => patchSlide(i, { pos })}
-                      options={rules.positions.map((pos: string) => ({
-                        value: pos,
-                        label: POSITION_LABELS[pos] || pos,
-                      }))}
-                      hint="Which part of the media stays visible when it is cropped."
-                    />
-                  </div>
-                </div>
+                  <SelectField
+                    className="md:max-w-sm"
+                    label="Focal point"
+                    value={slide.pos}
+                    onValueChange={(pos) => patchSlide(i, { pos })}
+                    options={rules.positions.map((pos: string) => ({
+                      value: pos,
+                      label: POSITION_LABELS[pos] || pos,
+                    }))}
+                    tooltip="Which part of the media stays visible when it is cropped."
+                  />
+                  {/* Stacked, not two columns: the dropzone and its thumbnails
+                      are several times taller than one select, so pairing them
+                      left a half-card of dead space. Full width also fits a
+                      slide's images on one row instead of wrapping them. */}
+                  <SlideMedia
+                    value={slide.images}
+                    max={mediaMax}
+                    error={errors[`slides.${i}.images`]}
+                    onChange={(images) => patchSlide(i, { images })}
+                  />
+                </ListRow>
               ))}
             </div>
           </div>

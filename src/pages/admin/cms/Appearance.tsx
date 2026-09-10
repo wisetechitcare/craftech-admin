@@ -191,7 +191,7 @@ export default function Appearance() {
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
         <div className="text-sm text-info">
           Controls which Navbar, Hero, and About style renders on the live site.
           The header's own links and button are set on the Navbar page, and

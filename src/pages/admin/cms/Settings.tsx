@@ -148,7 +148,7 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
         <div className="text-sm text-info">
           All values here control what appears on the website. Update them to
           immediately reflect across the site (no redeploy needed).
@@ -185,7 +185,7 @@ export default function Settings() {
 
       {Object.keys(fieldErrors).length > 0 && (
         <div className="flex items-start gap-3 p-4 bg-danger/10 border border-danger/40 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
           <div className="text-sm text-danger space-y-1">
             <p className="font-bold">Nothing was saved. Fix these first:</p>
             <ul className="space-y-0.5">

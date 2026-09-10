@@ -155,10 +155,7 @@ export default function ProjectsList() {
           className="flex items-center gap-2 px-3 py-2.5 rounded-xl flex-1"
           style={{ background: "#f6f8fb", border: "1px solid #dfe6ee" }}
         >
-          <Search
-            className="w-4 h-4 flex-shrink-0"
-            style={{ color: "#7386a0" }}
-          />
+          <Search className="w-4 h-4 shrink-0" style={{ color: "#7386a0" }} />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -173,7 +170,7 @@ export default function ProjectsList() {
           style={{ background: "#f6f8fb", border: "1px solid #dfe6ee" }}
         >
           <SlidersHorizontal
-            className="w-4 h-4 flex-shrink-0"
+            className="w-4 h-4 shrink-0"
             style={{ color: "#7386a0" }}
           />
           <SelectField
@@ -330,7 +327,7 @@ export default function ProjectsList() {
                     <Calendar className="w-3 h-3" /> {p.year}
                   </span>
                   <span className="flex items-center gap-1 truncate">
-                    <MapPin className="w-3 h-3 flex-shrink-0" /> {p.location}
+                    <MapPin className="w-3 h-3 shrink-0" /> {p.location}
                   </span>
                 </div>
 

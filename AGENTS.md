@@ -44,7 +44,7 @@ Follow these guidelines when generating or modifying code for this project.
 3. Reuse existing types whenever possible.
 4. Prefer type inference when it improves readability.
 5. Use Tailwind CSS utility classes whenever possible.
-6. Do **not** use arbitrary Tailwind values such as `text-[32px]`, `z-[100]`, `grid-cols-[1fr_2fr]`, `bg-[#fff]`, `text-[#1A1A1A]`, `border-[#E5E7EB]`, `rgb(...)`, or `hsl(...)`,etc.
+6. Do **not** use arbitrary Tailwind values such as `text-[32px]`, `z-100`, `grid-cols-[1fr_2fr]`, `bg-white`, `text-[#1A1A1A]`, `border-[#E5E7EB]`, `rgb(...)`, or `hsl(...)`,etc.
 7. Write self-explanatory code instead of relying on comments.
 8. Keep every source code file at **600 lines or fewer**. If a file exceeds 600 lines, refactor the code where possible. If it cannot be reasonably refactored, bifurcate it into separate files.
 9. Do not create new test files or testing patterns unless explicitly requested or required by an existing project convention. Prefer extending existing tests when available.

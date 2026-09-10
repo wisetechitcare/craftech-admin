@@ -1,132 +1,30 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { AlertCircle, Loader2, Plus, Save } from "lucide-react";
+import { AlertCircle, Loader2, Save } from "lucide-react";
 
-import InputField from "../../../components/admin/ui/InputField";
-import ListRow from "../../../components/admin/ui/ListRow";
+import InputField from "@/components/admin/ui/InputField";
+import ListRow from "@/components/admin/ui/ListRow";
+import {
+  AddButton,
+  HEADING,
+  SectionCard,
+} from "@/components/admin/ui/SectionCard";
+import SitePreview, { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
   ElementVisibility,
   type VisibilitySection,
-} from "../../../components/admin/ui/VisibilityToggle";
+} from "@/components/admin/ui/VisibilityToggle";
 
-import { appearanceApi } from "../../../services/api";
+import { DragList } from "@/lib/constants/drag-lists";
+import { appearanceApi } from "@/services/api";
 import {
   EMPTY_NAV_LINK,
   type AppearanceResponse,
   type NavbarContent,
-  type NavbarRules,
-} from "../../../types/appearance";
-import { move, patchAt, removeAt } from "../../../utils/utils";
-
-const CARD = "bg-paper border border-line rounded-xl p-6 space-y-5";
-const HEADING = "text-sm font-semibold text-ink uppercase tracking-wider";
-
-interface NavbarFieldsProps {
-  navbar: NavbarContent;
-  rules: NavbarRules;
-  onChange: (changes: Partial<NavbarContent>) => void;
-}
-
-/**
- * The header's own content: which links it lists, in what order, and the button
- * beside them. Order IS the stored order — no order column and no per-row
- * endpoint, so every edit here is a pure array transform that Save writes as one
- * document.
- *
- * Character caps come from the server's `navbarRules`, never from numbers typed
- * here, so the counters and the validation can never drift apart.
- */
-const NavbarFields = ({ navbar, rules, onChange }: NavbarFieldsProps) => (
-  <div className="space-y-4">
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <span className="block text-xs font-semibold text-ink-mute uppercase tracking-wider">
-          Navigation Links
-        </span>
-        <p className="mt-1 text-xs text-ink-faint">
-          Listed in the order below. Every layout draws the same links.
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={() => onChange({ links: [...navbar.links, EMPTY_NAV_LINK] })}
-        disabled={navbar.links.length >= rules.links.max}
-        className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line text-xs font-bold text-ink hover:bg-raise disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        <Plus className="w-4 h-4" />
-        Add link
-      </button>
-    </div>
-
-    {navbar.links.length === 0 ? (
-      <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-xs text-ink-faint">
-        No links. The header will draw the logo and the button only.
-      </p>
-    ) : (
-      <div className="space-y-3">
-        {navbar.links.map((link, i) => (
-          <ListRow
-            key={i}
-            title="Link"
-            index={i}
-            count={navbar.links.length}
-            onMove={(from, to) =>
-              onChange({ links: move(navbar.links, from, to) })
-            }
-            onRemove={(index) =>
-              onChange({ links: removeAt(navbar.links, index) })
-            }
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField
-                label="Label"
-                value={link.label}
-                onChange={(e) =>
-                  onChange({
-                    links: patchAt(navbar.links, i, { label: e.target.value }),
-                  })
-                }
-                maxChars={rules.label.max}
-              />
-              <InputField
-                label="Link"
-                value={link.href}
-                onChange={(e) =>
-                  onChange({
-                    links: patchAt(navbar.links, i, { href: e.target.value }),
-                  })
-                }
-                maxChars={rules.href.max}
-                tooltip='A page ("/about"), a homepage section ("/#services") or a full web address.'
-              />
-            </div>
-          </ListRow>
-        ))}
-      </div>
-    )}
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-      <InputField
-        label="Button label"
-        value={navbar.cta.label}
-        onChange={(e) =>
-          onChange({ cta: { ...navbar.cta, label: e.target.value } })
-        }
-        maxChars={rules.ctaLabel.max}
-        tooltip="The button beside the links, and its twin at the foot of the mobile menu."
-      />
-      <InputField
-        label="Button link"
-        value={navbar.cta.href}
-        onChange={(e) =>
-          onChange({ cta: { ...navbar.cta, href: e.target.value } })
-        }
-        maxChars={rules.href.max}
-      />
-    </div>
-  </div>
-);
+} from "@/types/appearance";
+import { move, patchAt, removeAt } from "@/utils/utils";
 
 /**
  * The site header's content and which of its parts are drawn.
@@ -135,6 +33,9 @@ const NavbarFields = ({ navbar, rules, onChange }: NavbarFieldsProps) => (
  * endpoint — which STYLE of header renders them stays on the Appearance page
  * with the Hero and About pickers, the same way About CMS edits copy while its
  * layout is chosen there.
+ *
+ * Link order IS the stored order: no order column and no per-row endpoint, so
+ * dragging a row is a pure array transform that Save writes as one document.
  */
 export default function NavbarCMS() {
   const [data, setData] = useState<AppearanceResponse | null>(null);
@@ -194,13 +95,6 @@ export default function NavbarCMS() {
         : prev,
     );
 
-  // The server's catalogue for the header, not a list written here: a part
-  // added to the registry appears with no change to this file, and nothing is
-  // drawn that could not be saved.
-  const navbarParts: VisibilitySection[] =
-    data?.visibilityOptions?.find((group) => group.key === "navbar")
-      ?.sections ?? [];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!data) return;
@@ -250,14 +144,37 @@ export default function NavbarCMS() {
       </div>
     );
 
+  if (!data)
+    return (
+      <p className="text-sm text-ink-mute">
+        The navbar is unavailable. Reload to try again.
+      </p>
+    );
+
+  const { navbar, navbarRules: rules } = data;
+  // The server's catalogue for the header, not a list written here: a part
+  // added to the registry appears with no change to this file, and nothing is
+  // drawn that could not be saved.
+  const navbarParts: VisibilitySection[] =
+    data.visibilityOptions?.find((group) => group.key === "navbar")?.sections ??
+    [];
+
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          The links and button the site header draws, on desktop and in the
-          mobile menu alike. Which header STYLE renders them is set on the
-          Appearance page. Updates reflect immediately (no redeploy needed).
+        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-info">
+          <span>
+            The links and button the site header draws, on desktop and in the
+            mobile menu alike. Which header STYLE renders them is set on the
+            Appearance page. Updates reflect immediately (no redeploy needed).
+          </span>
+          <Link
+            to="/admin/appearance"
+            className="text-xs font-bold text-info underline underline-offset-2"
+          >
+            Change in Appearance
+          </Link>
         </div>
       </div>
 
@@ -268,36 +185,132 @@ export default function NavbarCMS() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {data && (
-          <>
-            <div className={CARD}>
-              <h3 className={HEADING}>Navbar Content</h3>
-              <NavbarFields
-                navbar={data.navbar}
-                rules={data.navbarRules}
-                onChange={patchNavbar}
-              />
-            </div>
+      {/* Full width and above the form, not in a side column like Hero and
+          About: a header is wide and shallow, so SitePreview's 1440px viewport
+          scales to something legible across the page and to a ribbon in a
+          quarter of it. The short viewport keeps it to the bar and the top of
+          the Hero behind it — every header variant is transparent until it is
+          scrolled, so alone on an empty page there would be nothing to see. */}
+      <div className="space-y-2">
+        <h3 className={HEADING}>Preview</h3>
+        <SitePreview
+          section={PreviewSection.NAVBAR}
+          draft={{
+            appearance: { navbar, visibility: data.visibility ?? {} },
+          }}
+          viewportHeight={340}
+        />
+        <p className="text-[11px] text-ink-faint leading-relaxed">
+          The live header, rendered by the website itself from what is typed
+          here. Nothing is saved until you press Save.
+        </p>
+      </div>
 
-            {navbarParts.length > 0 && (
-              <div className={CARD}>
-                <div>
-                  <h3 className={HEADING}>What the header shows</h3>
-                  <p className="mt-1 text-xs text-ink-faint">
-                    Hidden parts keep their content, and hide on every screen
-                    size — desktop bar and mobile menu together.
-                  </p>
-                </div>
-                <ElementVisibility
-                  elements={navbarParts}
-                  map={data.visibility ?? {}}
-                  sectionVisible
-                  onChange={patchVisibility}
-                />
-              </div>
-            )}
-          </>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <SectionCard
+          title="Navigation Links"
+          description="Listed in the order below. Every layout draws the same links."
+          count={navbar.links.length}
+          max={rules.links.max}
+          controls={
+            <AddButton
+              label="Add link"
+              disabled={navbar.links.length >= rules.links.max}
+              onClick={() =>
+                patchNavbar({ links: [...navbar.links, EMPTY_NAV_LINK] })
+              }
+            />
+          }
+        >
+          {navbar.links.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-xs text-ink-faint">
+              No links. The header will draw the logo and the button only.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {navbar.links.map((link, i) => (
+                <ListRow
+                  key={i}
+                  title="Link"
+                  index={i}
+                  count={navbar.links.length}
+                  listId={DragList.NAVBAR_LINKS}
+                  onMove={(from, to) =>
+                    patchNavbar({ links: move(navbar.links, from, to) })
+                  }
+                  onRemove={(index) =>
+                    patchNavbar({ links: removeAt(navbar.links, index) })
+                  }
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InputField
+                      label="Label"
+                      value={link.label}
+                      onChange={(e) =>
+                        patchNavbar({
+                          links: patchAt(navbar.links, i, {
+                            label: e.target.value,
+                          }),
+                        })
+                      }
+                      maxChars={rules.label.max}
+                    />
+                    <InputField
+                      label="Link"
+                      value={link.href}
+                      onChange={(e) =>
+                        patchNavbar({
+                          links: patchAt(navbar.links, i, {
+                            href: e.target.value,
+                          }),
+                        })
+                      }
+                      maxChars={rules.href.max}
+                      tooltip='A page ("/about"), a homepage section ("/#services") or a full web address.'
+                    />
+                  </div>
+                </ListRow>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title="Call-to-action button"
+          description="The button beside the links, and its twin at the foot of the mobile menu."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="Button label"
+              value={navbar.cta.label}
+              onChange={(e) =>
+                patchNavbar({ cta: { ...navbar.cta, label: e.target.value } })
+              }
+              maxChars={rules.ctaLabel.max}
+            />
+            <InputField
+              label="Button link"
+              value={navbar.cta.href}
+              onChange={(e) =>
+                patchNavbar({ cta: { ...navbar.cta, href: e.target.value } })
+              }
+              maxChars={rules.href.max}
+            />
+          </div>
+        </SectionCard>
+
+        {navbarParts.length > 0 && (
+          <SectionCard
+            title="What the header shows"
+            description="Hidden parts keep their content, and hide on every screen size — desktop bar and mobile menu together."
+          >
+            <ElementVisibility
+              elements={navbarParts}
+              map={data.visibility ?? {}}
+              sectionVisible
+              onChange={patchVisibility}
+            />
+          </SectionCard>
         )}
 
         <div className="flex justify-end gap-3">

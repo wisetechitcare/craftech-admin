@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Trash2, Plus, Eye } from 'lucide-react';
-import { teamApi } from '../../../services/api';
-import toast from 'react-hot-toast';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Edit2, Trash2, Plus, Eye } from "lucide-react";
+import { teamApi } from "../../../services/api";
+import toast from "react-hot-toast";
 
 const TeamManager = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const TeamManager = () => {
         setTeam(data.data);
       }
     } catch (err) {
-      toast.error('Failed to load team members');
+      toast.error("Failed to load team members");
     } finally {
       setLoading(false);
     }
@@ -31,15 +31,20 @@ const TeamManager = () => {
   const handleDelete = async (id: string) => {
     try {
       await teamApi.remove(id);
-      setTeam(prev => prev.filter(m => m._id !== id));
+      setTeam((prev) => prev.filter((m) => m._id !== id));
       setDeleteModal(null);
-      toast.success('Team member deleted');
+      toast.success("Team member deleted");
     } catch (err) {
-      toast.error('Failed to delete team member');
+      toast.error("Failed to delete team member");
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-screen text-ink">Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-screen text-ink">
+        Loading...
+      </div>
+    );
 
   return (
     <div className="space-y-6">
@@ -47,10 +52,12 @@ const TeamManager = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-ink">Team Members</h1>
-          <p className="text-ink-mute text-sm mt-2">Manage your team and showcase your expertise</p>
+          <p className="text-ink-mute text-sm mt-2">
+            Manage your team and showcase your expertise
+          </p>
         </div>
         <button
-          onClick={() => navigate('/admin/team/new')}
+          onClick={() => navigate("/admin/team/new")}
           className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-bold uppercase tracking-wider text-sm hover:shadow-lg hover:shadow-accent/50 transition-all"
         >
           <Plus size={18} /> New Member
@@ -63,11 +70,21 @@ const TeamManager = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-line bg-paper">
-                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">Member</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">Role</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">Department</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-ink-soft uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">
+                  Member
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-ink-soft uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-ink-soft uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -82,8 +99,14 @@ const TeamManager = () => {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-accent overflow-hidden">
-                          {member.image && <img src={member.image} alt={member.name} className="w-full h-full object-cover" />}
+                        <div className="w-12 h-12 rounded-lg bg-linear-to-br from-blue-500 to-accent overflow-hidden">
+                          {member.image && (
+                            <img
+                              src={member.image}
+                              alt={member.name}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
                         </div>
                         <div>
                           <p className="font-bold text-ink">{member.name}</p>
@@ -92,7 +115,9 @@ const TeamManager = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-ink-soft">{member.role}</span>
+                      <span className="text-sm text-ink-soft">
+                        {member.role}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-block px-3 py-1 bg-navy/30 text-info text-xs font-bold rounded-full">
@@ -100,10 +125,14 @@ const TeamManager = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${
-                        member.active ? 'bg-ok/10 text-ok' : 'bg-danger/10 text-danger'
-                      }`}>
-                        {member.active ? 'Active' : 'Inactive'}
+                      <span
+                        className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${
+                          member.active
+                            ? "bg-ok/10 text-ok"
+                            : "bg-danger/10 text-danger"
+                        }`}
+                      >
+                        {member.active ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -134,7 +163,9 @@ const TeamManager = () => {
         {team.length === 0 && (
           <div className="text-center py-12 text-ink-mute">
             <Eye size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="font-medium">No team members yet. Create your first one!</p>
+            <p className="font-medium">
+              No team members yet. Create your first one!
+            </p>
           </div>
         )}
       </div>
@@ -154,8 +185,12 @@ const TeamManager = () => {
               exit={{ scale: 0.9 }}
               className="bg-paper rounded-2xl p-8 max-w-sm"
             >
-              <h3 className="text-xl font-semibold text-ink mb-4">Delete Team Member?</h3>
-              <p className="text-ink-mute mb-8">This action cannot be undone.</p>
+              <h3 className="text-xl font-semibold text-ink mb-4">
+                Delete Team Member?
+              </h3>
+              <p className="text-ink-mute mb-8">
+                This action cannot be undone.
+              </p>
               <div className="flex gap-4">
                 <button
                   onClick={() => setDeleteModal(null)}
