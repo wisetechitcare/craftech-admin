@@ -56,6 +56,30 @@ const breadcrumbMap: Record<string, Crumb[]> = {
     { label: "Dashboard", href: "/admin" },
     { label: "Settings" },
   ],
+  "/admin/appearance": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Appearance" },
+  ],
+  "/admin/site-identity/branding": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Site Identity", href: "/admin/site-identity/branding" },
+    { label: "Branding" },
+  ],
+  "/admin/site-identity/navigation": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Site Identity", href: "/admin/site-identity/branding" },
+    { label: "Navigation Style" },
+  ],
+  "/admin/site-identity/cursor": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Site Identity", href: "/admin/site-identity/branding" },
+    { label: "Cursor Animation" },
+  ],
+  "/admin/site-identity/scroll-progress": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Site Identity", href: "/admin/site-identity/branding" },
+    { label: "Scroll Progress" },
+  ],
 };
 
 function formatDate() {

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { cmsApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import { Save, Loader2, AlertCircle } from "lucide-react";
-import BrandingTab from "../../../components/admin/BrandingTab";
 import SharedInputField, {
   type InputProps,
 } from "../../../components/admin/ui/InputField";
@@ -135,7 +134,6 @@ export default function Settings() {
 
   const tabs = [
     { id: "company", label: "Company" },
-    { id: "branding", label: "Branding" },
     { id: "contact", label: "Contact" },
     { id: "social", label: "Social & Web" },
     { id: "business", label: "Business Hours" },
@@ -204,10 +202,6 @@ export default function Settings() {
         onSubmit={handleSubmit}
         className="bg-paper border border-line rounded-xl p-6 space-y-6"
       >
-        {activeTab === "branding" && (
-          <BrandingTab data={data} setData={setData} />
-        )}
-
         {/* COMPANY TAB */}
         {activeTab === "company" && (
           <>

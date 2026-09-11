@@ -30,6 +30,7 @@ import {
   type HeroSlide,
   type HeroVariant,
 } from "../../../types/hero";
+import { LayoutVariant } from "@/types/common";
 import { move, removeAt } from "@/utils/utils";
 
 const EMPTY_SLIDE: HeroSlide = {
@@ -233,7 +234,7 @@ function SlideMedia({
 
 export default function HeroCMS() {
   const [content, setContent] = useState<HeroContent | null>(null);
-  const [variant, setVariant] = useState<HeroVariant>("floating");
+  const [variant, setVariant] = useState<HeroVariant>(LayoutVariant.FLOATING);
   const [rules, setRules] = useState<HeroRules | null>(null);
   const [serverErrors, setServerErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState<boolean>(true);

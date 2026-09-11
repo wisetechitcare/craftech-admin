@@ -1,5 +1,5 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard,
@@ -7,7 +7,6 @@ import {
   Settings,
   LogOut,
   Building2,
-  Video,
   X,
   Users,
   MessageSquare,
@@ -15,6 +14,7 @@ import {
   Home,
   Layers,
   Star,
+  ChevronDown,
   ChevronRight,
   Cpu,
   FileText,
@@ -25,68 +25,99 @@ import {
   Palette,
   Info,
   Menu,
+  Sparkles,
+  Paintbrush,
+  MousePointer2,
+  Gauge,
 } from "lucide-react";
 
-interface NavItem {
-  to: string;
-  icon: any;
-  label: string;
-  end?: boolean;
-}
+import { cn } from "@/utils/utils";
+import type { NavGroup, NavItem } from "@/types/navigation";
 
-const navGroups: { label: string; items: NavItem[] }[] = [
+const navGroups: NavGroup[] = [
   {
     label: "Main",
     items: [
-      { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
+      {
+        name: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/admin",
+        end: true,
+      },
     ],
   },
   {
     label: "Content",
     items: [
-      { to: "/admin/navbar", icon: Menu, label: "Navbar" },
-      { to: "/admin/hero", icon: Home, label: "Hero" },
-      { to: "/admin/about", icon: Info, label: "About" },
-      { to: "/admin/stats", icon: BarChart3, label: "Statistics" },
-      { to: "/admin/process", icon: Layers, label: "Process Blueprint" },
-      { to: "/admin/features", icon: Star, label: "Why Features" },
-      { to: "/admin/pillars", icon: Cpu, label: "Core Pillars" },
+      { name: "Navbar", icon: Menu, path: "/admin/navbar" },
+      { name: "Hero", icon: Home, path: "/admin/hero" },
+      { name: "About", icon: Info, path: "/admin/about" },
+      { name: "Statistics", icon: BarChart3, path: "/admin/stats" },
+      { name: "Process Blueprint", icon: Layers, path: "/admin/process" },
+      { name: "Why Features", icon: Star, path: "/admin/features" },
+      { name: "Core Pillars", icon: Cpu, path: "/admin/pillars" },
       {
-        to: "/admin/services",
+        name: "Domain Specialization",
         icon: Briefcase,
-        label: "Domain Specialization",
+        path: "/admin/services",
       },
     ],
   },
   {
     label: "Projects & Media",
     items: [
-      { to: "/admin/projects", icon: FolderOpen, label: "Projects" },
-      { to: "/admin/media-library", icon: ImageIcon, label: "Media Library" },
+      { name: "Projects", icon: FolderOpen, path: "/admin/projects" },
+      { name: "Media Library", icon: ImageIcon, path: "/admin/media-library" },
     ],
   },
   {
     label: "Community",
     items: [
-      { to: "/admin/testimonials", icon: FileText, label: "Testimonials" },
-      { to: "/admin/clients", icon: Building2, label: "Clients" },
-      { to: "/admin/leads", icon: MessageSquare, label: "Leads" },
+      { name: "Testimonials", icon: FileText, path: "/admin/testimonials" },
+      { name: "Clients", icon: Building2, path: "/admin/clients" },
+      { name: "Leads", icon: MessageSquare, path: "/admin/leads" },
     ],
   },
   {
     label: "Growth & Analytics",
     items: [
-      { to: "/admin/blog", icon: BookOpen, label: "Blog" },
-      { to: "/admin/team", icon: Users, label: "Team" },
-      { to: "/admin/faq", icon: HelpCircle, label: "FAQs" },
-      { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+      { name: "Blog", icon: BookOpen, path: "/admin/blog" },
+      { name: "Team", icon: Users, path: "/admin/team" },
+      { name: "FAQs", icon: HelpCircle, path: "/admin/faq" },
+      { name: "Analytics", icon: BarChart3, path: "/admin/analytics" },
     ],
   },
   {
     label: "System",
     items: [
-      { to: "/admin/appearance", icon: Palette, label: "Appearance" },
-      { to: "/admin/settings", icon: Settings, label: "Settings" },
+      {
+        name: "Site Identity",
+        icon: Sparkles,
+        subItems: [
+          {
+            name: "Branding",
+            path: "/admin/site-identity/branding",
+            icon: Paintbrush,
+          },
+          {
+            name: "Navigation Style",
+            path: "/admin/site-identity/navigation",
+            icon: Menu,
+          },
+          {
+            name: "Cursor Animation",
+            path: "/admin/site-identity/cursor",
+            icon: MousePointer2,
+          },
+          {
+            name: "Scroll Progress",
+            path: "/admin/site-identity/scroll-progress",
+            icon: Gauge,
+          },
+        ],
+      },
+      { name: "Appearance", icon: Palette, path: "/admin/appearance" },
+      { name: "Settings", icon: Settings, path: "/admin/settings" },
     ],
   },
 ];
@@ -99,11 +130,57 @@ interface SidebarProps {
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [openSubmenuKey, setOpenSubmenuKey] = useState<string | null>(null);
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
+    {},
+  );
+  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleLogout = () => {
     logout();
     navigate("/admin/login");
   };
+
+  const isActive = useCallback(
+    (path: string) => pathname === path || pathname.startsWith(`${path}/`),
+    [pathname],
+  );
+
+  useEffect(() => {
+    let matched = false;
+
+    navGroups.forEach((group) => {
+      group.items.forEach((item, index) => {
+        if (!item.subItems) return;
+
+        const hasActiveChild = item.subItems.some((subItem) =>
+          isActive(subItem.path),
+        );
+
+        if (hasActiveChild) {
+          setOpenSubmenuKey(`${group.label}-${index}`);
+          matched = true;
+        }
+      });
+    });
+
+    if (!matched) {
+      setOpenSubmenuKey(null);
+    }
+  }, [pathname, isActive]);
+
+  useEffect(() => {
+    if (!openSubmenuKey) return;
+
+    const element = subMenuRefs.current[openSubmenuKey];
+    if (!element) return;
+
+    setSubMenuHeight((prev) => ({
+      ...prev,
+      [openSubmenuKey]: element.scrollHeight,
+    }));
+  }, [openSubmenuKey, pathname]);
 
   const initials = admin?.name
     ? admin.name
@@ -113,6 +190,130 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         .toUpperCase()
         .slice(0, 2)
     : "A";
+
+  const renderSubmenu = (item: NavItem, groupLabel: string, index: number) => {
+    const submenuKey = `${groupLabel}-${index}`;
+    const isOpen = openSubmenuKey === submenuKey;
+    const isSectionActive = item.subItems?.some((subItem) =>
+      isActive(subItem.path),
+    );
+
+    return (
+      <li key={item.name}>
+        <button
+          type="button"
+          onClick={() =>
+            setOpenSubmenuKey((prev) =>
+              prev === submenuKey ? null : submenuKey,
+            )
+          }
+          className={cn(
+            "group flex w-full items-center gap-3 pl-3 pr-2 py-2 rounded-[10px] text-[0.83rem] transition-colors duration-150 relative",
+            isSectionActive
+              ? "bg-accent/[0.07] text-ink font-semibold"
+              : "text-ink-soft font-medium hover:bg-raise hover:text-ink",
+          )}
+        >
+          {isSectionActive && (
+            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r bg-accent" />
+          )}
+          <item.icon
+            className={cn(
+              "w-[17px] h-[17px] shrink-0",
+              isSectionActive
+                ? "text-accent"
+                : "text-ink-faint group-hover:text-ink-mute",
+            )}
+          />
+          <span className="flex-1 truncate text-left">{item.name}</span>
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 shrink-0 transition-transform duration-200",
+              isOpen ? "rotate-180 text-accent" : "text-ink-faint",
+            )}
+          />
+        </button>
+
+        <div
+          ref={(element) => {
+            subMenuRefs.current[submenuKey] = element;
+          }}
+          className="overflow-hidden transition-all duration-300"
+          style={{ height: isOpen ? `${subMenuHeight[submenuKey] ?? 0}px` : 0 }}
+        >
+          <ul className="mt-1 ml-4 pl-3 border-l border-line-2 space-y-0.5">
+            {item.subItems?.map((subItem) => {
+              const active = isActive(subItem.path);
+              const SubIcon = subItem.icon;
+
+              return (
+                <li key={subItem.path}>
+                  <Link
+                    to={subItem.path}
+                    onClick={onClose}
+                    className={cn(
+                      "group flex items-center gap-2.5 py-2 pr-2 rounded-[10px] text-[0.8rem] transition-colors duration-150",
+                      active
+                        ? "text-ink font-semibold"
+                        : "text-ink-soft font-medium hover:text-ink",
+                    )}
+                  >
+                    {SubIcon && (
+                      <SubIcon
+                        className={cn(
+                          "w-4 h-4 shrink-0",
+                          active ? "text-accent" : "text-ink-faint",
+                        )}
+                      />
+                    )}
+                    <span className="truncate">{subItem.name}</span>
+                    {active && (
+                      <ChevronRight className="ml-auto w-3 h-3 text-accent/70" />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </li>
+    );
+  };
+
+  const renderNavLink = (item: NavItem) => {
+    if (!item.path) return null;
+
+    const active = item.end ? pathname === item.path : isActive(item.path);
+
+    return (
+      <li key={item.path}>
+        <Link
+          to={item.path}
+          onClick={onClose}
+          className={cn(
+            "group flex items-center gap-3 pl-3 pr-2 py-2 rounded-[10px] text-[0.83rem] transition-colors duration-150 relative",
+            active
+              ? "bg-accent/[0.07] text-ink font-semibold"
+              : "text-ink-soft font-medium hover:bg-raise hover:text-ink",
+          )}
+        >
+          {active && (
+            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r bg-accent" />
+          )}
+          <item.icon
+            className={cn(
+              "w-[17px] h-[17px] shrink-0",
+              active
+                ? "text-accent"
+                : "text-ink-faint group-hover:text-ink-mute",
+            )}
+          />
+          <span className="flex-1 truncate">{item.name}</span>
+          {active && <ChevronRight className="w-3 h-3 text-accent/70" />}
+        </Link>
+      </li>
+    );
+  };
 
   return (
     <>
@@ -127,7 +328,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         className={`fixed top-0 left-0 h-full w-64 z-30 flex flex-col bg-paper border-r border-line transition-transform duration-300 ease-in-out
           ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
-        {/* Logo */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-line-2">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-[10px] bg-accent flex items-center justify-center shrink-0">
@@ -153,52 +353,23 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-5 scrollbar-thin">
           {navGroups.map((group) => (
             <div key={group.label}>
               <p className="px-3 mb-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-ink-faint">
                 {group.label}
               </p>
-              <div className="space-y-0.5">
-                {group.items.map(({ to, icon: Icon, label, end }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    end={end}
-                    onClick={onClose}
-                    className={({ isActive }) =>
-                      `group flex items-center gap-3 pl-3 pr-2 py-2 rounded-[10px] text-[0.83rem] transition-colors duration-150 relative ${
-                        isActive
-                          ? "bg-accent/[0.07] text-ink font-semibold"
-                          : "text-ink-soft font-medium hover:bg-raise hover:text-ink"
-                      }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        {/* Accent rail — carried over from the public site's
-                            section marker, the one signature both UIs share. */}
-                        {isActive && (
-                          <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r bg-accent" />
-                        )}
-                        <Icon
-                          className={`w-[17px] h-[17px] shrink-0 ${isActive ? "text-accent" : "text-ink-faint group-hover:text-ink-mute"}`}
-                        />
-                        <span className="flex-1 truncate">{label}</span>
-                        {isActive && (
-                          <ChevronRight className="w-3 h-3 text-accent/70" />
-                        )}
-                      </>
-                    )}
-                  </NavLink>
-                ))}
-              </div>
+              <ul className="space-y-0.5">
+                {group.items.map((item, index) =>
+                  item.subItems
+                    ? renderSubmenu(item, group.label, index)
+                    : renderNavLink(item),
+                )}
+              </ul>
             </div>
           ))}
         </nav>
 
-        {/* User Info */}
         <div className="px-3 pb-3 pt-3 border-t border-line-2">
           <div className="flex items-center gap-3 px-2.5 py-2 rounded-[10px] bg-raise mb-1">
             <div className="w-8 h-8 rounded-[10px] bg-navy flex items-center justify-center shrink-0 text-[0.7rem] font-bold text-white">

@@ -9,7 +9,9 @@ import type {
   VisibilitySection,
 } from "../components/admin/ui/VisibilityToggle";
 
-export type LayoutVariant = "premium-glass" | "clean-modern" | "floating";
+import type { CustomCursorVariant, LayoutVariant } from "./common";
+
+export type { CustomCursorVariant, LayoutVariant };
 
 export interface NavbarLink {
   label: string;
@@ -44,6 +46,7 @@ export interface AppearanceResponse {
   navbarVariant: LayoutVariant;
   heroVariant: LayoutVariant;
   aboutVariant: LayoutVariant;
+  customCursorVariant: CustomCursorVariant;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
   visibility: VisibilityMap | null;
@@ -62,6 +65,7 @@ export interface AppearanceUpdatePayload {
   navbarVariant?: LayoutVariant;
   heroVariant?: LayoutVariant;
   aboutVariant?: LayoutVariant;
+  customCursorVariant?: CustomCursorVariant;
   navbar?: NavbarContent;
   visibility?: VisibilityMap;
   sectionOrder?: string[];

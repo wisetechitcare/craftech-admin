@@ -1,54 +1,32 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { AlertCircle, Loader2, Save } from "lucide-react";
 
-import LayoutVariantPicker from "@/components/admin/ui/LayoutVariantPicker";
-import { PreviewSection } from "@/components/admin/ui/SitePreview";
+import CursorVariantPicker from "@/components/admin/ui/CursorVariantPicker";
 
-import { appearanceApi } from "../../../services/api";
-import { type AppearanceResponse } from "../../../types/appearance";
-import { LayoutVariant } from "../../../types/common";
+import { appearanceApi } from "@/services/api";
+import {
+  type AppearanceResponse,
+  type AppearanceUpdatePayload,
+} from "@/types/appearance";
+import { CustomCursorVariant } from "@/types/common";
 
-interface SectionHeaderProps {
-  title: string;
-  description?: string;
-}
-
-const SectionHeader = ({ title, description }: SectionHeaderProps) => (
-  <div className="mb-6 pb-4 border-b border-line">
-    <h3 className="text-lg font-bold text-ink mb-1">{title}</h3>
-    {description && <p className="text-sm text-ink-mute">{description}</p>}
-  </div>
-);
-
-export default function Appearance() {
+export default function SiteIdentityCursor() {
   const [data, setData] = useState<AppearanceResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-
-  const draft = useMemo(
-    () => ({
-      appearance: {
-        navbarVariant: data?.navbarVariant,
-        heroVariant: data?.heroVariant,
-        aboutVariant: data?.aboutVariant,
-      },
-    }),
-    [data?.navbarVariant, data?.heroVariant, data?.aboutVariant],
-  );
 
   useEffect(() => {
     fetchAppearance();
   }, []);
 
   const fetchAppearance = async () => {
-    let message = "Failed to load appearance";
+    let message = "Failed to load cursor animation";
     let isError = true;
 
     try {
       const response = await appearanceApi.get();
-
       message = response.data?.message || message;
 
       if (response.data?.success) {
@@ -68,29 +46,26 @@ export default function Appearance() {
     }
   };
 
-  const patch = (changes: Partial<AppearanceResponse>) =>
-    setData((prev) => (prev ? { ...prev, ...changes } : prev));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!data) return;
 
-    let message = "Failed to save appearance";
+    let message = "Failed to save cursor animation";
     let isError = true;
 
     setSaving(true);
 
-    try {
-      const response = await appearanceApi.update({
-        heroVariant: data.heroVariant,
-        aboutVariant: data.aboutVariant,
-      });
+    const payload: AppearanceUpdatePayload = {
+      customCursorVariant: data.customCursorVariant,
+    };
 
+    try {
+      const response = await appearanceApi.update(payload);
       message = response.data?.message || message;
 
       if (response.data?.success) {
         isError = false;
-        message = "Appearance saved successfully";
+        message = "Cursor animation saved successfully";
         setData(response.data.data);
       }
     } catch (error) {
@@ -108,52 +83,35 @@ export default function Appearance() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="w-8 h-8 animate-spin text-ink-faint" />
       </div>
     );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
         <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
         <div className="text-sm text-info">
-          Controls which Hero and About styles render on the live site. Global
-          navigation style and cursor animation live under Site Identity.
+          The custom cursor appears on desktop across the entire website. It
+          does not change per page or section.
         </div>
-      </div>
-
-      <div>
-        <h2 className="text-2xl font-bold text-ink">Appearance</h2>
-        <p className="text-sm text-ink-mute mt-1">
-          Choose the layout variants used on page sections
-        </p>
       </div>
 
       <form
         onSubmit={handleSubmit}
         className="bg-paper border border-line rounded-xl p-6 space-y-8"
       >
-        <SectionHeader
-          title="Page Layouts"
-          description="Choose which Hero and About styles render on the live site"
-        />
-        <LayoutVariantPicker
-          label="Hero Style"
-          value={data?.heroVariant ?? LayoutVariant.FLOATING}
-          section={PreviewSection.HERO}
-          draft={draft}
-          onChange={(value) => patch({ heroVariant: value })}
-        />
-        <LayoutVariantPicker
-          label="About Style"
-          value={data?.aboutVariant ?? LayoutVariant.CLEAN_MODERN}
-          section={PreviewSection.ABOUT}
-          draft={draft}
-          previewHeight={1400}
-          onChange={(value) => patch({ aboutVariant: value })}
+        <CursorVariantPicker
+          value={data?.customCursorVariant ?? CustomCursorVariant.NONE}
+          onChange={(value) =>
+            setData((prev) =>
+              prev ? { ...prev, customCursorVariant: value } : prev,
+            )
+          }
         />
 
         <div className="flex justify-end gap-3 pt-6 border-t border-line">
@@ -177,7 +135,7 @@ export default function Appearance() {
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Save Appearance
+                Save Cursor Animation
               </>
             )}
           </button>

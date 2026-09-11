@@ -35,6 +35,7 @@ import {
   type AboutVariant,
   type FieldErrors,
 } from "@/types/about";
+import { LayoutVariant } from "@/types/common";
 import { move } from "@/utils/utils";
 
 /** The seven cards this page is made of, keyed as the server's registry names
@@ -87,7 +88,9 @@ const PINNED_REASON =
  */
 export default function AboutCMS() {
   const [content, setContent] = useState<AboutContent | null>(null);
-  const [variant, setVariant] = useState<AboutVariant>("clean-modern");
+  const [variant, setVariant] = useState<AboutVariant>(
+    LayoutVariant.CLEAN_MODERN,
+  );
   const [rules, setRules] = useState<AboutRules | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState<boolean>(true);

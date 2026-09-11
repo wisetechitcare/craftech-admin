@@ -22,6 +22,11 @@ import ClientsList from "./pages/admin/cms/ClientsList";
 import LeadsCRM from "./pages/admin/LeadsCRM";
 import Settings from "./pages/admin/cms/Settings";
 import Appearance from "./pages/admin/cms/Appearance";
+import SiteIdentityLayout from "./pages/admin/site-identity/SiteIdentityLayout";
+import SiteIdentityBranding from "./pages/admin/site-identity/SiteIdentityBranding";
+import SiteIdentityNavigation from "./pages/admin/site-identity/SiteIdentityNavigation";
+import SiteIdentityCursor from "./pages/admin/site-identity/SiteIdentityCursor";
+import SiteIdentityScrollProgress from "./pages/admin/site-identity/SiteIdentityScrollProgress";
 import NavbarCMS from "./pages/admin/cms/NavbarCMS";
 import CTACMS from "./pages/admin/cms/CTACMS";
 import AnalyticsDashboard from "./pages/admin/analytics/Dashboard";
@@ -85,6 +90,19 @@ function App() {
           <Route path="ctas" element={<CTACMS />} />
           <Route path="settings" element={<Settings />} />
           <Route path="appearance" element={<Appearance />} />
+          <Route path="site-identity" element={<SiteIdentityLayout />}>
+            <Route
+              index
+              element={<Navigate to="/admin/site-identity/branding" replace />}
+            />
+            <Route path="branding" element={<SiteIdentityBranding />} />
+            <Route path="navigation" element={<SiteIdentityNavigation />} />
+            <Route path="cursor" element={<SiteIdentityCursor />} />
+            <Route
+              path="scroll-progress"
+              element={<SiteIdentityScrollProgress />}
+            />
+          </Route>
           <Route path="navbar" element={<NavbarCMS />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="blog" element={<BlogManager />} />

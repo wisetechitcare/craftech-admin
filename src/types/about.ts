@@ -3,11 +3,12 @@
 // payload as `rules`, so the admin renders counters from the same numbers the
 // server enforces and the two can never drift. Same arrangement as types/hero.
 
-import type { FieldErrors } from './hero';
+import type { FieldErrors } from "./hero";
+import { LayoutVariant } from "./common";
 
 export type { FieldErrors };
 
-export type AboutVariant = 'premium-glass' | 'clean-modern' | 'floating';
+export type AboutVariant = LayoutVariant;
 
 export interface AboutLink {
   label: string;
@@ -85,7 +86,16 @@ export interface AboutRules {
   step: { number: Limit; title: Limit; description: Limit };
   ctaLabel: Limit;
   ctaDescription: Limit;
-  lists: Record<'stats' | 'details' | 'values' | 'whatWeDo' | 'whyChooseUs' | 'howWeWork' | 'tags', Limit>;
+  lists: Record<
+    | "stats"
+    | "details"
+    | "values"
+    | "whatWeDo"
+    | "whyChooseUs"
+    | "howWeWork"
+    | "tags",
+    Limit
+  >;
 }
 
 export interface AboutResponse extends AboutContent {
@@ -94,13 +104,13 @@ export interface AboutResponse extends AboutContent {
 }
 
 export const ABOUT_VARIANT_LABELS: Record<AboutVariant, string> = {
-  'premium-glass': 'Premium Glass',
-  'clean-modern': 'Clean Modern',
-  floating: 'Floating',
+  [LayoutVariant.PREMIUM_GLASS]: "Premium Glass",
+  [LayoutVariant.CLEAN_MODERN]: "Clean Modern",
+  [LayoutVariant.FLOATING]: "Floating",
 };
 
-export const EMPTY_ITEM: AboutItem = { icon: '', title: '', description: '' };
+export const EMPTY_ITEM: AboutItem = { icon: "", title: "", description: "" };
 export const EMPTY_CAPABILITY: AboutCapability = { ...EMPTY_ITEM, tags: [] };
-export const EMPTY_STAT: AboutStat = { value: '', label: '' };
-export const EMPTY_DETAIL: AboutDetail = { label: '', value: '' };
-export const EMPTY_STEP: AboutStep = { number: '', title: '', description: '' };
+export const EMPTY_STAT: AboutStat = { value: "", label: "" };
+export const EMPTY_DETAIL: AboutDetail = { label: "", value: "" };
+export const EMPTY_STEP: AboutStep = { number: "", title: "", description: "" };
