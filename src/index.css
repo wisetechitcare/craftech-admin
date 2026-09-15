@@ -1,40 +1,125 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-@layer components {
-  .btn { @apply inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] font-semibold text-sm transition-colors duration-150 disabled:opacity-45 disabled:cursor-not-allowed; }
-  .btn-primary { @apply btn bg-navy text-white hover:bg-navy-light; }
-  .btn-accent { @apply btn bg-accent text-white hover:bg-opacity-90; }
-  .btn-ghost { @apply btn bg-paper text-ink-soft border border-line hover:bg-raise hover:text-ink; }
-  .btn-danger { @apply btn bg-paper text-danger border border-danger/25 hover:bg-danger/[0.06]; }
+@config '../tailwind.config.js';
 
-  .input { @apply w-full px-3 py-2 bg-paper border border-line rounded-[10px] text-ink placeholder-ink-faint text-sm focus:outline-none focus:border-navy/40 focus:ring-2 focus:ring-navy/10 transition-colors; }
-  .label { @apply block text-sm font-medium text-ink-soft mb-1.5; }
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
-  .card { @apply bg-paper rounded-2xl border border-line; }
-  .card-header { @apply px-5 py-3.5 border-b border-line-2; }
-  .card-body { @apply p-5; }
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
-  .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold; }
-  .badge-blue { @apply badge bg-info/10 text-info; }
-  .badge-red { @apply badge bg-danger/10 text-danger; }
-  .badge-green { @apply badge bg-ok/10 text-ok; }
-  .badge-gold { @apply badge bg-warn/10 text-warn; }
+@utility btn {
+  @apply inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] font-semibold text-sm transition-colors duration-150 disabled:opacity-45 disabled:cursor-not-allowed;
+}
 
+@utility btn-primary {
+  @apply btn bg-navy text-white hover:bg-navy-light;
+}
+
+@utility btn-accent {
+  @apply btn bg-accent text-white hover:bg-accent/90;
+}
+
+@utility btn-ghost {
+  @apply btn bg-paper text-ink-soft border border-line hover:bg-raise hover:text-ink;
+}
+
+@utility btn-danger {
+  @apply btn bg-paper text-danger border border-danger/25 hover:bg-danger/6;
+}
+
+@utility input {
+  @apply w-full px-3 py-2 bg-paper border border-line rounded-[10px] text-ink placeholder-ink-faint text-sm focus:outline-hidden focus:border-navy/40 focus:ring-2 focus:ring-navy/10 transition-colors;
+}
+
+@utility label {
+  @apply block text-sm font-medium text-ink-soft mb-1.5;
+}
+
+@utility card {
+  @apply bg-paper rounded-2xl border border-line;
+}
+
+@utility card-header {
+  @apply px-5 py-3.5 border-b border-line-2;
+}
+
+@utility card-body {
+  @apply p-5;
+}
+
+@utility badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+}
+
+@utility badge-blue {
+  @apply badge bg-info/10 text-info;
+}
+
+@utility badge-red {
+  @apply badge bg-danger/10 text-danger;
+}
+
+@utility badge-green {
+  @apply badge bg-ok/10 text-ok;
+}
+
+@utility badge-gold {
+  @apply badge bg-warn/10 text-warn;
+}
+
+@utility admin-eyebrow {
   /* Eyebrow — the public site's section label, reused as the admin page kicker.
      This plus the accent hairline is the through-line between the two UIs. */
-  .admin-eyebrow { @apply flex items-center gap-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-ink-mute; }
-  .admin-eyebrow::before { @apply block w-7 h-px bg-accent; content: ''; }
+  @apply flex items-center gap-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-ink-mute;
+  &::before {
+    @apply block w-7 h-px bg-accent;
+    content: '';
+  }
+}
 
-  .admin-card { @apply bg-paper rounded-2xl border border-line; }
-  .admin-card-header { @apply px-5 py-4 border-b border-line-2; }
-  .admin-card-body { @apply p-5; }
-  .admin-input { @apply input; }
-  .admin-label { @apply block text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ink-mute mb-2; }
-  .cms-card { @apply admin-card overflow-hidden; }
-  .cms-card-header { @apply admin-card-header; }
-  .cms-card-body { @apply admin-card-body; }
+@utility admin-card {
+  @apply bg-paper rounded-2xl border border-line;
+}
+
+@utility admin-card-header {
+  @apply px-5 py-4 border-b border-line-2;
+}
+
+@utility admin-card-body {
+  @apply p-5;
+}
+
+@utility admin-input {
+  @apply input;
+}
+
+@utility admin-label {
+  @apply block text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-ink-mute mb-2;
+}
+
+@utility cms-card {
+  @apply admin-card overflow-hidden;
+}
+
+@utility cms-card-header {
+  @apply admin-card-header;
+}
+
+@utility cms-card-body {
+  @apply admin-card-body;
 }
 
 @layer base {
@@ -48,7 +133,7 @@
   }
   /* Single focus style for the whole site — there were 5 across 14.5k lines. */
   :focus-visible {
-    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-white rounded-[4px];
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-white rounded-[4px];
   }
   .dark :focus-visible {
     @apply ring-offset-dark;

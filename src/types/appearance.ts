@@ -9,7 +9,9 @@ import type {
   VisibilitySection,
 } from "../components/admin/ui/VisibilityToggle";
 
-export type LayoutVariant = "premium-glass" | "clean-modern" | "floating";
+import type { CustomCursorVariant, LayoutVariant } from "./common";
+
+export type { CustomCursorVariant, LayoutVariant };
 
 export interface NavbarLink {
   label: string;
@@ -44,10 +46,17 @@ export interface AppearanceResponse {
   navbarVariant: LayoutVariant;
   heroVariant: LayoutVariant;
   aboutVariant: LayoutVariant;
+  customCursorVariant: CustomCursorVariant;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
   visibility: VisibilityMap | null;
   visibilityOptions: VisibilityGroup[];
+  /** Always complete — the server repairs it and serves the default when
+   *  nothing has been saved, so the Admin carries no copy of that default. */
+  sectionOrder: string[];
+  /** Which of those the live layout can be told to move. Read-only, like
+   *  `visibilityOptions` — the write schema drops it. */
+  sectionOrderOptions: string[];
 }
 
 /** Every field is optional: a form sends the slice it owns and nothing else,
@@ -56,8 +65,10 @@ export interface AppearanceUpdatePayload {
   navbarVariant?: LayoutVariant;
   heroVariant?: LayoutVariant;
   aboutVariant?: LayoutVariant;
+  customCursorVariant?: CustomCursorVariant;
   navbar?: NavbarContent;
   visibility?: VisibilityMap;
+  sectionOrder?: string[];
 }
 
 export const EMPTY_NAV_LINK: NavbarLink = { label: "", href: "" };

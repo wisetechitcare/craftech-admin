@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { cmsApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import { Save, Loader2, AlertCircle } from "lucide-react";
-import BrandingTab from "../../../components/admin/BrandingTab";
+
 import SharedInputField, {
   type InputProps,
 } from "../../../components/admin/ui/InputField";
 import TextArea from "../../../components/admin/ui/TextArea";
 import SelectField from "../../../components/admin/ui/SelectField";
+import { AdminInfoCallout } from "@/components/common";
+
+import { cmsApi } from "../../../services/api";
 
 const humanize = (field: string) =>
   field
@@ -135,7 +137,6 @@ export default function Settings() {
 
   const tabs = [
     { id: "company", label: "Company" },
-    { id: "branding", label: "Branding" },
     { id: "contact", label: "Contact" },
     { id: "social", label: "Social & Web" },
     { id: "business", label: "Business Hours" },
@@ -147,13 +148,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          All values here control what appears on the website. Update them to
-          immediately reflect across the site (no redeploy needed).
-        </div>
-      </div>
+      <AdminInfoCallout description="All values here control what appears on the website. Update them to immediately reflect across the site (no redeploy needed)." />
 
       <div>
         <h2 className="text-2xl font-bold text-ink">Global Settings</h2>
@@ -185,7 +180,7 @@ export default function Settings() {
 
       {Object.keys(fieldErrors).length > 0 && (
         <div className="flex items-start gap-3 p-4 bg-danger/10 border border-danger/40 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
           <div className="text-sm text-danger space-y-1">
             <p className="font-bold">Nothing was saved. Fix these first:</p>
             <ul className="space-y-0.5">
@@ -204,10 +199,6 @@ export default function Settings() {
         onSubmit={handleSubmit}
         className="bg-paper border border-line rounded-xl p-6 space-y-6"
       >
-        {activeTab === "branding" && (
-          <BrandingTab data={data} setData={setData} />
-        )}
-
         {/* COMPANY TAB */}
         {activeTab === "company" && (
           <>

@@ -75,7 +75,7 @@ export function InfoTooltip({ label, ...props }: InfoTooltipProps) {
         aria-label={label ? `About ${label}` : "More information"}
         className="text-ink-faint transition-colors hover:text-ink-mute focus:outline-none focus-visible:text-ink-mute"
       >
-        <Info className="size-3.5" />
+        <Info className="size-3.5 cursor-help" />
       </button>
     </Tooltip>
   );

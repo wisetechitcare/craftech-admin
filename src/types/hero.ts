@@ -3,7 +3,9 @@
 // payload as `rules`, so the admin renders counters from the same numbers the
 // server enforces and the two can never drift.
 
-export type HeroVariant = "premium-glass" | "clean-modern" | "floating";
+import { LayoutVariant } from "./common";
+
+export type HeroVariant = LayoutVariant;
 
 /** True when a slide's media is a video rather than a still. Mirrors
  *  isHeroVideo in the website bundle — the two apps ship separately and share
@@ -56,7 +58,7 @@ export interface HeroResponse extends HeroContent {
 export type FieldErrors = Record<string, string>;
 
 export const HERO_VARIANT_LABELS: Record<HeroVariant, string> = {
-  "premium-glass": "Premium Glass",
-  "clean-modern": "Clean Modern",
-  floating: "Floating",
+  [LayoutVariant.PREMIUM_GLASS]: "Premium Glass",
+  [LayoutVariant.CLEAN_MODERN]: "Clean Modern",
+  [LayoutVariant.FLOATING]: "Floating",
 };

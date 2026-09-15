@@ -17,6 +17,8 @@ import {
 } from "@/lib/constants/common";
 import { cn } from "@/utils/utils";
 
+import { InfoTooltip } from "./Tooltip";
+
 export interface SelectOption {
   value: string;
   label: string;
@@ -28,6 +30,7 @@ export interface SelectFieldProps {
   labelClassName?: string;
   error?: boolean | FieldError;
   hint?: string;
+  tooltip?: ReactNode;
   options: SelectOption[];
   value?: string;
   onValueChange?: (value: string) => void;
@@ -46,6 +49,7 @@ interface SelectFieldWrapperProps {
   label?: string;
   required?: boolean;
   labelClassName?: string;
+  tooltip?: ReactNode;
   hasError: boolean;
   resolvedHint?: string;
   className?: string;
@@ -56,6 +60,7 @@ function SelectFieldWrapper({
   label,
   required = false,
   labelClassName,
+  tooltip,
   hasError,
   resolvedHint,
   className,
@@ -63,16 +68,21 @@ function SelectFieldWrapper({
 }: SelectFieldWrapperProps) {
   return (
     <div className={className}>
-      {label && (
-        <label
-          className={cn(
-            "mb-2 block text-sm font-medium text-black",
-            labelClassName,
+      {(label || tooltip) && (
+        <div className="mb-2 flex items-center gap-1.5">
+          {label && (
+            <label
+              className={cn(
+                "block text-sm font-medium text-black",
+                labelClassName,
+              )}
+            >
+              {label}
+              {required && <span className="text-error-500"> *</span>}
+            </label>
           )}
-        >
-          {label}
-          {required && <span className="text-error-500"> *</span>}
-        </label>
+          {tooltip && <InfoTooltip content={tooltip} label={label} />}
+        </div>
       )}
 
       {children}
@@ -92,7 +102,7 @@ function SelectFieldWrapper({
 }
 
 const optionButtonClassName = cn(
-  "w-full px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-brand-500/10 hover:text-ink",
+  "w-full cursor-pointer px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-brand-500/10 hover:text-ink",
   "data-[selected=true]:bg-brand-500/15 data-[selected=true]:font-medium data-[selected=true]:text-ink",
 );
 
@@ -312,7 +322,7 @@ function DefaultSelectField({
         disabled={disabled}
         onClick={handleOpenDropdown}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs transition-colors duration-200 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90",
+          "flex h-11 w-full cursor-pointer items-center justify-between rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs transition-colors duration-200 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90",
           disabled
             ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500 opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
             : hasError
@@ -441,7 +451,7 @@ function CreatableSelectField({
           aria-label="Open options"
           disabled={disabled}
           onClick={handleOpenDropdown}
-          className="absolute right-0 top-0 flex h-11 w-10 items-center justify-center text-gray-500"
+          className="absolute right-0 top-0 flex h-11 w-10 cursor-pointer items-center justify-center text-gray-500"
         >
           <ChevronDown
             className={cn(
@@ -471,6 +481,7 @@ export default function SelectField({
   labelClassName,
   error,
   hint,
+  tooltip,
   options,
   value,
   onValueChange,
@@ -493,6 +504,7 @@ export default function SelectField({
       label={label}
       required={required}
       labelClassName={labelClassName}
+      tooltip={tooltip}
       hasError={hasError}
       resolvedHint={resolvedHint}
       className={className}

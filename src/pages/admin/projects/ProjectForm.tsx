@@ -366,7 +366,7 @@ export default function ProjectForm() {
         <button
           type="button"
           onClick={() => navigate("/admin/projects")}
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all"
           style={{
             background: "#f6f8fb",
             border: "1px solid #dfe6ee",
@@ -554,7 +554,7 @@ export default function ProjectForm() {
                     onClick={() =>
                       setForm({ ...form, featured: !form.featured })
                     }
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0"
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 shrink-0"
                     style={{
                       background: form.featured
                         ? "linear-gradient(135deg, #a86a00 0%, #b8962e 100%)"
@@ -785,7 +785,7 @@ export default function ProjectForm() {
                       style={{ borderTop: "1px solid #dfe6ee" }}
                     >
                       <Film
-                        className="w-4 h-4 flex-shrink-0"
+                        className="w-4 h-4 shrink-0"
                         style={{ color: "#7c3aed" }}
                       />
                       <p className="flex-1 text-sm font-medium text-ink truncate">
@@ -795,7 +795,7 @@ export default function ProjectForm() {
                         type="button"
                         onClick={() => handleVideoDelete(v._id)}
                         disabled={deletingVideo === v._id}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-50"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all disabled:opacity-50"
                         style={{
                           background: "rgba(196,27,31,0.12)",
                           border: "1px solid rgba(196,27,31,0.2)",
