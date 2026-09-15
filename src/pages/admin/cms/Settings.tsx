@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { cmsApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import { Save, Loader2, AlertCircle } from "lucide-react";
+
 import SharedInputField, {
   type InputProps,
 } from "../../../components/admin/ui/InputField";
 import TextArea from "../../../components/admin/ui/TextArea";
 import SelectField from "../../../components/admin/ui/SelectField";
+import { AdminInfoCallout } from "@/components/common";
+
+import { cmsApi } from "../../../services/api";
 
 const humanize = (field: string) =>
   field
@@ -145,13 +148,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          All values here control what appears on the website. Update them to
-          immediately reflect across the site (no redeploy needed).
-        </div>
-      </div>
+      <AdminInfoCallout description="All values here control what appears on the website. Update them to immediately reflect across the site (no redeploy needed)." />
 
       <div>
         <h2 className="text-2xl font-bold text-ink">Global Settings</h2>

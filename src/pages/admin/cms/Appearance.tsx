@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { AlertCircle, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import LayoutVariantPicker from "@/components/admin/ui/LayoutVariantPicker";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
+import { AdminInfoCallout } from "@/components/common";
 
 import { appearanceApi } from "../../../services/api";
 import { type AppearanceResponse } from "../../../types/appearance";
@@ -117,13 +118,7 @@ export default function Appearance() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          Controls which Hero and About styles render on the live site. Global
-          navigation style and cursor animation live under Site Identity.
-        </div>
-      </div>
+      <AdminInfoCallout description="Controls which Hero and About styles render on the live site. Global navigation style and cursor animation live under Site Identity." />
 
       <div>
         <h2 className="text-2xl font-bold text-ink">Appearance</h2>

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { AlertCircle, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import BrandingTab from "@/components/admin/BrandingTab";
+import { AdminInfoCallout } from "@/components/common";
 
 import { cmsApi } from "@/services/api";
 
@@ -117,13 +118,7 @@ export default function SiteIdentityBranding() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          Logo, palette, and theme colours apply site-wide. Changes reflect on
-          the live website immediately without a redeploy.
-        </div>
-      </div>
+      <AdminInfoCallout description="Logo, palette, and theme colours apply site-wide. Changes reflect on the live website immediately without a redeploy." />
 
       <form
         onSubmit={handleSubmit}

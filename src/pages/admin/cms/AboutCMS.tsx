@@ -23,6 +23,7 @@ import {
   type VisibilityMap,
   type VisibilitySection,
 } from "@/components/admin/ui/VisibilityToggle";
+import { AdminInfoCallout } from "@/components/common";
 
 import { ABOUT_GROUP, AboutSectionKey } from "@/lib/constants/about";
 import { DragList } from "@/lib/constants/drag-lists";
@@ -284,25 +285,24 @@ export default function AboutCMS() {
 
       {/* Variant is Appearance's to choose; About CMS only reads it, because the
           limits below are written for the tightest of the three layouts. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <div className="flex items-center gap-3 text-sm text-info">
-          <Palette className="w-5 h-5 shrink-0" />
-          <span>
+      <AdminInfoCallout
+        icon={Palette}
+        description={
+          <>
             About style: <strong>{ABOUT_VARIANT_LABELS[variant]}</strong> —
             layout only; this content is shown by all three.
-          </span>
-        </div>
-        <Link
-          to="/admin/appearance"
-          className="text-xs font-bold text-info underline underline-offset-2"
-        >
-          Change in Appearance
-        </Link>
-      </div>
+          </>
+        }
+        action={
+          <Link
+            to="/admin/appearance"
+            className="text-xs font-bold text-info underline underline-offset-2"
+          >
+            Change in Appearance
+          </Link>
+        }
+      />
 
-      {/* items-start so the preview column can stick instead of stretching to
-          the form's full height. `main` is the scroll container, so `sticky
-          top-0` here follows the page as the form scrolls past it. */}
       <div className="grid items-start gap-6 xl:grid-cols-4">
         <aside className="space-y-2 xl:order-last xl:sticky xl:top-0">
           <div className="flex items-center justify-between gap-3">

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { AlertCircle, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import CursorVariantPicker from "@/components/admin/ui/CursorVariantPicker";
+import { AdminInfoCallout } from "@/components/common";
 
 import { appearanceApi } from "@/services/api";
 import {
@@ -93,13 +94,7 @@ export default function SiteIdentityCursor() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          The custom cursor appears on desktop across the entire website. It
-          does not change per page or section.
-        </div>
-      </div>
+      <AdminInfoCallout description="The custom cursor appears on desktop across the entire website. It does not change per page or section." />
 
       <form
         onSubmit={handleSubmit}

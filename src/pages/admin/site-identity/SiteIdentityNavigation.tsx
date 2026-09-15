@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { AlertCircle, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import LayoutVariantPicker from "@/components/admin/ui/LayoutVariantPicker";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
+import { AdminInfoCallout } from "@/components/common";
 
 import { appearanceApi } from "@/services/api";
 import {
@@ -105,20 +106,14 @@ export default function SiteIdentityNavigation() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          The navigation style applies globally on every page. Link labels and
-          the call-to-action are edited on the Navbar content page.
-        </div>
-      </div>
+      <AdminInfoCallout description="The navigation style applies globally on every page. Link labels and the call-to-action are edited on the Navbar content page." />
 
       <form
         onSubmit={handleSubmit}
         className="bg-paper border border-line rounded-xl p-6 space-y-8"
       >
         <LayoutVariantPicker
-          label="Navigation Style"
+          label="Navbar Style"
           value={data?.navbarVariant ?? LayoutVariant.CLEAN_MODERN}
           section={PreviewSection.NAVBAR}
           draft={draft}

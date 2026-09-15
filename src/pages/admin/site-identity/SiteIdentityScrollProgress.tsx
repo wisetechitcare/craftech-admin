@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { AlertCircle, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import ScrollProgressPreview from "@/components/admin/ui/ScrollProgressPreview";
 import {
@@ -9,6 +9,7 @@ import {
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
+import { AdminInfoCallout } from "@/components/common";
 
 import { appearanceApi } from "@/services/api";
 
@@ -90,13 +91,7 @@ export default function SiteIdentityScrollProgress() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
-        <div className="text-sm text-info">
-          The scroll progress bar appears below the navigation on every page.
-          Turn it off to use the system default with no top progress indicator.
-        </div>
-      </div>
+      <AdminInfoCallout description="The scroll progress bar appears below the navigation on every page. Turn it off to use the system default with no top progress indicator." />
 
       <form
         onSubmit={handleSubmit}

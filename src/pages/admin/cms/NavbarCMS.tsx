@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { AlertCircle, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import InputField from "@/components/admin/ui/InputField";
+import { AdminInfoCallout } from "@/components/common";
 import ListRow from "@/components/admin/ui/ListRow";
 import {
   AddButton,
@@ -161,22 +162,17 @@ export default function NavbarCMS() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-info shrink-0 mt-0.5" />
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-info">
-          <span>
-            The links and button the site header draws, on desktop and in the
-            mobile menu alike. Which header STYLE renders them is set on the
-            Appearance page. Updates reflect immediately (no redeploy needed).
-          </span>
+      <AdminInfoCallout
+        description="The links and button the site header draws, on desktop and in the mobile menu alike. Which header STYLE renders them is set on the Appearance page. Updates reflect immediately (no redeploy needed)."
+        action={
           <Link
             to="/admin/appearance"
             className="text-xs font-bold text-info underline underline-offset-2"
           >
             Change in Appearance
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       <div>
         <h2 className="text-2xl font-bold text-ink">Navbar</h2>

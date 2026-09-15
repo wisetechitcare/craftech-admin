@@ -100,7 +100,7 @@ const navGroups: NavGroup[] = [
             icon: Paintbrush,
           },
           {
-            name: "Navigation Style",
+            name: "Navbar Style",
             path: "/admin/site-identity/navigation",
             icon: Menu,
           },
@@ -215,11 +215,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           )}
         >
           {isSectionActive && (
-            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r bg-accent" />
+            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-0.75 h-6 rounded-r bg-accent" />
           )}
           <item.icon
             className={cn(
-              "w-[17px] h-[17px] shrink-0",
+              "w-4.5 h-4.5 shrink-0",
               isSectionActive
                 ? "text-accent"
                 : "text-ink-faint group-hover:text-ink-mute",
@@ -298,11 +298,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           )}
         >
           {active && (
-            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r bg-accent" />
+            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-0.75 h-6 rounded-r bg-accent" />
           )}
           <item.icon
             className={cn(
-              "w-[17px] h-[17px] shrink-0",
+              "w-4.5 h-4.5 shrink-0",
               active
                 ? "text-accent"
                 : "text-ink-faint group-hover:text-ink-mute",
@@ -388,7 +388,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-2.5 py-2 rounded-[10px] text-[0.83rem] font-medium text-ink-mute hover:bg-danger/6 hover:text-danger transition-colors"
           >
-            <LogOut className="w-[17px] h-[17px] shrink-0" />
+            <LogOut className="w-4.5 h-4.5 shrink-0" />
             <span>Sign out</span>
           </button>
         </div>

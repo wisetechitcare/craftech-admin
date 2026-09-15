@@ -17,6 +17,7 @@ import {
   type VisibilityMap,
   type VisibilitySection,
 } from "../../../components/admin/ui/VisibilityToggle";
+import { AdminInfoCallout } from "@/components/common";
 
 import { DragList } from "@/lib/constants/drag-lists";
 import { appearanceApi, heroApi, uploadApi } from "../../../services/api";
@@ -403,21 +404,23 @@ export default function HeroCMS() {
 
       {/* Variant is Appearance's to choose; Hero CMS only reads it, because the
           limits below depend on how much room that layout leaves for text. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-info/10 border border-info/50 rounded-lg">
-        <div className="flex items-center gap-3 text-sm text-info">
-          <Palette className="w-5 h-5 shrink-0" />
-          <span>
+      <AdminInfoCallout
+        icon={Palette}
+        description={
+          <>
             Hero style: <strong>{HERO_VARIANT_LABELS[variant]}</strong> —
             character limits below are set by this layout.
-          </span>
-        </div>
-        <Link
-          to="/admin/appearance"
-          className="text-xs font-bold text-info underline underline-offset-2"
-        >
-          Change in Appearance
-        </Link>
-      </div>
+          </>
+        }
+        action={
+          <Link
+            to="/admin/appearance"
+            className="text-xs font-bold text-info underline underline-offset-2"
+          >
+            Change in Appearance
+          </Link>
+        }
+      />
 
       {/* items-start so the preview column can stick instead of stretching to
           the form's full height. `main` is the scroll container, so `sticky
