@@ -7,12 +7,9 @@ import { Loader2, Save } from "lucide-react";
 import InputField from "@/components/admin/ui/InputField";
 import { AdminInfoCallout } from "@/components/common";
 import ListRow from "@/components/admin/ui/ListRow";
-import {
-  AddButton,
-  HEADING,
-  SectionCard,
-} from "@/components/admin/ui/SectionCard";
-import SitePreview, { PreviewSection } from "@/components/admin/ui/SitePreview";
+import { AddButton, SectionCard } from "@/components/admin/ui/SectionCard";
+import PreviewPanel from "@/components/admin/ui/PreviewPanel";
+import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
   ElementVisibility,
   type VisibilitySection,
@@ -166,7 +163,7 @@ export default function NavbarCMS() {
         description="The links and button the site header draws, on desktop and in the mobile menu alike. Which header STYLE renders them is set on the Appearance page. Updates reflect immediately (no redeploy needed)."
         action={
           <Link
-            to="/admin/appearance"
+            to="/admin/site-identity/navigation"
             className="text-xs font-bold text-info underline underline-offset-2"
           >
             Change in Appearance
@@ -181,161 +178,152 @@ export default function NavbarCMS() {
         </p>
       </div>
 
-      {/* Full width and above the form, not in a side column like Hero and
-          About: a header is wide and shallow, so SitePreview's 1440px viewport
-          scales to something legible across the page and to a ribbon in a
-          quarter of it. The short viewport keeps it to the bar and the top of
-          the Hero behind it — every header variant is transparent until it is
-          scrolled, so alone on an empty page there would be nothing to see. */}
-      <div className="space-y-2">
-        <h3 className={HEADING}>Preview</h3>
-        <SitePreview
-          section={PreviewSection.NAVBAR}
-          draft={{
-            appearance: { navbar, visibility: data.visibility ?? {} },
-          }}
-          viewportHeight={340}
-        />
-        <p className="text-[11px] text-ink-faint leading-relaxed">
-          The live header, rendered by the website itself from what is typed
-          here. Nothing is saved until you press Save.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <SectionCard
-          title="Navigation Links"
-          description="Listed in the order below. Every layout draws the same links."
-          count={navbar.links.length}
-          max={rules.links.max}
-          controls={
-            <AddButton
-              label="Add link"
-              disabled={navbar.links.length >= rules.links.max}
-              onClick={() =>
-                patchNavbar({ links: [...navbar.links, EMPTY_NAV_LINK] })
-              }
-            />
-          }
-        >
-          {navbar.links.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-xs text-ink-faint">
-              No links. The header will draw the logo and the button only.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {navbar.links.map((link, i) => (
-                <ListRow
-                  key={i}
-                  title="Link"
-                  index={i}
-                  count={navbar.links.length}
-                  listId={DragList.NAVBAR_LINKS}
-                  onMove={(from, to) =>
-                    patchNavbar({ links: move(navbar.links, from, to) })
-                  }
-                  onRemove={(index) =>
-                    patchNavbar({ links: removeAt(navbar.links, index) })
-                  }
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField
-                      label="Label"
-                      value={link.label}
-                      onChange={(e) =>
-                        patchNavbar({
-                          links: patchAt(navbar.links, i, {
-                            label: e.target.value,
-                          }),
-                        })
-                      }
-                      maxChars={rules.label.max}
-                    />
-                    <InputField
-                      label="Link"
-                      value={link.href}
-                      onChange={(e) =>
-                        patchNavbar({
-                          links: patchAt(navbar.links, i, {
-                            href: e.target.value,
-                          }),
-                        })
-                      }
-                      maxChars={rules.href.max}
-                      tooltip='A page ("/about"), a homepage section ("/#services") or a full web address.'
-                    />
-                  </div>
-                </ListRow>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title="Call-to-action button"
-          description="The button beside the links, and its twin at the foot of the mobile menu."
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField
-              label="Button label"
-              value={navbar.cta.label}
-              onChange={(e) =>
-                patchNavbar({ cta: { ...navbar.cta, label: e.target.value } })
-              }
-              maxChars={rules.ctaLabel.max}
-            />
-            <InputField
-              label="Button link"
-              value={navbar.cta.href}
-              onChange={(e) =>
-                patchNavbar({ cta: { ...navbar.cta, href: e.target.value } })
-              }
-              maxChars={rules.href.max}
-            />
-          </div>
-        </SectionCard>
-
-        {navbarParts.length > 0 && (
+      <PreviewPanel
+        section={PreviewSection.NAVBAR}
+        placement="above"
+        draft={{
+          appearance: { navbar, visibility: data.visibility ?? {} },
+        }}
+        // Just the bar and the top of the Hero behind it: every header variant
+        // is transparent until scrolled, so alone it would draw nothing.
+        viewportHeight={340}
+        caption="The live header, rendered by the website itself from what is typed here. Nothing is saved until you press Save."
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
           <SectionCard
-            title="What the header shows"
-            description="Hidden parts keep their content, and hide on every screen size — desktop bar and mobile menu together."
+            title="Navigation Links"
+            description="Listed in the order below. Every layout draws the same links."
+            count={navbar.links.length}
+            max={rules.links.max}
+            controls={
+              <AddButton
+                label="Add link"
+                disabled={navbar.links.length >= rules.links.max}
+                onClick={() =>
+                  patchNavbar({ links: [...navbar.links, EMPTY_NAV_LINK] })
+                }
+              />
+            }
           >
-            <ElementVisibility
-              elements={navbarParts}
-              map={data.visibility ?? {}}
-              sectionVisible
-              onChange={patchVisibility}
-            />
-          </SectionCard>
-        )}
-
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => fetchAppearance()}
-            className="px-6 py-2 text-ink border border-line rounded-lg font-bold text-sm hover:bg-paper transition-colors"
-          >
-            Reset
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-6 py-2 bg-info text-white rounded-lg font-bold text-sm hover:bg-info disabled:opacity-50 flex items-center gap-2 transition-colors"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
+            {navbar.links.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-xs text-ink-faint">
+                No links. The header will draw the logo and the button only.
+              </p>
             ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Save Navbar
-              </>
+              <div className="space-y-4">
+                {navbar.links.map((link, i) => (
+                  <ListRow
+                    key={i}
+                    title="Link"
+                    index={i}
+                    count={navbar.links.length}
+                    listId={DragList.NAVBAR_LINKS}
+                    onMove={(from, to) =>
+                      patchNavbar({ links: move(navbar.links, from, to) })
+                    }
+                    onRemove={(index) =>
+                      patchNavbar({ links: removeAt(navbar.links, index) })
+                    }
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InputField
+                        label="Label"
+                        value={link.label}
+                        onChange={(e) =>
+                          patchNavbar({
+                            links: patchAt(navbar.links, i, {
+                              label: e.target.value,
+                            }),
+                          })
+                        }
+                        maxChars={rules.label.max}
+                      />
+                      <InputField
+                        label="Link"
+                        value={link.href}
+                        onChange={(e) =>
+                          patchNavbar({
+                            links: patchAt(navbar.links, i, {
+                              href: e.target.value,
+                            }),
+                          })
+                        }
+                        maxChars={rules.href.max}
+                        tooltip='A page ("/about"), a homepage section ("/#services") or a full web address.'
+                      />
+                    </div>
+                  </ListRow>
+                ))}
+              </div>
             )}
-          </button>
-        </div>
-      </form>
+          </SectionCard>
+
+          <SectionCard
+            title="Call-to-action button"
+            description="The button beside the links, and its twin at the foot of the mobile menu."
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Button label"
+                value={navbar.cta.label}
+                onChange={(e) =>
+                  patchNavbar({ cta: { ...navbar.cta, label: e.target.value } })
+                }
+                maxChars={rules.ctaLabel.max}
+              />
+              <InputField
+                label="Button link"
+                value={navbar.cta.href}
+                onChange={(e) =>
+                  patchNavbar({ cta: { ...navbar.cta, href: e.target.value } })
+                }
+                maxChars={rules.href.max}
+              />
+            </div>
+          </SectionCard>
+
+          {navbarParts.length > 0 && (
+            <SectionCard
+              title="What the header shows"
+              description="Hidden parts keep their content, and hide on every screen size — desktop bar and mobile menu together."
+            >
+              <ElementVisibility
+                elements={navbarParts}
+                map={data.visibility ?? {}}
+                sectionVisible
+                onChange={patchVisibility}
+              />
+            </SectionCard>
+          )}
+
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => fetchAppearance()}
+              className="px-6 py-2 text-ink border border-line rounded-lg font-bold text-sm hover:bg-paper transition-colors"
+            >
+              Reset
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-6 py-2 bg-info text-white rounded-lg font-bold text-sm hover:bg-info disabled:opacity-50 flex items-center gap-2 transition-colors"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Navbar
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </PreviewPanel>
     </div>
   );
 }

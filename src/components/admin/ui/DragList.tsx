@@ -25,13 +25,13 @@ interface DragItemOptions {
   disabled?: boolean;
 }
 
-export function useDragItem({
+export function useDragItem<T extends HTMLElement = HTMLDivElement>({
   listId,
   index,
   onMove,
   disabled = false,
 }: DragItemOptions) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<T>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isTarget, setIsTarget] = useState<boolean>(false);

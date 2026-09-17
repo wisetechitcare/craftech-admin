@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import type { AboutContent } from "@/types/about";
 import type { AppearanceUpdatePayload } from "@/types/appearance";
+import type { FaqItem, FaqSectionContent } from "@/types/faq";
 import type { HeroContent } from "@/types/hero";
 
 /** The sections the website exposes at /preview/<section> for this panel. */
@@ -9,6 +10,7 @@ export enum PreviewSection {
   NAVBAR = "navbar",
   HERO = "hero",
   ABOUT = "about",
+  FAQ = "faq",
 }
 
 /** The slice of the website's CMS context an editing screen overrides. Keys are
@@ -16,6 +18,7 @@ export enum PreviewSection {
 export interface PreviewDraft {
   heroContent?: HeroContent;
   aboutContent?: AboutContent;
+  faqContent?: { faqs: FaqItem[]; section: FaqSectionContent };
   appearance?: AppearanceUpdatePayload;
 }
 

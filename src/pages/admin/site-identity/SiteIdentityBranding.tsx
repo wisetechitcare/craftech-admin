@@ -8,14 +8,7 @@ import { AdminInfoCallout } from "@/components/common";
 
 import { cmsApi } from "@/services/api";
 
-const BRANDING_FIELDS = [
-  "logoUrl",
-  "faviconUrl",
-  "brandColor",
-  "accentColor",
-  "brandPalette",
-  "themeColors",
-] as const;
+const BRANDING_FIELDS = ["logoUrl", "brandPalette", "themeColors"];
 
 type BrandingField = (typeof BRANDING_FIELDS)[number];
 

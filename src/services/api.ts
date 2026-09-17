@@ -5,6 +5,11 @@ import type {
   AppearanceResponse,
   AppearanceUpdatePayload,
 } from "../types/appearance";
+import type {
+  FaqListResponse,
+  FaqPayload,
+  FaqSectionContent,
+} from "../types/faq";
 import type { HeroContent, HeroResponse } from "../types/hero";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
@@ -213,15 +218,23 @@ export const blogApi = {
 
 // ── FAQ ─────────────────────────────────────────────────────────────────────
 export const faqApi = {
-  list: (params?: any) => api.get("/cms/faq", { params }), // category, search, featured
+  list: () => api.get<FaqListResponse>("/cms/faq"),
   getById: (id: string) => api.get(`/cms/faq/${id}`),
-  getByCategory: (cat: string) => api.get(`/cms/faq/category/${cat}`),
-  adminList: () => api.get("/cms/faq/admin/list"),
-  create: (data: any) => api.post("/cms/faq", data),
-  update: (id: string, data: any) => api.put(`/cms/faq/${id}`, data),
+  create: (data: FaqPayload) => api.post("/cms/faq", data),
+  update: (id: string, data: FaqPayload) => api.put(`/cms/faq/${id}`, data),
   remove: (id: string) => api.delete(`/cms/faq/${id}`),
-  vote: (id: string, v: "yes" | "no") =>
-    api.post(`/cms/faq/${id}/helpful/${v}`),
+  /** The whole list in its new order, sent once when the admin saves — never
+   *  one call per dragged row. */
+  reorder: (ids: string[]) => api.put("/cms/faq/reorder", { ids }),
+  getSection: () =>
+    api.get<{ success: boolean; message?: string; data: FaqSectionContent }>(
+      "/cms/faq/section",
+    ),
+  updateSection: (data: FaqSectionContent) =>
+    api.put<{ success: boolean; message?: string; data: FaqSectionContent }>(
+      "/cms/faq/section",
+      data,
+    ),
 };
 
 // ── Team ────────────────────────────────────────────────────────────────────

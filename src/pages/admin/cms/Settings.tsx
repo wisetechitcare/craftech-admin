@@ -1,15 +1,41 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { Save, Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2, Save } from "lucide-react";
 
-import SharedInputField, {
-  type InputProps,
-} from "../../../components/admin/ui/InputField";
-import TextArea from "../../../components/admin/ui/TextArea";
-import SelectField from "../../../components/admin/ui/SelectField";
+import {
+  AdvancedTab,
+  ContactLocationTab,
+  GeneralTab,
+  SeoTab,
+  SocialLinksTab,
+} from "@/components/admin/settings";
 import { AdminInfoCallout } from "@/components/common";
 
-import { cmsApi } from "../../../services/api";
+import { cn } from "@/utils/utils";
+import {
+  SETTINGS_TABS,
+  SETTINGS_TAB_FIELDS,
+  SettingsTab,
+} from "@/lib/constants/settings";
+import { cmsApi } from "@/services/api";
+import type { SettingsTabProps, SiteSettings } from "@/types/settings";
+
+const TAB_CONTENT: Record<
+  SettingsTab,
+  React.ComponentType<SettingsTabProps>
+> = {
+  [SettingsTab.GENERAL]: GeneralTab,
+  [SettingsTab.CONTACT]: ContactLocationTab,
+  [SettingsTab.SOCIAL]: SocialLinksTab,
+  [SettingsTab.SEO]: SeoTab,
+  [SettingsTab.ADVANCED]: AdvancedTab,
+};
+
+const tabOfField = (field: string) =>
+  SETTINGS_TABS.find(({ id }) =>
+    SETTINGS_TAB_FIELDS[id].some((key) => field.split(".")[0] === key),
+  );
 
 const humanize = (field: string) =>
   field
@@ -22,67 +48,30 @@ const humanize = (field: string) =>
     )
     .join(" → ");
 
-const SectionHeader = ({ title, description }: any) => (
-  <div className="mb-6 pb-4 border-b border-line">
-    <h3 className="text-lg font-bold text-ink mb-1">{title}</h3>
-    {description && <p className="text-sm text-ink-mute">{description}</p>}
-  </div>
-);
-
-// The shared field, plus the one thing this screen needs that it does not do:
-// every value here is read off a partially-loaded CMS document, so an absent
-// key must not flip the input from controlled to uncontrolled mid-edit.
-const InputField = (props: InputProps) => (
-  <SharedInputField {...props} value={props.value ?? ""} />
-);
-
-const CheckboxField = ({ label, checked, onChange }: any) => (
-  <label className="flex items-center gap-3 cursor-pointer p-3 bg-raise rounded-lg hover:bg-paper transition-colors">
-    <input
-      type="checkbox"
-      checked={checked || false}
-      onChange={onChange}
-      className="w-4 h-4 rounded border-line"
-    />
-    <span className="text-sm font-medium text-ink">{label}</span>
-  </label>
-);
-
 export default function Settings() {
-  const [data, setRawData] = useState<any>(null);
-  const [saved, setSaved] = useState<any>(null);
+  const [data, setData] = useState<SiteSettings | null>(null);
+  const [saved, setSaved] = useState<SiteSettings | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("company");
-  const [dirtyTabs, setDirtyTabs] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<SettingsTab>(SettingsTab.GENERAL);
 
-  // Every field editor in this file (and BrandingTab) already calls setData, so
-  // wrapping it here marks the open tab without touching ~45 call sites. It
-  // tracks "touched", not "differs" — typing and undoing leaves the dot until
-  // save or reset, which is why the dots only render while changes are pending.
-  const setData = (next: any) => {
-    setRawData(next);
-    setDirtyTabs((prev) =>
-      prev.includes(activeTab) ? prev : [...prev, activeTab],
-    );
-  };
-
-  // Only what the admin actually touched. PUTting the whole record re-validated
-  // every required column, so one empty legacy field blocked saving any tab.
-  const changes = useMemo(() => {
+  // Only what the admin actually changed, and only fields this page owns.
+  // PUTting the whole record re-validated every field, so one bad legacy value
+  // blocked saving any tab.
+  const changes = useMemo<Partial<SiteSettings>>(() => {
     if (!data || !saved) return {};
     return Object.fromEntries(
-      Object.entries(data).filter(
-        ([key, value]) => JSON.stringify(value) !== JSON.stringify(saved[key]),
-      ),
+      Object.values(SETTINGS_TAB_FIELDS)
+        .flat()
+        .filter(
+          (key) => JSON.stringify(data[key]) !== JSON.stringify(saved[key]),
+        )
+        .map((key) => [key, data[key]]),
     );
   }, [data, saved]);
-  const changeCount = Object.keys(changes).length;
-
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  const changedFields = Object.keys(changes);
+  const changeCount = changedFields.length;
 
   useEffect(() => {
     if (!changeCount) return;
@@ -94,36 +83,72 @@ export default function Settings() {
     return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
   }, [changeCount]);
 
+  const adopt = (settings: SiteSettings) => {
+    setData(settings);
+    setSaved(settings);
+    setFieldErrors({});
+  };
+
   const fetchSettings = async () => {
+    let message = "Failed to load settings";
+    let isError = true;
+
     try {
-      const res = await cmsApi.getSettings();
-      setRawData(res.data.data);
-      setSaved(res.data.data);
-      setFieldErrors({});
-      setDirtyTabs([]);
-    } catch (err) {
-      toast.error("Failed to load settings");
+      const response = await cmsApi.getSettings();
+      message = response.data?.message || message;
+
+      if (response.data?.success) {
+        isError = false;
+        adopt(response.data.data as SiteSettings);
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+      }
     } finally {
+      if (isError) {
+        toast.error(message);
+      }
+
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!changeCount) return;
+
+    let message = "Failed to save settings";
+    let isError = true;
 
     setSaving(true);
     setFieldErrors({});
+
     try {
-      const res = await cmsApi.updateSettings(changes);
-      setRawData(res.data.data);
-      setSaved(res.data.data);
-      setDirtyTabs([]);
-      toast.success("Settings saved successfully");
-    } catch (err: any) {
-      setFieldErrors(err.response?.data?.fields || {});
-      toast.error(err.response?.data?.message || "Failed to save settings");
+      const response = await cmsApi.updateSettings(changes);
+      message = response.data?.message || message;
+
+      if (response.data?.success) {
+        isError = false;
+        adopt(response.data.data as SiteSettings);
+        message = "Settings saved";
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+        setFieldErrors(error.response?.data?.fields || {});
+      }
     } finally {
+      if (isError) {
+        toast.error(message);
+      } else {
+        toast.success(message);
+      }
+
       setSaving(false);
     }
   };
@@ -135,43 +160,44 @@ export default function Settings() {
       </div>
     );
 
-  const tabs = [
-    { id: "company", label: "Company" },
-    { id: "contact", label: "Contact" },
-    { id: "social", label: "Social & Web" },
-    { id: "business", label: "Business Hours" },
-    { id: "cta", label: "CTAs" },
-    { id: "footer", label: "Footer" },
-    { id: "seo", label: "SEO" },
-    { id: "advanced", label: "Advanced" },
-  ];
+  // The failed load already raised a toast.
+  if (!data) return null;
+
+  const patch = (next: Partial<SiteSettings>) => setData({ ...data, ...next });
+  const TabContent = TAB_CONTENT[activeTab];
+  const flaggedTabs = new Set(
+    [...changedFields, ...Object.keys(fieldErrors)].map(
+      (field) => tabOfField(field)?.id,
+    ),
+  );
 
   return (
     <div className="space-y-6">
-      <AdminInfoCallout description="All values here control what appears on the website. Update them to immediately reflect across the site (no redeploy needed)." />
+      <AdminInfoCallout description="These details are used across the whole website. Changes show on the next page load; page titles and search settings can take up to a minute." />
 
       <div>
         <h2 className="text-2xl font-bold text-ink">Global Settings</h2>
         <p className="text-sm text-ink-mute mt-1">
-          Manage all company information, contact details, and website
-          configuration
+          Site-wide details every page reads from one place. Section content,
+          buttons and layout are edited on their own pages.
         </p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 border-b border-line overflow-x-auto pb-2">
-        {tabs.map((tab) => (
+        {SETTINGS_TABS.map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-semibold uppercase tracking-wider whitespace-nowrap transition-colors ${
+            className={cn(
+              "px-4 py-2 text-sm font-semibold uppercase tracking-wider whitespace-nowrap transition-colors",
               activeTab === tab.id
                 ? "text-ink border-b-2 border-info"
-                : "text-ink-mute hover:text-ink-soft"
-            }`}
+                : "text-ink-mute hover:text-ink-soft",
+            )}
           >
             {tab.label}
-            {changeCount > 0 && dirtyTabs.includes(tab.id) && (
+            {flaggedTabs.has(tab.id) && (
               <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-warn align-middle" />
             )}
           </button>
@@ -186,7 +212,9 @@ export default function Settings() {
             <ul className="space-y-0.5">
               {Object.entries(fieldErrors).map(([field, message]) => (
                 <li key={field}>
-                  <span className="font-semibold">{humanize(field)}</span>{" "}
+                  <span className="font-semibold">
+                    {tabOfField(field)?.label} · {humanize(field)}
+                  </span>{" "}
                   &mdash; {message}
                 </li>
               ))}
@@ -195,601 +223,17 @@ export default function Settings() {
         </div>
       )}
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-paper border border-line rounded-xl p-6 space-y-6"
-      >
-        {/* COMPANY TAB */}
-        {activeTab === "company" && (
-          <>
-            <SectionHeader
-              title="Company Identity"
-              description="Basic company information"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <InputField
-                label="Company Name"
-                value={data?.companyName}
-                onChange={(e: any) =>
-                  setData({ ...data, companyName: e.target.value })
-                }
-                required
-              />
-              <InputField
-                label="Founded Year"
-                type="number"
-                value={data?.foundedYear}
-                onChange={(e: any) =>
-                  setData({ ...data, foundedYear: parseInt(e.target.value) })
-                }
-              />
-              <InputField
-                label="Years of Experience"
-                type="number"
-                value={data?.yearsExperience}
-                onChange={(e: any) =>
-                  setData({
-                    ...data,
-                    yearsExperience: parseInt(e.target.value),
-                  })
-                }
-              />
-              <InputField
-                label="Total Projects Completed"
-                type="number"
-                value={data?.totalProjects}
-                onChange={(e: any) =>
-                  setData({ ...data, totalProjects: parseInt(e.target.value) })
-                }
-              />
-              <div className="md:col-span-2">
-                <InputField
-                  label="Company Tagline"
-                  value={data?.companyTagline}
-                  onChange={(e: any) =>
-                    setData({ ...data, companyTagline: e.target.value })
-                  }
-                  placeholder="e.g., 'Building Legacy, Engineering Trust'"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <TextArea
-                  label="Company Description"
-                  labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
-                  rows={3}
-                  value={data?.companyDescription || ""}
-                  onChange={(e) =>
-                    setData({ ...data, companyDescription: e.target.value })
-                  }
-                  placeholder="Brief company description"
-                />
-              </div>
-            </div>
-          </>
-        )}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <TabContent data={data} errors={fieldErrors} patch={patch} />
 
-        {/* CONTACT TAB */}
-        {activeTab === "contact" && (
-          <>
-            <SectionHeader
-              title="Contact Information"
-              description="Phone and email (SINGLE SOURCE OF TRUTH - all pages use these values)"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <InputField
-                label="Primary Phone"
-                value={data?.primaryPhone}
-                onChange={(e: any) =>
-                  setData({ ...data, primaryPhone: e.target.value })
-                }
-                required
-                placeholder="+91 93248 77493"
-              />
-              <InputField
-                label="Alternate Phone"
-                value={data?.alternatePhone}
-                onChange={(e: any) =>
-                  setData({ ...data, alternatePhone: e.target.value })
-                }
-                placeholder="+91 XXXXXXXXXX"
-              />
-              <InputField
-                label="WhatsApp Number"
-                value={data?.whatsappNumber}
-                onChange={(e: any) =>
-                  setData({ ...data, whatsappNumber: e.target.value })
-                }
-                placeholder="+91 93248 77493"
-              />
-              <InputField
-                label="Office Phone"
-                value={data?.officePhone}
-                onChange={(e: any) =>
-                  setData({ ...data, officePhone: e.target.value })
-                }
-              />
-              <InputField
-                label="Business Email"
-                type="email"
-                value={data?.businessEmail}
-                onChange={(e: any) =>
-                  setData({ ...data, businessEmail: e.target.value })
-                }
-                required
-              />
-              <InputField
-                label="Support Email"
-                type="email"
-                value={data?.supportEmail}
-                onChange={(e: any) =>
-                  setData({ ...data, supportEmail: e.target.value })
-                }
-              />
-            </div>
-
-            <SectionHeader title="Office Location" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="md:col-span-2">
-                <InputField
-                  label="Office Address"
-                  value={data?.officeAddress}
-                  onChange={(e: any) =>
-                    setData({ ...data, officeAddress: e.target.value })
-                  }
-                  required
-                  placeholder="Full office address"
-                />
-              </div>
-              <InputField
-                label="City"
-                value={data?.city}
-                onChange={(e: any) =>
-                  setData({ ...data, city: e.target.value })
-                }
-              />
-              <InputField
-                label="State"
-                value={data?.state}
-                onChange={(e: any) =>
-                  setData({ ...data, state: e.target.value })
-                }
-              />
-              <InputField
-                label="Postal Code"
-                value={data?.postalCode}
-                onChange={(e: any) =>
-                  setData({ ...data, postalCode: e.target.value })
-                }
-              />
-              <InputField
-                label="Country"
-                value={data?.country}
-                onChange={(e: any) =>
-                  setData({ ...data, country: e.target.value })
-                }
-              />
-              <div className="md:col-span-2">
-                <InputField
-                  label="Google Maps Embed URL"
-                  value={data?.mapEmbedUrl}
-                  onChange={(e: any) =>
-                    setData({ ...data, mapEmbedUrl: e.target.value })
-                  }
-                  placeholder="Google Maps iframe embed code"
-                />
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* SOCIAL TAB */}
-        {activeTab === "social" && (
-          <>
-            <SectionHeader title="Social Media Links" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <InputField
-                label="Instagram"
-                value={data?.socialLinks?.instagram}
-                onChange={(e: any) =>
-                  setData({
-                    ...data,
-                    socialLinks: {
-                      ...data.socialLinks,
-                      instagram: e.target.value,
-                    },
-                  })
-                }
-                placeholder="https://instagram.com/..."
-              />
-              <InputField
-                label="LinkedIn"
-                value={data?.socialLinks?.linkedin}
-                onChange={(e: any) =>
-                  setData({
-                    ...data,
-                    socialLinks: {
-                      ...data.socialLinks,
-                      linkedin: e.target.value,
-                    },
-                  })
-                }
-                placeholder="https://linkedin.com/company/..."
-              />
-              <InputField
-                label="Facebook"
-                value={data?.socialLinks?.facebook}
-                onChange={(e: any) =>
-                  setData({
-                    ...data,
-                    socialLinks: {
-                      ...data.socialLinks,
-                      facebook: e.target.value,
-                    },
-                  })
-                }
-                placeholder="https://facebook.com/..."
-              />
-              <InputField
-                label="Twitter"
-                value={data?.socialLinks?.twitter}
-                onChange={(e: any) =>
-                  setData({
-                    ...data,
-                    socialLinks: {
-                      ...data.socialLinks,
-                      twitter: e.target.value,
-                    },
-                  })
-                }
-                placeholder="https://twitter.com/..."
-              />
-              <div className="md:col-span-2">
-                <InputField
-                  label="Website URL"
-                  value={data?.website}
-                  onChange={(e: any) =>
-                    setData({ ...data, website: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* BUSINESS HOURS TAB */}
-        {activeTab === "business" && (
-          <>
-            <SectionHeader title="Business Hours" />
-            <div className="space-y-3">
-              {[
-                "monday",
-                "tuesday",
-                "wednesday",
-                "thursday",
-                "friday",
-                "saturday",
-                "sunday",
-              ].map((day) => (
-                <div
-                  key={day}
-                  className="flex items-end gap-3 p-3 bg-raise rounded-lg"
-                >
-                  <div className="flex-1">
-                    <label className="block text-xs font-semibold text-ink-mute tracking-wider mb-1 capitalize">
-                      {day}
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <InputField
-                          type="time"
-                          value={data?.businessHours?.[day]?.open || "10:00"}
-                          onChange={(e) =>
-                            setData({
-                              ...data,
-                              businessHours: {
-                                ...data.businessHours,
-                                [day]: {
-                                  ...data.businessHours[day],
-                                  open: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                          disabled={!data?.businessHours?.[day]?.isOpen}
-                        />
-                      </div>
-                      <span className="text-ink-mute text-sm">-</span>
-                      <div className="flex-1">
-                        <InputField
-                          type="time"
-                          value={data?.businessHours?.[day]?.close || "18:00"}
-                          onChange={(e) =>
-                            setData({
-                              ...data,
-                              businessHours: {
-                                ...data.businessHours,
-                                [day]: {
-                                  ...data.businessHours[day],
-                                  close: e.target.value,
-                                },
-                              },
-                            })
-                          }
-                          disabled={!data?.businessHours?.[day]?.isOpen}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={data?.businessHours?.[day]?.isOpen || false}
-                      onChange={(e) =>
-                        setData({
-                          ...data,
-                          businessHours: {
-                            ...data.businessHours,
-                            [day]: {
-                              ...data.businessHours[day],
-                              isOpen: e.target.checked,
-                            },
-                          },
-                        })
-                      }
-                      className="w-4 h-4 rounded border-line"
-                    />
-                    <span className="text-xs text-ink-mute">Open</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* CTA TAB */}
-        {activeTab === "cta" && (
-          <>
-            <SectionHeader title="Primary Call-to-Action" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="md:col-span-2">
-                <InputField
-                  label="CTA Button Text"
-                  value={data?.primaryCTA?.text}
-                  onChange={(e: any) =>
-                    setData({
-                      ...data,
-                      primaryCTA: { ...data.primaryCTA, text: e.target.value },
-                    })
-                  }
-                  placeholder="e.g., 'Book a Free Site Visit'"
-                />
-              </div>
-              <SelectField
-                label="CTA Action"
-                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
-                placeholder="Select..."
-                value={data?.primaryCTA?.action}
-                onValueChange={(action) =>
-                  setData({
-                    ...data,
-                    primaryCTA: { ...data.primaryCTA, action },
-                  })
-                }
-                options={[
-                  { value: "scroll", label: "Scroll to Section" },
-                  { value: "modal", label: "Open Modal" },
-                  { value: "link", label: "External Link" },
-                ]}
-              />
-              <InputField
-                label="CTA Target (URL or anchor)"
-                value={data?.primaryCTA?.target}
-                onChange={(e: any) =>
-                  setData({
-                    ...data,
-                    primaryCTA: { ...data.primaryCTA, target: e.target.value },
-                  })
-                }
-                placeholder="#contact or https://..."
-              />
-            </div>
-
-            <SectionHeader title="Secondary Call-to-Action" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="md:col-span-2">
-                <InputField
-                  label="CTA Button Text"
-                  value={data?.secondaryCTA?.text}
-                  onChange={(e: any) =>
-                    setData({
-                      ...data,
-                      secondaryCTA: {
-                        ...data.secondaryCTA,
-                        text: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="e.g., 'View Our Projects'"
-                />
-              </div>
-              <SelectField
-                label="CTA Action"
-                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
-                placeholder="Select..."
-                value={data?.secondaryCTA?.action}
-                onValueChange={(action) =>
-                  setData({
-                    ...data,
-                    secondaryCTA: {
-                      ...data.secondaryCTA,
-                      action,
-                    },
-                  })
-                }
-                options={[
-                  { value: "scroll", label: "Scroll to Section" },
-                  { value: "link", label: "Link" },
-                ]}
-              />
-              <InputField
-                label="CTA Target"
-                value={data?.secondaryCTA?.target}
-                onChange={(e: any) =>
-                  setData({
-                    ...data,
-                    secondaryCTA: {
-                      ...data.secondaryCTA,
-                      target: e.target.value,
-                    },
-                  })
-                }
-                placeholder="#portfolio or /projects"
-              />
-            </div>
-          </>
-        )}
-
-        {/* FOOTER TAB */}
-        {activeTab === "footer" && (
-          <>
-            <SectionHeader title="Footer Configuration" />
-            <div className="space-y-5">
-              <InputField
-                label="Copyright Text"
-                value={data?.copyrightText}
-                onChange={(e) =>
-                  setData({ ...data, copyrightText: e.target.value })
-                }
-              />
-              <TextArea
-                label="Footer Text"
-                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
-                rows={2}
-                value={data?.footerText || ""}
-                onChange={(e) =>
-                  setData({ ...data, footerText: e.target.value })
-                }
-              />
-              <InputField
-                label="Privacy Policy URL"
-                value={data?.privacyPolicyUrl}
-                onChange={(e: any) =>
-                  setData({ ...data, privacyPolicyUrl: e.target.value })
-                }
-                placeholder="https://..."
-              />
-              <InputField
-                label="Terms of Service URL"
-                value={data?.termsOfServiceUrl}
-                onChange={(e: any) =>
-                  setData({ ...data, termsOfServiceUrl: e.target.value })
-                }
-                placeholder="https://..."
-              />
-            </div>
-          </>
-        )}
-
-        {/* SEO TAB */}
-        {activeTab === "seo" && (
-          <>
-            <SectionHeader title="SEO Configuration" />
-            <div className="space-y-5">
-              <InputField
-                label="Default Page Title"
-                value={data?.seoDefaultTitle}
-                onChange={(e: any) =>
-                  setData({ ...data, seoDefaultTitle: e.target.value })
-                }
-              />
-              <TextArea
-                label="Default Meta Description"
-                labelClassName="text-xs font-semibold text-ink-mute uppercase tracking-wider"
-                rows={2}
-                value={data?.seoDefaultDescription || ""}
-                onChange={(e) =>
-                  setData({ ...data, seoDefaultDescription: e.target.value })
-                }
-              />
-              <InputField
-                label="Google Analytics ID"
-                value={data?.googleAnalyticsId}
-                onChange={(e: any) =>
-                  setData({ ...data, googleAnalyticsId: e.target.value })
-                }
-                placeholder="G-XXXXXXXXXX"
-              />
-              <InputField
-                label="Google Search Console ID"
-                value={data?.googleSearchConsoleId}
-                onChange={(e: any) =>
-                  setData({ ...data, googleSearchConsoleId: e.target.value })
-                }
-              />
-            </div>
-          </>
-        )}
-
-        {/* ADVANCED TAB */}
-        {activeTab === "advanced" && (
-          <>
-            <SectionHeader title="Advanced Settings" />
-            <div className="space-y-4">
-              <CheckboxField
-                label="Website is Live"
-                checked={data?.isLive}
-                onChange={(e: any) =>
-                  setData({ ...data, isLive: e.target.checked })
-                }
-              />
-              <CheckboxField
-                label="Maintenance Mode"
-                checked={data?.maintenanceMode}
-                onChange={(e: any) =>
-                  setData({ ...data, maintenanceMode: e.target.checked })
-                }
-              />
-              {data?.maintenanceMode && (
-                <InputField
-                  label="Maintenance Message"
-                  value={data?.maintenanceMessage}
-                  onChange={(e: any) =>
-                    setData({ ...data, maintenanceMessage: e.target.value })
-                  }
-                  placeholder="We're temporarily down for maintenance..."
-                />
-              )}
-              <CheckboxField
-                label="Notify on New Lead"
-                checked={data?.notifyOnNewLead}
-                onChange={(e: any) =>
-                  setData({ ...data, notifyOnNewLead: e.target.checked })
-                }
-              />
-              {data?.notifyOnNewLead && (
-                <InputField
-                  label="Lead Notification Email"
-                  type="email"
-                  value={data?.leadNotificationEmail}
-                  onChange={(e: any) =>
-                    setData({ ...data, leadNotificationEmail: e.target.value })
-                  }
-                  placeholder="sales@example.com"
-                />
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Submit Button */}
-        <div className="flex justify-end gap-3 pt-6 border-t border-line">
+        <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => fetchSettings()}
-            className="px-6 py-2 text-ink border border-line rounded-lg font-bold text-sm hover:bg-paper transition-colors"
+            onClick={() => saved && adopt(saved)}
+            disabled={!changeCount}
+            className="px-6 py-2 text-ink border border-line rounded-lg font-bold text-sm hover:bg-paper transition-colors disabled:opacity-50"
           >
-            Reset
+            Discard changes
           </button>
           <button
             type="submit"

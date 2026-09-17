@@ -29,6 +29,7 @@ import {
   Paintbrush,
   MousePointer2,
   Gauge,
+  PanelTop,
 } from "lucide-react";
 
 import { cn } from "@/utils/utils";
@@ -50,7 +51,14 @@ const navGroups: NavGroup[] = [
     label: "Content",
     items: [
       { name: "Navbar", icon: Menu, path: "/admin/navbar" },
-      { name: "Hero", icon: Home, path: "/admin/hero" },
+      {
+        name: "Home",
+        icon: Home,
+        subItems: [
+          { name: "Hero Section", path: "/admin/hero", icon: PanelTop },
+          { name: "FAQ Section", path: "/admin/faq", icon: HelpCircle },
+        ],
+      },
       { name: "About", icon: Info, path: "/admin/about" },
       { name: "Statistics", icon: BarChart3, path: "/admin/stats" },
       { name: "Process Blueprint", icon: Layers, path: "/admin/process" },
@@ -83,7 +91,6 @@ const navGroups: NavGroup[] = [
     items: [
       { name: "Blog", icon: BookOpen, path: "/admin/blog" },
       { name: "Team", icon: Users, path: "/admin/team" },
-      { name: "FAQs", icon: HelpCircle, path: "/admin/faq" },
       { name: "Analytics", icon: BarChart3, path: "/admin/analytics" },
     ],
   },
@@ -116,7 +123,15 @@ const navGroups: NavGroup[] = [
           },
         ],
       },
-      { name: "Appearance", icon: Palette, path: "/admin/appearance" },
+      {
+        name: "Appearance",
+        icon: Palette,
+        subItems: [
+          { name: "Hero", path: "/admin/appearance/hero", icon: PanelTop },
+          { name: "About", path: "/admin/appearance/about", icon: Info },
+          { name: "FAQ", path: "/admin/appearance/faq", icon: HelpCircle },
+        ],
+      },
       { name: "Settings", icon: Settings, path: "/admin/settings" },
     ],
   },
