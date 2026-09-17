@@ -13,6 +13,7 @@ export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextArea
   hint?: React.ReactNode;
   maxChars?: number;
   tooltip?: React.ReactNode;
+  labelAction?: React.ReactNode;
 }
 
 const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
@@ -31,6 +32,7 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
       hint,
       maxChars,
       tooltip,
+      labelAction,
       ...rest
     },
     ref,
@@ -44,7 +46,7 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
 
     return (
       <div>
-        {(label || tooltip || maxChars !== undefined) && (
+        {(label || tooltip || labelAction) && (
           <div className="mb-2 flex items-baseline justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <label
@@ -58,16 +60,7 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
               </label>
               {tooltip && <InfoTooltip content={tooltip} label={label} />}
             </div>
-            {maxChars !== undefined && (
-              <span
-                className={cn(
-                  "text-xs font-semibold tabular-nums",
-                  over ? "text-error-500" : "text-gray-500",
-                )}
-              >
-                {length} / {maxChars}
-              </span>
-            )}
+            {labelAction}
           </div>
         )}
 
@@ -96,15 +89,27 @@ const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           />
         </div>
 
-        {resolvedHint && (
-          <p
-            className={cn(
-              "mt-1.5 text-xs",
-              hasError ? "text-error-500" : "text-gray-500",
+        {(resolvedHint || maxChars !== undefined) && (
+          <div className="mt-1.5 flex justify-between gap-3">
+            <p
+              className={cn(
+                "text-xs",
+                hasError ? "text-error-500" : "text-gray-500",
+              )}
+            >
+              {resolvedHint}
+            </p>
+            {maxChars !== undefined && (
+              <span
+                className={cn(
+                  "shrink-0 text-xs font-semibold tabular-nums",
+                  over ? "text-error-500" : "text-gray-500",
+                )}
+              >
+                {length} / {maxChars}
+              </span>
             )}
-          >
-            {resolvedHint}
-          </p>
+          </div>
         )}
       </div>
     );

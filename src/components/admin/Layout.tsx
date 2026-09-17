@@ -24,7 +24,7 @@ export default function Layout() {
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main
           ref={main}
-          className="flex-1 overflow-y-auto bg-canvas px-4 sm:px-6 py-5 sm:py-6"
+          className="relative flex-1 overflow-y-auto bg-canvas px-4 sm:px-6 py-5 sm:py-6"
         >
           <div className="max-w-(--breakpoint-2xl) mx-auto">
             <Outlet />

@@ -26,7 +26,10 @@ import {
 } from "@/components/admin/ui/DragList";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
-import type { VisibilityMap } from "@/components/admin/ui/VisibilityToggle";
+import {
+  isVisible,
+  type VisibilityMap,
+} from "@/components/admin/ui/VisibilityToggle";
 
 import { DragList } from "@/lib/constants/drag-lists";
 import { appearanceApi, faqApi } from "@/services/api";
@@ -163,6 +166,12 @@ const FAQManager = () => {
 
   const columns: Column<FaqItem>[] = [
     {
+      id: "index",
+      header: "Sr. No.",
+      cell: (faq, index) => <p className="text-sm font-bold">{index + 1}</p>,
+      widthClassName: "w-30",
+    },
+    {
       id: "question",
       header: "Question",
       cell: (faq, index) => (
@@ -173,6 +182,11 @@ const FAQManager = () => {
           onMove={moveFaq}
         />
       ),
+    },
+    {
+      id: "answer",
+      header: "Answer",
+      cell: (faq) => <p className="truncate text-sm">{faq.answer}</p>,
     },
     {
       id: "actions",
@@ -276,6 +290,10 @@ const FAQManager = () => {
         placement="above"
         draft={{ faqContent: { faqs, section }, appearance: { visibility } }}
         caption="The live FAQ section, rendered by the website itself. Unsaved copy, order and visibility show here before you save them."
+        sectionHidden={!isVisible(visibility, "home.faq")}
+        onShowSection={() =>
+          setVisibility((prev) => ({ ...prev, "home.faq": true }))
+        }
       >
         <FaqSectionContentCard
           content={section}

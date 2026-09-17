@@ -21,6 +21,8 @@ export interface HeroSlide {
   images: string[];
   pos: string;
   title: string;
+  /** The end of the headline, drawn in the accent colour. May be empty. */
+  accent: string;
   subtitle: string;
 }
 

@@ -12,13 +12,14 @@ import SelectField from "../../../components/admin/ui/SelectField";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
-  ElementVisibility,
+  SectionVisibilitySwitch,
   VisibilityToggle,
   isVisible,
   type VisibilityMap,
   type VisibilitySection,
 } from "../../../components/admin/ui/VisibilityToggle";
 import { AdminInfoCallout } from "@/components/common";
+import { Button } from "@/components/ui/button";
 
 import { DragList } from "@/lib/constants/drag-lists";
 import { appearanceApi, heroApi, uploadApi } from "../../../services/api";
@@ -39,6 +40,7 @@ const EMPTY_SLIDE: HeroSlide = {
   images: [],
   pos: "center center",
   title: "",
+  accent: "",
   subtitle: "",
 };
 
@@ -80,7 +82,12 @@ function clientErrors(content: HeroContent, rules: HeroRules): FieldErrors {
       errors[`slides.${i}.images`] =
         "With more than one slide, each slide takes a single image or video. Remove the extras here, or delete the other slides.";
     }
-    cap(`slides.${i}.title`, slide.title, rules.title.max, "Title");
+    cap(
+      `slides.${i}.title`,
+      slide.title + slide.accent,
+      rules.title.max,
+      "Title and accent text together",
+    );
     cap(`slides.${i}.subtitle`, slide.subtitle, rules.subtitle.max, "Subtitle");
   });
   if (!content.slides.length) errors.slides = "At least one slide is required.";
@@ -308,6 +315,19 @@ export default function HeroCMS() {
     (key) => !previewShows(key),
   ).length;
 
+  // Each optional part's switch sits on the field it hides, and only when the
+  // served catalogue offers that key. A hidden Hero takes every part with it,
+  // so their switches disable rather than sit there looking live.
+  const heroVisible = isVisible(visibility, "home.hero");
+  const elementToggle = (key: string) =>
+    heroSection?.elements?.some((el) => el.key === key) ? (
+      <VisibilityToggle
+        visible={heroVisible && isVisible(visibility, key)}
+        disabled={!heroVisible}
+        onChange={(v) => patchVisibility(key, v)}
+      />
+    ) : undefined;
+
   const patchSlide = (index: number, changes: Partial<HeroSlide>) =>
     setContent((prev) =>
       prev
@@ -431,18 +451,21 @@ export default function HeroCMS() {
           appearance: { heroVariant: variant, visibility },
         }}
         caption="The live Hero, rendered by the website itself from what is typed here. Nothing is saved until you press Save."
+        sectionHidden={!heroVisible}
+        onShowSection={() => patchVisibility("home.hero", true)}
         actions={
           // Absent means visible, so the empty map IS the default and clearing
           // it is the whole reset. Nothing is written until Save.
-          <button
-            type="button"
+          <Button
+            size="xs"
+            variant="none"
             onClick={() => setVisibility({})}
             disabled={hiddenCount === 0}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+            startIcon={<Eye className="w-3 h-3" />}
+            className="shrink-0 gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute hover:text-ink"
           >
-            <Eye className="w-3 h-3" />
             {hiddenCount ? `Show all (${hiddenCount} hidden)` : "All visible"}
-          </button>
+          </Button>
         }
       >
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -508,26 +531,24 @@ export default function HeroCMS() {
                   onMove={moveSlide}
                   onRemove={removeSlide}
                 >
+                  {/* Title and accent share one headline's room, so each
+                      counter's limit is what the other leaves free. */}
                   <InputField
                     label="Title"
                     required
                     value={slide.title}
                     onChange={(e) => patchSlide(i, { title: e.target.value })}
-                    maxChars={rules.title.max}
+                    maxChars={rules.title.max - slide.accent.length}
                     error={!!errors[`slides.${i}.title`]}
-                    warning={
-                      slide.title.split(",").length > 2
-                        ? "Only the first comma is used as the split point — everything after it becomes the accent part."
-                        : undefined
-                    }
                     hint={errors[`slides.${i}.title`]}
-                    tooltip={
-                      <>
-                        Text after the <strong>first comma</strong> renders in
-                        the accent colour — on its own second line in Premium
-                        Glass, inline in Clean Modern and Floating.
-                      </>
-                    }
+                    labelAction={elementToggle("home.hero.title")}
+                  />
+                  <InputField
+                    label="Accent text"
+                    value={slide.accent}
+                    onChange={(e) => patchSlide(i, { accent: e.target.value })}
+                    maxChars={rules.title.max - slide.title.length}
+                    tooltip="Drawn in the accent colour after the title — on its own second line in Premium Glass, inline in Clean Modern and Floating."
                   />
 
                   <TextArea
@@ -539,6 +560,7 @@ export default function HeroCMS() {
                     maxChars={rules.subtitle.max}
                     error={!!errors[`slides.${i}.subtitle`]}
                     hint={errors[`slides.${i}.subtitle`]}
+                    labelAction={elementToggle("home.hero.subtitle")}
                   />
                   <SelectField
                     className="md:max-w-sm"
@@ -580,8 +602,8 @@ export default function HeroCMS() {
                 )}
               </div>
               {heroSection && (
-                <VisibilityToggle
-                  visible={isVisible(visibility, "home.hero")}
+                <SectionVisibilitySwitch
+                  visible={heroVisible}
                   onChange={(v) => patchVisibility("home.hero", v)}
                 />
               )}
@@ -595,6 +617,7 @@ export default function HeroCMS() {
               error={!!errors.eyebrow}
               hint={errors.eyebrow}
               tooltip="The small kicker above the headline. Floating renders it inside a pill, so it must stay on one line."
+              labelAction={elementToggle("home.hero.eyebrow")}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -612,8 +635,9 @@ export default function HeroCMS() {
                 maxChars={rules.ctaLabel.max}
                 error={!!errors["primaryCta.label"]}
                 hint={errors["primaryCta.label"]}
+                labelAction={elementToggle("home.hero.primaryCta")}
               />
-              <InputField
+              {/* <InputField
                 label="Primary CTA — link"
                 value={content.primaryCta.url}
                 onChange={(e) =>
@@ -624,7 +648,7 @@ export default function HeroCMS() {
                 error={!!errors["primaryCta.url"]}
                 hint={errors["primaryCta.url"]}
                 tooltip="An anchor (#portfolio), a path (/projects) or a full URL."
-              />
+              /> */}
               <InputField
                 label="Secondary CTA — label"
                 value={content.secondaryCta.label}
@@ -639,8 +663,9 @@ export default function HeroCMS() {
                 maxChars={rules.ctaLabel.max}
                 error={!!errors["secondaryCta.label"]}
                 hint={errors["secondaryCta.label"]}
+                labelAction={elementToggle("home.hero.secondaryCta")}
               />
-              <InputField
+              {/* <InputField
                 label="Secondary CTA — link"
                 value={content.secondaryCta.url}
                 onChange={(e) =>
@@ -653,7 +678,7 @@ export default function HeroCMS() {
                 }
                 error={!!errors["secondaryCta.url"]}
                 hint={errors["secondaryCta.url"]}
-              />
+              /> */}
             </div>
 
             <TextArea
@@ -671,16 +696,8 @@ export default function HeroCMS() {
                   characters each.
                 </>
               }
+              labelAction={elementToggle("home.hero.trustStrip")}
             />
-
-            {heroSection?.elements?.length ? (
-              <ElementVisibility
-                elements={heroSection.elements}
-                map={visibility}
-                sectionVisible={isVisible(visibility, "home.hero")}
-                onChange={patchVisibility}
-              />
-            ) : null}
           </div>
 
           <div className="flex items-center justify-end gap-4">

@@ -15,8 +15,10 @@ export default {
         "dark-2": "#12121a",
         mid: "#5b6b7f",
         light: "#f8fafc",
-        surface: "#111827",
-        "surface-2": "#1f2937",
+        // Light, because the shared Button's outline variant reads these as
+        // the page it sits on; no admin class used the old dark values.
+        surface: "#ffffff",
+        "surface-2": "#f6f8fb",
         "surface-3": "#374151",
 
         // Admin surfaces + ink. Same navy/accent identity as the public site,
@@ -39,6 +41,8 @@ export default {
         // admin identity above rather than a second palette, so `brand-500`
         // and `info` are the same blue and `error-500` is `danger`.
         brand: {
+          DEFAULT: "#1d5fd0",
+          2: "#123a80",
           25: "#f4f8fe",
           300: "#8fb3f0",
           500: "#1d5fd0",
@@ -58,6 +62,17 @@ export default {
         "hms-gold": "#7386a0",
         "hms-cream": "#eef2f7",
         "hms-muted": "#7386a0",
+
+        // Names the shadcn primitives in components/ui are written against,
+        // mapped onto the admin identity so they drop in unedited.
+        "on-brand": "#ffffff",
+        primary: "#1d5fd0",
+        "primary-foreground": "#ffffff",
+        background: "#ffffff",
+        foreground: "#0A2647",
+        input: "#dfe6ee",
+        ring: "#1d5fd0",
+        destructive: "#c0271f",
       },
 
       fontFamily: {

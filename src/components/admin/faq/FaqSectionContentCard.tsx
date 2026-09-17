@@ -7,6 +7,7 @@ import InputField from "@/components/admin/ui/InputField";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 import TextArea from "@/components/admin/ui/TextArea";
 import {
+  SectionVisibilitySwitch,
   VisibilityToggle,
   isVisible,
   type VisibilityMap,
@@ -39,6 +40,22 @@ const FaqSectionContentCard = ({
 
   const patch = (changes: Partial<FaqSectionContent>) =>
     onChange({ ...content, ...changes });
+
+  const patchVisibility = (key: string, visible: boolean) =>
+    onVisibilityChange({ ...visibility, [key]: visible });
+
+  // A hidden section takes its parts with it, so their toggles disable.
+  const sectionVisible = isVisible(visibility, VISIBILITY_KEY);
+  const fieldToggle = (part: string) => {
+    const key = `${VISIBILITY_KEY}.${part}`;
+    return (
+      <VisibilityToggle
+        visible={sectionVisible && isVisible(visibility, key)}
+        disabled={!sectionVisible}
+        onChange={(visible) => patchVisibility(key, visible)}
+      />
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,11 +104,9 @@ const FaqSectionContentCard = ({
         title="FAQ Section Content"
         description="Shown above the questions in every FAQ style. Leave a field empty to keep the text shown as its placeholder. The switch hides the whole section; nothing is deleted."
         controls={
-          <VisibilityToggle
-            visible={isVisible(visibility, VISIBILITY_KEY)}
-            onChange={(visible) =>
-              onVisibilityChange({ ...visibility, [VISIBILITY_KEY]: visible })
-            }
+          <SectionVisibilitySwitch
+            visible={sectionVisible}
+            onChange={(visible) => patchVisibility(VISIBILITY_KEY, visible)}
           />
         }
       >
@@ -100,6 +115,7 @@ const FaqSectionContentCard = ({
           value={content.title}
           onChange={(e) => patch({ title: e.target.value })}
           placeholder={FAQ_SECTION_DEFAULTS.title}
+          labelAction={fieldToggle("title")}
         />
         <TextArea
           label="Supporting text"
@@ -107,16 +123,19 @@ const FaqSectionContentCard = ({
           onChange={(e) => patch({ description: e.target.value })}
           placeholder={FAQ_SECTION_DEFAULTS.description}
           tooltip="The contact email is added at the end of this text as a link."
+          labelAction={fieldToggle("description")}
         />
-        <InputField
-          className="md:max-w-sm"
-          label="Contact email"
-          type="email"
-          value={content.email}
-          onChange={(e) => patch({ email: e.target.value })}
-          placeholder={FAQ_SECTION_DEFAULTS.email}
-          hint="Only set this if FAQ questions should go to a different address than the site's email in Global Settings."
-        />
+        <div className="md:max-w-sm">
+          <InputField
+            label="Contact email"
+            type="email"
+            value={content.email}
+            onChange={(e) => patch({ email: e.target.value })}
+            placeholder={FAQ_SECTION_DEFAULTS.email}
+            labelAction={fieldToggle("email")}
+            // hint="Only set this if FAQ questions should go to a different address than the site's email in Global Settings."
+          />
+        </div>
         <div className="flex justify-end">
           <button
             type="submit"
