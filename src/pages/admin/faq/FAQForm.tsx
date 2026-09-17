@@ -1,263 +1,171 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ArrowLeft, Plus, X } from "lucide-react";
-import InputField from "../../../components/admin/ui/InputField";
-import TextArea from "../../../components/admin/ui/TextArea";
-import { faqApi } from "../../../services/api";
+import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import SelectField from "../../../components/admin/ui/SelectField";
-import { toSelectOptions } from "../../../utils/utils";
+import { Loader2, ArrowLeft, Save } from "lucide-react";
+
+import { SectionCard } from "@/components/admin/ui/SectionCard";
+import TextArea from "@/components/admin/ui/TextArea";
+
+import { FAQ_LIMITS } from "@/lib/constants/faq";
+import { faqApi } from "@/services/api";
+
+// Same limits and same wording as the server, so a field never passes here and
+// comes back rejected with a different sentence.
+const copy = (label: string, { min, max }: { min: number; max: number }) =>
+  z
+    .string()
+    .trim()
+    .min(min, `${label} must be at least ${min} characters`)
+    .max(
+      max,
+      `${label} must be ${max.toLocaleString("en-US")} characters or fewer`,
+    );
 
 const faqValidationSchema = z.object({
-  question: z.string().min(10, "Question must be at least 10 characters"),
-  answer: z.string().min(50, "Answer must be at least 50 characters"),
-  category: z.string().min(1, "Category required"),
-  keywords: z.array(z.string()).optional().default([]),
-  published: z.boolean().default(true),
-  order: z.number().optional(),
+  question: copy("Question", FAQ_LIMITS.question),
+  answer: copy("Answer", FAQ_LIMITS.answer),
 });
 
-const categories = [
-  "General",
-  "Services",
-  "Projects",
-  "Process",
-  "Pricing",
-  "Timeline",
-  "Technical",
-];
+type FaqFormValues = z.infer<typeof faqValidationSchema>;
 
 const FAQForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(!!id);
-  const [submitting, setSubmitting] = useState(false);
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [newKeyword, setNewKeyword] = useState("");
+  const [loading, setLoading] = useState<boolean>(!!id);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
-  // Typed off the schema so `errors.x` is a FieldError InputField accepts.
   const {
     register,
     handleSubmit,
-    control,
+    watch,
     formState: { errors },
     reset,
-  } = useForm<z.input<typeof faqValidationSchema>>({
+  } = useForm<FaqFormValues>({
     resolver: zodResolver(faqValidationSchema),
-    defaultValues: {
-      published: true,
-      keywords: [],
-    },
   });
 
   useEffect(() => {
-    if (id) {
-      const fetchFAQ = async () => {
-        try {
-          const { data } = await faqApi.getById(id);
-          if (data?.success) {
-            const faq = data.data;
-            reset({
-              question: faq.question,
-              answer: faq.answer,
-              category: faq.category,
-              published: faq.published,
-              order: faq.order,
-            });
-            setKeywords(faq.keywords || []);
-          }
-        } catch (err) {
-          toast.error("Failed to load FAQ");
-        } finally {
-          setLoading(false);
+    if (!id) return;
+
+    const fetchFAQ = async () => {
+      try {
+        const { data } = await faqApi.getById(id);
+        if (data?.success) {
+          reset({ question: data.data.question, answer: data.data.answer });
         }
-      };
-      fetchFAQ();
-    }
+      } catch {
+        toast.error("Failed to load FAQ");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFAQ();
   }, [id, reset]);
 
-  const onSubmit = async (values: any) => {
-    setSubmitting(true);
-    try {
-      const payload = {
-        ...values,
-        keywords,
-      };
+  // A new FAQ is appended to the end of the list by the server; dragging in the
+  // list is what moves it.
+  const onSubmit = async (values: FaqFormValues) => {
+    let message = "Failed to save FAQ";
+    let isError = true;
 
-      if (id) {
-        await faqApi.update(id, payload);
-        toast.success("FAQ updated");
+    setSubmitting(true);
+
+    try {
+      const response = id
+        ? await faqApi.update(id, values)
+        : await faqApi.create(values);
+
+      message = response.data?.message || message;
+
+      if (response.data?.success) {
+        isError = false;
+        navigate("/admin/faq");
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+      }
+    } finally {
+      if (isError) {
+        toast.error(message);
       } else {
-        await faqApi.create(payload);
-        toast.success("FAQ created");
+        toast.success(message);
       }
 
-      navigate("/admin/faq");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save FAQ");
-    } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-ink">
-        Loading...
+      <div className="flex justify-center p-8">
+        <Loader2 className="w-8 h-8 animate-spin text-ink-faint" />
       </div>
     );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button
+          type="button"
           onClick={() => navigate("/admin/faq")}
-          className="p-2 rounded-lg bg-raise hover:bg-line hover:text-ink transition-colors"
+          aria-label="Back to FAQs"
+          className="p-2 rounded-lg bg-raise hover:bg-line transition-colors"
         >
-          <ArrowLeft size={20} className="text-ink" />
+          <ArrowLeft className="w-5 h-5 text-ink" />
         </button>
         <div>
-          <h1 className="text-3xl font-semibold text-ink">
+          <h2 className="text-xl font-bold text-ink">
             {id ? "Edit FAQ" : "New FAQ"}
-          </h1>
+          </h2>
+          <p className="text-sm text-ink-mute">
+            A question and its answer, rendered by every FAQ style.
+          </p>
         </div>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-paper rounded-2xl p-8 space-y-6">
-          {/* Question */}
+        <SectionCard title="FAQ Content">
           <TextArea
-            label="Question *"
-            labelClassName="text-sm font-bold text-ink-soft"
+            label="Question"
+            required
             {...register("question")}
-            rows={3}
-            className="resize-none"
+            value={watch("question") ?? ""}
+            rows={2}
+            maxChars={FAQ_LIMITS.question.max}
             placeholder="What is your question?"
-            error={Boolean(errors.question)}
-            hint={errors.question?.message as string | undefined}
+            error={!!errors.question}
           />
 
-          {/* Answer */}
           <TextArea
-            label="Answer *"
-            labelClassName="text-sm font-bold text-ink-soft"
+            label="Answer"
+            required
             {...register("answer")}
+            value={watch("answer") ?? ""}
             rows={6}
-            className="resize-none"
+            maxChars={FAQ_LIMITS.answer.max}
             placeholder="Detailed answer to the question..."
-            error={Boolean(errors.answer)}
-            hint={errors.answer?.message as string | undefined}
+            error={!!errors.answer}
           />
+        </SectionCard>
 
-          {/* Category */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Controller
-              name="category"
-              control={control}
-              render={({ field }) => (
-                <SelectField
-                  label="Category *"
-                  labelClassName="text-sm font-bold text-ink-soft"
-                  placeholder="Select category"
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  options={toSelectOptions(categories)}
-                  error={!!errors.category}
-                  hint={errors.category?.message as string | undefined}
-                />
-              )}
-            />
-
-            <InputField
-              label="Order"
-              type="number"
-              {...register("order", { valueAsNumber: true })}
-              error={!!errors.order}
-              hint={errors.order?.message as string}
-              placeholder="Display order"
-            />
-          </div>
-
-          {/* Keywords */}
-          <div>
-            <label className="block text-sm font-bold text-ink-soft mb-2">
-              Keywords (SEO)
-            </label>
-            <div className="flex gap-2 mb-3">
-              <div className="flex-1">
-                <InputField
-                  type="text"
-                  value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
-                  placeholder="Add keyword"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (newKeyword) {
-                    setKeywords([...keywords, newKeyword]);
-                    setNewKeyword("");
-                  }
-                }}
-                className="px-4 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors flex items-center gap-2"
-              >
-                <Plus size={18} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {keywords.map((kw, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 px-3 py-1 bg-accent/20 text-accent rounded-full"
-                >
-                  <span>{kw}</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setKeywords(keywords.filter((_, idx) => idx !== i))
-                    }
-                    className="text-accent/60 hover:text-accent"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Status */}
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register("published")}
-              className="w-4 h-4 rounded"
-            />
-            <span className="text-ink-soft font-medium">Publish this FAQ</span>
-          </label>
-        </div>
-
-        {/* Submit */}
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={() => navigate("/admin/faq")}
-            className="flex-1 px-6 py-3 border border-line text-ink-soft rounded-xl font-bold hover:bg-raise transition-colors"
-          >
-            Cancel
-          </button>
+        <div className="flex items-center justify-end">
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 px-6 py-3 bg-accent text-white rounded-xl font-bold hover:shadow-lg hover:shadow-accent/50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex items-center gap-2 px-5 py-2.5 bg-info hover:bg-info text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting && <Loader2 size={18} className="animate-spin" />}
-            {id ? "Update FAQ" : "Create FAQ"}
+            {submitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {id ? "Save Changes" : "Create FAQ"}
           </button>
         </div>
       </form>

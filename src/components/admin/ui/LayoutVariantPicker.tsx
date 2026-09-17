@@ -1,8 +1,3 @@
-import SitePreview, {
-  PreviewSection,
-  type PreviewDraft,
-} from "@/components/admin/ui/SitePreview";
-
 import { LayoutVariant } from "@/types/common";
 import { cn } from "@/utils/utils";
 
@@ -15,18 +10,12 @@ const LAYOUT_VARIANT_OPTIONS: { value: LayoutVariant; label: string }[] = [
 interface LayoutVariantPickerProps {
   label: string;
   value: LayoutVariant;
-  section: PreviewSection;
-  draft: PreviewDraft;
-  previewHeight?: number;
   onChange: (value: LayoutVariant) => void;
 }
 
 const LayoutVariantPicker = ({
   label,
   value,
-  section,
-  draft,
-  previewHeight,
   onChange,
 }: LayoutVariantPickerProps) => (
   <div className="space-y-3">
@@ -50,11 +39,6 @@ const LayoutVariantPicker = ({
         </button>
       ))}
     </div>
-    <SitePreview
-      section={section}
-      draft={draft}
-      viewportHeight={previewHeight}
-    />
   </div>
 );
 

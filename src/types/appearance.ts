@@ -46,6 +46,7 @@ export interface AppearanceResponse {
   navbarVariant: LayoutVariant;
   heroVariant: LayoutVariant;
   aboutVariant: LayoutVariant;
+  faqVariant: LayoutVariant;
   customCursorVariant: CustomCursorVariant;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
@@ -65,6 +66,7 @@ export interface AppearanceUpdatePayload {
   navbarVariant?: LayoutVariant;
   heroVariant?: LayoutVariant;
   aboutVariant?: LayoutVariant;
+  faqVariant?: LayoutVariant;
   customCursorVariant?: CustomCursorVariant;
   navbar?: NavbarContent;
   visibility?: VisibilityMap;

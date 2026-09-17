@@ -269,7 +269,7 @@ const TeamForm = () => {
               {...register("phone")}
               error={!!errors.phone}
               hint={errors.phone?.message as string}
-              placeholder="+91 93248 77493"
+              placeholder="+1 555 010 0000"
             />
           </div>
 

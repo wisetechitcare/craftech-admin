@@ -9,7 +9,8 @@ import InputField from "../../../components/admin/ui/InputField";
 import ListRow from "@/components/admin/ui/ListRow";
 import TextArea from "../../../components/admin/ui/TextArea";
 import SelectField from "../../../components/admin/ui/SelectField";
-import SitePreview, { PreviewSection } from "@/components/admin/ui/SitePreview";
+import PreviewPanel from "@/components/admin/ui/PreviewPanel";
+import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
   ElementVisibility,
   VisibilityToggle,
@@ -414,7 +415,7 @@ export default function HeroCMS() {
         }
         action={
           <Link
-            to="/admin/appearance"
+            to="/admin/appearance/hero"
             className="text-xs font-bold text-info underline underline-offset-2"
           >
             Change in Appearance
@@ -422,45 +423,29 @@ export default function HeroCMS() {
         }
       />
 
-      {/* items-start so the preview column can stick instead of stretching to
-          the form's full height. `main` is the scroll container, so `sticky
-          top-0` here follows the page as the form scrolls past it. */}
-      <div className="grid items-start gap-6 xl:grid-cols-4">
-        <aside className="space-y-2 xl:order-last xl:sticky xl:top-0">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
-              Preview
-            </h3>
-            {/* Absent means visible, so the default state IS the empty map and
-                clearing it is the whole reset. It clears every page's flags,
-                which is what "everything visible" means; nothing is written
-                until Save, like every switch on this page. */}
-            <button
-              type="button"
-              onClick={() => setVisibility({})}
-              disabled={hiddenCount === 0}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Eye className="w-3 h-3" />
-              {hiddenCount ? `Show all (${hiddenCount} hidden)` : "All visible"}
-            </button>
-          </div>
-          {/* The real Hero cycles its own frames on its own timer, so the frame
-              picker that used to sit here has nothing left to pick. */}
-          <SitePreview
-            section={PreviewSection.HERO}
-            draft={{
-              heroContent: content,
-              appearance: { heroVariant: variant, visibility },
-            }}
-          />
-          <p className="text-[11px] text-ink-faint leading-relaxed">
-            The live Hero, rendered by the website itself from what is typed
-            here. Nothing is saved until you press Save.
-          </p>
-        </aside>
-
-        <form onSubmit={handleSubmit} className="space-y-6 xl:col-span-3">
+      <PreviewPanel
+        section={PreviewSection.HERO}
+        placement="above"
+        draft={{
+          heroContent: content,
+          appearance: { heroVariant: variant, visibility },
+        }}
+        caption="The live Hero, rendered by the website itself from what is typed here. Nothing is saved until you press Save."
+        actions={
+          // Absent means visible, so the empty map IS the default and clearing
+          // it is the whole reset. Nothing is written until Save.
+          <button
+            type="button"
+            onClick={() => setVisibility({})}
+            disabled={hiddenCount === 0}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Eye className="w-3 h-3" />
+            {hiddenCount ? `Show all (${hiddenCount} hidden)` : "All visible"}
+          </button>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-paper border border-line rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
@@ -718,7 +703,7 @@ export default function HeroCMS() {
             </button>
           </div>
         </form>
-      </div>
+      </PreviewPanel>
     </div>
   );
 }

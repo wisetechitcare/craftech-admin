@@ -21,10 +21,11 @@ import TestimonialsList from "./pages/admin/cms/TestimonialsList";
 import ClientsList from "./pages/admin/cms/ClientsList";
 import LeadsCRM from "./pages/admin/LeadsCRM";
 import Settings from "./pages/admin/cms/Settings";
-import Appearance from "./pages/admin/cms/Appearance";
+import AppearanceLayout from "./pages/admin/appearance/AppearanceLayout";
+import AppearanceStyle from "./pages/admin/appearance/AppearanceStyle";
+import { PreviewSection } from "./components/admin/ui/SitePreview";
 import SiteIdentityLayout from "./pages/admin/site-identity/SiteIdentityLayout";
 import SiteIdentityBranding from "./pages/admin/site-identity/SiteIdentityBranding";
-import SiteIdentityNavigation from "./pages/admin/site-identity/SiteIdentityNavigation";
 import SiteIdentityCursor from "./pages/admin/site-identity/SiteIdentityCursor";
 import SiteIdentityScrollProgress from "./pages/admin/site-identity/SiteIdentityScrollProgress";
 import NavbarCMS from "./pages/admin/cms/NavbarCMS";
@@ -89,14 +90,66 @@ function App() {
           <Route path="leads" element={<LeadsCRM />} />
           <Route path="ctas" element={<CTACMS />} />
           <Route path="settings" element={<Settings />} />
-          <Route path="appearance" element={<Appearance />} />
+          {/* One page per section, keyed so moving between them remounts the
+              form instead of briefly showing the previous section's style. */}
+          <Route path="appearance" element={<AppearanceLayout />}>
+            <Route
+              index
+              element={<Navigate to="/admin/appearance/hero" replace />}
+            />
+            <Route
+              path="hero"
+              element={
+                <AppearanceStyle
+                  key="hero"
+                  field="heroVariant"
+                  label="Hero Style"
+                  section={PreviewSection.HERO}
+                />
+              }
+            />
+            <Route
+              path="about"
+              element={
+                <AppearanceStyle
+                  key="about"
+                  field="aboutVariant"
+                  label="About Style"
+                  section={PreviewSection.ABOUT}
+                  viewportHeight={3200}
+                />
+              }
+            />
+            <Route
+              path="faq"
+              element={
+                <AppearanceStyle
+                  key="faq"
+                  field="faqVariant"
+                  label="FAQ Style"
+                  section={PreviewSection.FAQ}
+                />
+              }
+            />
+          </Route>
           <Route path="site-identity" element={<SiteIdentityLayout />}>
             <Route
               index
               element={<Navigate to="/admin/site-identity/branding" replace />}
             />
             <Route path="branding" element={<SiteIdentityBranding />} />
-            <Route path="navigation" element={<SiteIdentityNavigation />} />
+            <Route
+              path="navigation"
+              element={
+                <AppearanceStyle
+                  field="navbarVariant"
+                  label="Navbar Style"
+                  section={PreviewSection.NAVBAR}
+                  viewportHeight={340}
+                  note="The navigation style applies globally on every page. Link labels and the call-to-action are edited on the Navbar content page."
+                />
+              }
+            />
             <Route path="cursor" element={<SiteIdentityCursor />} />
             <Route
               path="scroll-progress"

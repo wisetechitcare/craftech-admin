@@ -14,6 +14,16 @@ const breadcrumbMap: Record<string, Crumb[]> = {
     { label: "Dashboard", href: "/admin" },
     { label: "Hero & Stats" },
   ],
+  "/admin/hero": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Home", href: "/admin/hero" },
+    { label: "Hero Section" },
+  ],
+  "/admin/faq": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Home", href: "/admin/hero" },
+    { label: "FAQ Section" },
+  ],
   "/admin/process": [
     { label: "Dashboard", href: "/admin" },
     { label: "Process Blueprint" },
@@ -56,9 +66,20 @@ const breadcrumbMap: Record<string, Crumb[]> = {
     { label: "Dashboard", href: "/admin" },
     { label: "Settings" },
   ],
-  "/admin/appearance": [
+  "/admin/appearance/hero": [
     { label: "Dashboard", href: "/admin" },
-    { label: "Appearance" },
+    { label: "Appearance", href: "/admin/appearance/hero" },
+    { label: "Hero" },
+  ],
+  "/admin/appearance/about": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Appearance", href: "/admin/appearance/hero" },
+    { label: "About" },
+  ],
+  "/admin/appearance/faq": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Appearance", href: "/admin/appearance/hero" },
+    { label: "FAQ" },
   ],
   "/admin/site-identity/branding": [
     { label: "Dashboard", href: "/admin" },

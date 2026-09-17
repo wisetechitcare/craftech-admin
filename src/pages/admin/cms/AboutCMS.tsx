@@ -10,12 +10,10 @@ import StorySection from "@/components/admin/about/StorySection";
 import WhatWeDoSection from "@/components/admin/about/WhatWeDoSection";
 import WhoWeAreSection from "@/components/admin/about/WhoWeAreSection";
 import WhyChooseUsSection from "@/components/admin/about/WhyChooseUsSection";
-import {
-  HEADING,
-  type AboutSectionProps,
-} from "@/components/admin/about/shared";
+import { type AboutSectionProps } from "@/components/admin/about/shared";
 import { DragBlock } from "@/components/admin/ui/DragList";
-import SitePreview, { PreviewSection } from "@/components/admin/ui/SitePreview";
+import PreviewPanel from "@/components/admin/ui/PreviewPanel";
+import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
   ElementVisibility,
   VisibilityToggle,
@@ -295,7 +293,7 @@ export default function AboutCMS() {
         }
         action={
           <Link
-            to="/admin/appearance"
+            to="/admin/appearance/about"
             className="text-xs font-bold text-info underline underline-offset-2"
           >
             Change in Appearance
@@ -303,52 +301,44 @@ export default function AboutCMS() {
         }
       />
 
-      <div className="grid items-start gap-6 xl:grid-cols-4">
-        <aside className="space-y-2 xl:order-last xl:sticky xl:top-0">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className={HEADING}>
-              Preview{" "}
-              <span className="text-ink-faint normal-case font-normal">
-                — {ABOUT_VARIANT_LABELS[variant]}
-              </span>
-            </h3>
-            {/* Absent means visible, so the default state IS the empty map —
-                clearing it is the whole reset. It clears the flags set under
-                the other two layouts too, which is what "everything visible"
-                means; nothing is written until Save, like every toggle here. */}
-            <button
-              type="button"
-              onClick={() => setVisibility({})}
-              disabled={hiddenCount === 0}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Eye className="w-3 h-3" />
-              {hiddenCount ? `Show all (${hiddenCount} hidden)` : "All visible"}
-            </button>
-          </div>
-          <div className="max-h-[calc(100vh-11rem)] overflow-y-auto rounded-lg">
-            <SitePreview
-              section={PreviewSection.ABOUT}
-              draft={{
-                aboutContent: content,
-                appearance: {
-                  aboutVariant: variant,
-                  visibility,
-                  // The dragged order, before it is saved.
-                  sectionOrder: order,
-                },
-              }}
-              viewportHeight={3200}
-            />
-          </div>
-          <p className="text-[11px] text-ink-faint leading-relaxed">
-            The live About page, rendered by the website itself from what is
-            typed here — scroll the panel for the rest of it. Nothing is saved
-            until you press Save.
-          </p>
-        </aside>
-
-        <form onSubmit={handleSubmit} className="space-y-6 xl:col-span-3">
+      <PreviewPanel
+        section={PreviewSection.ABOUT}
+        placement="side"
+        draft={{
+          aboutContent: content,
+          appearance: {
+            aboutVariant: variant,
+            visibility,
+            // The dragged order, before it is saved.
+            sectionOrder: order,
+          },
+        }}
+        viewportHeight={3200}
+        title={
+          <>
+            Preview{" "}
+            <span className="text-ink-faint normal-case font-normal">
+              — {ABOUT_VARIANT_LABELS[variant]}
+            </span>
+          </>
+        }
+        caption="The live About page, rendered by the website itself from what is typed here — scroll the panel for the rest of it. Nothing is saved until you press Save."
+        actions={
+          // Absent means visible, so the empty map IS the default and clearing
+          // it is the whole reset — including flags set under the other two
+          // layouts. Nothing is written until Save.
+          <button
+            type="button"
+            onClick={() => setVisibility({})}
+            disabled={hiddenCount === 0}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Eye className="w-3 h-3" />
+            {hiddenCount ? `Show all (${hiddenCount} hidden)` : "All visible"}
+          </button>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
           {order.map((key, index) => {
             const section = SECTIONS[key];
             if (!section) return null;
@@ -390,7 +380,7 @@ export default function AboutCMS() {
             </button>
           </div>
         </form>
-      </div>
+      </PreviewPanel>
     </div>
   );
 }
