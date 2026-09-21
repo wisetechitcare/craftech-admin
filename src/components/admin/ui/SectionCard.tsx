@@ -1,5 +1,6 @@
 import React from "react";
 import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const CARD = "bg-paper border border-line rounded-xl p-6 space-y-5";
 export const HEADING =
@@ -75,12 +76,13 @@ interface AddButtonProps {
 }
 
 export const AddButton = ({ label, disabled, onClick }: AddButtonProps) => (
-  <button
+  <Button
     type="button"
     onClick={onClick}
+    variant="none"
     disabled={disabled}
-    className="text-xs flex items-center gap-1 text-info disabled:opacity-40 disabled:cursor-not-allowed"
+    className="text-xs flex items-center cursor-pointer gap-1 text-info disabled:opacity-40 disabled:cursor-not-allowed"
   >
     <Plus className="w-4 h-4" /> {label}
-  </button>
+  </Button>
 );

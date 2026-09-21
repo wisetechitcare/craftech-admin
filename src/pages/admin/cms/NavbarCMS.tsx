@@ -7,34 +7,34 @@ import { Loader2, Save } from "lucide-react";
 import InputField from "@/components/admin/ui/InputField";
 import { AdminInfoCallout } from "@/components/common";
 import ListRow from "@/components/admin/ui/ListRow";
-import { AddButton, SectionCard } from "@/components/admin/ui/SectionCard";
+import SelectField from "@/components/admin/ui/SelectField";
+import { SectionCard } from "@/components/admin/ui/SectionCard";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
-  ElementVisibility,
+  VisibilityToggle,
+  isVisible,
   type VisibilitySection,
 } from "@/components/admin/ui/VisibilityToggle";
+import { Button } from "@/components/ui/button";
 
 import { DragList } from "@/lib/constants/drag-lists";
-import { appearanceApi } from "@/services/api";
 import {
-  EMPTY_NAV_LINK,
-  type AppearanceResponse,
-  type NavbarContent,
+  NAVBAR_VISIBILITY_GROUP,
+  NavbarVisibilityKey,
+} from "@/lib/constants/navbar";
+import {
+  navigationDestinationSelectOptions,
+  withNavigationDestinationKey,
+} from "@/lib/constants/navigation";
+import { appearanceApi } from "@/services/api";
+import type {
+  AppearanceResponse,
+  NavbarContent,
+  NavbarItem,
 } from "@/types/appearance";
-import { move, patchAt, removeAt } from "@/utils/utils";
+import { move, patchAt } from "@/utils/utils";
 
-/**
- * The site header's content and which of its parts are drawn.
- *
- * Both live on the Appearance record, so this page reads and writes that one
- * endpoint — which STYLE of header renders them stays on the Appearance page
- * with the Hero and About pickers, the same way About CMS edits copy while its
- * layout is chosen there.
- *
- * Link order IS the stored order: no order column and no per-row endpoint, so
- * dragging a row is a pure array transform that Save writes as one document.
- */
 export default function NavbarCMS() {
   const [data, setData] = useState<AppearanceResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -75,14 +75,6 @@ export default function NavbarCMS() {
       prev ? { ...prev, navbar: { ...prev.navbar, ...changes } } : prev,
     );
 
-  // Merged into the map this page LOADED, never sent as the navbar keys alone:
-  // the column is replaced whole on write, so a partial map would delete every
-  // flag the About and Hero forms set.
-  //
-  // ponytail: last write wins across tabs — a section hidden in About CMS while
-  // this page sat open is un-hidden by saving here. Same race About CMS already
-  // has; the fix is a server-side merge of the map, worth doing the first time
-  // two people actually edit at once.
   const patchVisibility = (key: string, visible: boolean) =>
     setData((prev) =>
       prev
@@ -92,6 +84,13 @@ export default function NavbarCMS() {
           }
         : prev,
     );
+
+  const patchLink = (index: number, changes: Partial<NavbarItem>) =>
+    setData((prev) => {
+      if (!prev) return prev;
+      const links = patchAt(prev.navbar.links, index, changes);
+      return { ...prev, navbar: { ...prev.navbar, links } };
+    });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,9 +102,6 @@ export default function NavbarCMS() {
     setSaving(true);
 
     try {
-      // Only the two fields this form owns. The layout switches are the
-      // Appearance page's to write, and sending them from here would re-write
-      // them from a copy that could be minutes stale.
       const response = await appearanceApi.update({
         navbar: data.navbar,
         visibility: data.visibility ?? {},
@@ -116,8 +112,6 @@ export default function NavbarCMS() {
       if (response.data?.success) {
         isError = false;
         message = "Navbar saved successfully";
-        // Trust the server's copy over local state, so what the form shows
-        // after a save is what was actually stored.
         setData(response.data.data);
       }
     } catch (error) {
@@ -150,17 +144,32 @@ export default function NavbarCMS() {
     );
 
   const { navbar, navbarRules: rules } = data;
-  // The server's catalogue for the header, not a list written here: a part
-  // added to the registry appears with no change to this file, and nothing is
-  // drawn that could not be saved.
-  const navbarParts: VisibilitySection[] =
-    data.visibilityOptions?.find((group) => group.key === "navbar")?.sections ??
-    [];
+  const navbarSections: VisibilitySection[] =
+    data.visibilityOptions?.find(
+      (group) => group.key === NAVBAR_VISIBILITY_GROUP,
+    )?.sections ?? [];
+
+  const elementToggle = (key: NavbarVisibilityKey) =>
+    navbarSections.some((section) => section.key === key) ? (
+      <VisibilityToggle
+        visible={isVisible(data.visibility, key)}
+        onChange={(visible) => patchVisibility(key, visible)}
+      />
+    ) : undefined;
+
+  const ctaVisible = isVisible(data.visibility, NavbarVisibilityKey.CTA);
+  const ctaDestinationDisabled =
+    navbarSections.some((section) => section.key === NavbarVisibilityKey.CTA) &&
+    !ctaVisible;
+
+  const themeSection = navbarSections.find(
+    (section) => section.key === NavbarVisibilityKey.THEME_TOGGLE,
+  );
 
   return (
     <div className="space-y-6">
       <AdminInfoCallout
-        description="The links and button the site header draws, on desktop and in the mobile menu alike. Which header STYLE renders them is set on the Appearance page. Updates reflect immediately (no redeploy needed)."
+        description="Rename navigation items, choose which appear in the header, and set where the call-to-action goes. Paths are managed by the site — you pick destinations from a list. Which header STYLE renders them is set on the Appearance page."
         action={
           <Link
             to="/admin/site-identity/navigation"
@@ -174,7 +183,7 @@ export default function NavbarCMS() {
       <div>
         <h2 className="text-2xl font-bold text-ink">Navbar</h2>
         <p className="text-sm text-ink-mute mt-1">
-          Navigation links, the call-to-action button, and what the header shows
+          Navigation labels, visibility, order, and the header button
         </p>
       </div>
 
@@ -184,143 +193,126 @@ export default function NavbarCMS() {
         draft={{
           appearance: { navbar, visibility: data.visibility ?? {} },
         }}
-        // Just the bar and the top of the Hero behind it: every header variant
-        // is transparent until scrolled, so alone it would draw nothing.
         viewportHeight={340}
         caption="The live header, rendered by the website itself from what is typed here. Nothing is saved until you press Save."
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <SectionCard
-            title="Navigation Links"
-            description="Listed in the order below. Every layout draws the same links."
-            count={navbar.links.length}
-            max={rules.links.max}
-            controls={
-              <AddButton
-                label="Add link"
-                disabled={navbar.links.length >= rules.links.max}
-                onClick={() =>
-                  patchNavbar({ links: [...navbar.links, EMPTY_NAV_LINK] })
-                }
-              />
-            }
+            title="Navigation links"
+            description="Drag to reorder. Hidden links stay saved but do not appear in the header or footer quick links."
           >
-            {navbar.links.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-xs text-ink-faint">
-                No links. The header will draw the logo and the button only.
-              </p>
-            ) : (
-              <div className="space-y-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {navbar.links.map((link, i) => (
-                  <ListRow
-                    key={i}
-                    title="Link"
-                    index={i}
-                    count={navbar.links.length}
-                    listId={DragList.NAVBAR_LINKS}
-                    onMove={(from, to) =>
-                      patchNavbar({ links: move(navbar.links, from, to) })
-                    }
-                    onRemove={(index) =>
-                      patchNavbar({ links: removeAt(navbar.links, index) })
+                  <div
+                    key={link.destinationKey}
+                    className={
+                      i === navbar.links.length - 1 &&
+                      navbar.links.length % 2 === 1
+                        ? "md:col-span-2"
+                        : undefined
                     }
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ListRow
+                      chrome="grip"
+                      title={link.label || "Navigation link"}
+                      index={i}
+                      count={navbar.links.length}
+                      listId={DragList.NAVBAR_LINKS}
+                      onMove={(from, to) =>
+                        patchNavbar({ links: move(navbar.links, from, to) })
+                      }
+                      onRemove={() => {}}
+                      canRemove={false}
+                      showRemove={false}
+                    >
                       <InputField
-                        label="Label"
+                        label={`NavItem Label ${i + 1}`}
                         value={link.label}
                         onChange={(e) =>
-                          patchNavbar({
-                            links: patchAt(navbar.links, i, {
-                              label: e.target.value,
-                            }),
-                          })
+                          patchLink(i, { label: e.target.value })
                         }
                         maxChars={rules.label.max}
-                      />
-                      <InputField
-                        label="Link"
-                        value={link.href}
-                        onChange={(e) =>
-                          patchNavbar({
-                            links: patchAt(navbar.links, i, {
-                              href: e.target.value,
-                            }),
-                          })
+                        labelAction={
+                          <VisibilityToggle
+                            visible={link.visible}
+                            onChange={(visible) => patchLink(i, { visible })}
+                          />
                         }
-                        maxChars={rules.href.max}
-                        tooltip='A page ("/about"), a homepage section ("/#services") or a full web address.'
                       />
-                    </div>
-                  </ListRow>
+                    </ListRow>
+                  </div>
                 ))}
               </div>
-            )}
+
+              {themeSection && (
+                <div className="flex items-center justify-between gap-4 border-t border-line pt-4">
+                  <div className="min-w-0">
+                    <p className="text-base font-medium text-ink">
+                      {themeSection.label}
+                    </p>
+                    {themeSection.helper && (
+                      <p className="mt-0.5 text-xs text-ink-mute">
+                        {themeSection.helper}
+                      </p>
+                    )}
+                  </div>
+                  {elementToggle(NavbarVisibilityKey.THEME_TOGGLE)}
+                </div>
+              )}
+            </div>
           </SectionCard>
 
           <SectionCard
             title="Call-to-action button"
             description="The button beside the links, and its twin at the foot of the mobile menu."
+            controls={elementToggle(NavbarVisibilityKey.CTA)}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label="Button label"
                 value={navbar.cta.label}
                 onChange={(e) =>
-                  patchNavbar({ cta: { ...navbar.cta, label: e.target.value } })
+                  patchNavbar({
+                    cta: { ...navbar.cta, label: e.target.value },
+                  })
                 }
                 maxChars={rules.ctaLabel.max}
               />
-              <InputField
-                label="Button link"
-                value={navbar.cta.href}
-                onChange={(e) =>
-                  patchNavbar({ cta: { ...navbar.cta, href: e.target.value } })
-                }
-                maxChars={rules.href.max}
+              <SelectField
+                label="Destination"
+                value={navbar.cta.destinationKey}
+                options={navigationDestinationSelectOptions(
+                  data.navigationDestinations,
+                )}
+                onValueChange={(value) => {
+                  const next = withNavigationDestinationKey(
+                    navbar.cta,
+                    value,
+                    data.navigationDestinations,
+                  );
+                  if (next) patchNavbar({ cta: next });
+                }}
+                disabled={ctaDestinationDisabled}
+                tooltip="Where this button takes visitors. Internal pages and sections are chosen from the list — no paths to type."
               />
             </div>
           </SectionCard>
 
-          {navbarParts.length > 0 && (
-            <SectionCard
-              title="What the header shows"
-              description="Hidden parts keep their content, and hide on every screen size — desktop bar and mobile menu together."
-            >
-              <ElementVisibility
-                elements={navbarParts}
-                map={data.visibility ?? {}}
-                sectionVisible
-                onChange={patchVisibility}
-              />
-            </SectionCard>
-          )}
-
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => fetchAppearance()}
-              className="px-6 py-2 text-ink border border-line rounded-lg font-bold text-sm hover:bg-paper transition-colors"
-            >
-              Reset
-            </button>
-            <button
+          <div className="flex items-center justify-end gap-4">
+            <Button
               type="submit"
               disabled={saving}
-              className="px-6 py-2 bg-info text-white rounded-lg font-bold text-sm hover:bg-info disabled:opacity-50 flex items-center gap-2 transition-colors"
-            >
-              {saving ? (
-                <>
+              startIcon={
+                saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
+                ) : (
                   <Save className="w-4 h-4" />
-                  Save Navbar
-                </>
-              )}
-            </button>
+                )
+              }
+            >
+              Save Changes
+            </Button>
           </div>
         </form>
       </PreviewPanel>

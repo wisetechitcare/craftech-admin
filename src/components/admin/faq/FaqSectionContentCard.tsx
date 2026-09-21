@@ -7,17 +7,15 @@ import InputField from "@/components/admin/ui/InputField";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 import TextArea from "@/components/admin/ui/TextArea";
 import {
-  SectionVisibilitySwitch,
   VisibilityToggle,
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
 
-import { FAQ_SECTION_DEFAULTS } from "@/lib/constants/faq";
+import { FAQ_SECTION_DEFAULTS, FAQ_VISIBILITY_KEY } from "@/lib/constants/faq";
 import { appearanceApi, faqApi } from "@/services/api";
 import type { FaqSectionContent } from "@/types/faq";
-
-const VISIBILITY_KEY = "home.faq";
+import { Button } from "@/components/ui/button";
 
 interface FaqSectionContentCardProps {
   content: FaqSectionContent;
@@ -45,9 +43,9 @@ const FaqSectionContentCard = ({
     onVisibilityChange({ ...visibility, [key]: visible });
 
   // A hidden section takes its parts with it, so their toggles disable.
-  const sectionVisible = isVisible(visibility, VISIBILITY_KEY);
+  const sectionVisible = isVisible(visibility, FAQ_VISIBILITY_KEY);
   const fieldToggle = (part: string) => {
-    const key = `${VISIBILITY_KEY}.${part}`;
+    const key = `${FAQ_VISIBILITY_KEY}.${part}`;
     return (
       <VisibilityToggle
         visible={sectionVisible && isVisible(visibility, key)}
@@ -102,13 +100,7 @@ const FaqSectionContentCard = ({
     <form onSubmit={handleSubmit}>
       <SectionCard
         title="FAQ Section Content"
-        description="Shown above the questions in every FAQ style. Leave a field empty to keep the text shown as its placeholder. The switch hides the whole section; nothing is deleted."
-        controls={
-          <SectionVisibilitySwitch
-            visible={sectionVisible}
-            onChange={(visible) => patchVisibility(VISIBILITY_KEY, visible)}
-          />
-        }
+        description="Shown above the questions in every FAQ style. Leave a field empty to keep the text shown as its placeholder."
       >
         <InputField
           label="Title"
@@ -137,18 +129,21 @@ const FaqSectionContentCard = ({
           />
         </div>
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 bg-info hover:bg-info text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-sm font-bold"
+            size="sm"
+            startIcon={
+              saving ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <Save className="size-5" />
+              )
+            }
           >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
             Save Changes
-          </button>
+          </Button>
         </div>
       </SectionCard>
     </form>

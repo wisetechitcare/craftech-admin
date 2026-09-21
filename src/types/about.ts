@@ -3,6 +3,7 @@
 // payload as `rules`, so the admin renders counters from the same numbers the
 // server enforces and the two can never drift. Same arrangement as types/hero.
 
+import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import type { FieldErrors } from "./hero";
 import { LayoutVariant } from "./common";
 
@@ -12,7 +13,8 @@ export type AboutVariant = LayoutVariant;
 
 export interface AboutLink {
   label: string;
-  url: string;
+  destinationKey: string;
+  externalUrl?: string | null;
 }
 
 export interface AboutStat {
@@ -101,6 +103,7 @@ export interface AboutRules {
 export interface AboutResponse extends AboutContent {
   variant: AboutVariant;
   rules: AboutRules;
+  navigationDestinations: NavigationDestinationOption[];
 }
 
 export const ABOUT_VARIANT_LABELS: Record<AboutVariant, string> = {

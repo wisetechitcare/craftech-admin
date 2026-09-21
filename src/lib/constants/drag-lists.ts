@@ -14,5 +14,6 @@ export enum DragList {
   ABOUT_HOW_WE_WORK = "about.howWeWork.steps",
   FAQ_ITEMS = "faq.items",
   HERO_SLIDES = "hero.slides",
+  HERO_TRUST_STRIP = "hero.trustStrip",
   NAVBAR_LINKS = "navbar.links",
 }

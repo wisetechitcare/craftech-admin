@@ -72,7 +72,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div>
         {(label || tooltip || labelAction) && (
-          <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="mb-2 flex min-h-8 items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <label
                 className={cn(

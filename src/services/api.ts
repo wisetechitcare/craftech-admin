@@ -82,11 +82,6 @@ export const uploadApi = {
       headers: { "Content-Type": "multipart/form-data" },
       onUploadProgress: onProgress,
     }),
-  highlightVideo: (formData: FormData, onProgress?: any) =>
-    api.post("/upload/highlights/video", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      onUploadProgress: onProgress,
-    }),
   // Any CMS slot that takes an image or a video; the server picks Cloudinary's
   // resource type from the file. `folder` groups the asset (e.g. 'hero').
   cmsMedia: (folder: string, formData: FormData, onProgress?: any) =>
@@ -96,11 +91,6 @@ export const uploadApi = {
     }),
   logo: (formData: FormData, onProgress?: any) =>
     api.post("/upload/logo", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      onUploadProgress: onProgress,
-    }),
-  highlightThumbnail: (formData: FormData, onProgress?: any) =>
-    api.post("/upload/highlights/thumbnail", formData, {
       headers: { "Content-Type": "multipart/form-data" },
       onUploadProgress: onProgress,
     }),
@@ -119,14 +109,6 @@ export const contentApi = {
   updateService: (id: string, data: any) =>
     api.put(`/content/services/${id}`, data),
   deleteService: (id: string) => api.delete(`/content/services/${id}`),
-
-  getHighlightVideos: () => api.get("/content/highlight-videos"),
-  createHighlightVideo: (data: any) =>
-    api.post("/content/highlight-videos", data),
-  updateHighlightVideo: (id: string, data: any) =>
-    api.put(`/content/highlight-videos/${id}`, data),
-  deleteHighlightVideo: (id: string) =>
-    api.delete(`/content/highlight-videos/${id}`),
 };
 
 // ── CMS ───────────────────────────────────────────────────────────────────────

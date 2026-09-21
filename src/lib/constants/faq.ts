@@ -14,3 +14,7 @@ export const FAQ_LIMITS = {
   question: { min: 5, max: 200 },
   answer: { min: 10, max: 1500 },
 } as const;
+
+/** The appearance flag for the whole FAQ section — the page header owns the
+ *  switch, the card and the preview read the same key. */
+export const FAQ_VISIBILITY_KEY = "home.faq";

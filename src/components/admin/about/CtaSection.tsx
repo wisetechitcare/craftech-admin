@@ -1,20 +1,28 @@
 import InputField from "@/components/admin/ui/InputField";
+import SelectField from "@/components/admin/ui/SelectField";
 import TextArea from "@/components/admin/ui/TextArea";
 
 import { HeadFields, SectionCard, type AboutSectionProps } from "./shared";
 
 import { AboutSectionKey } from "@/lib/constants/about";
+import {
+  navigationDestinationSelectOptions,
+  withNavigationDestinationKey,
+} from "@/lib/constants/navigation";
 
-/** The closing band at the foot of the page. */
 const CtaSection = ({
   content,
   rules,
+  navigationDestinations,
   errors,
   patchSection,
   toggle,
   elementToggles,
 }: AboutSectionProps) => {
   const { cta } = content;
+  const destinationOptions = navigationDestinationSelectOptions(
+    navigationDestinations,
+  );
 
   return (
     <SectionCard
@@ -51,17 +59,21 @@ const CtaSection = ({
           error={!!errors["cta.primary.label"]}
           hint={errors["cta.primary.label"]}
         />
-        <InputField
-          label="Primary button — link"
-          value={cta.primary.url}
-          onChange={(e) =>
-            patchSection("cta", {
-              primary: { ...cta.primary, url: e.target.value },
-            })
-          }
-          error={!!errors["cta.primary.url"]}
-          hint={errors["cta.primary.url"]}
-          tooltip="An anchor on the home page (/#contact), a path (/projects) or a full URL."
+        <SelectField
+          label="Destination"
+          value={cta.primary.destinationKey}
+          options={destinationOptions}
+          onValueChange={(value) => {
+            const next = withNavigationDestinationKey(
+              cta.primary,
+              value,
+              navigationDestinations,
+            );
+            if (next) patchSection("cta", { primary: next });
+          }}
+          error={!!errors["cta.primary.destinationKey"]}
+          hint={errors["cta.primary.destinationKey"]}
+          tooltip="Where this button takes visitors. Internal pages and sections are chosen from the list — no paths to type."
         />
       </div>
 
@@ -72,7 +84,7 @@ const CtaSection = ({
           onChange={(e) =>
             patchSection("cta", {
               secondary: e.target.checked
-                ? { label: "", url: "/#portfolio" }
+                ? { label: "", destinationKey: "portfolio" }
                 : null,
             })
           }
@@ -94,16 +106,21 @@ const CtaSection = ({
             error={!!errors["cta.secondary.label"]}
             hint={errors["cta.secondary.label"]}
           />
-          <InputField
-            label="Secondary button — link"
-            value={cta.secondary.url}
-            onChange={(e) =>
-              patchSection("cta", {
-                secondary: { ...cta.secondary!, url: e.target.value },
-              })
-            }
-            error={!!errors["cta.secondary.url"]}
-            hint={errors["cta.secondary.url"]}
+          <SelectField
+            label="Destination"
+            value={cta.secondary.destinationKey}
+            options={destinationOptions}
+            onValueChange={(value) => {
+              const next = withNavigationDestinationKey(
+                cta.secondary!,
+                value,
+                navigationDestinations,
+              );
+              if (next) patchSection("cta", { secondary: next });
+            }}
+            error={!!errors["cta.secondary.destinationKey"]}
+            hint={errors["cta.secondary.destinationKey"]}
+            tooltip="Where this button takes visitors. Internal pages and sections are chosen from the list — no paths to type."
           />
         </div>
       )}

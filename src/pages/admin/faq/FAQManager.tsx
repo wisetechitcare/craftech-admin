@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Edit2,
   Trash2,
-  Plus,
   Palette,
   Loader2,
   RotateCcw,
   Save,
+  Plus,
 } from "lucide-react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import {
   AdminInfoCallout,
   CommonTable,
+  PageHeader,
   type Column,
 } from "@/components/common";
 import FaqSectionContentCard from "@/components/admin/faq/FaqSectionContentCard";
@@ -25,13 +26,17 @@ import {
   useDragItem,
 } from "@/components/admin/ui/DragList";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
+import { SectionCard } from "@/components/admin/ui/SectionCard";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
+  SectionVisibilitySwitch,
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
+import { Button } from "@/components/ui/button";
 
 import { DragList } from "@/lib/constants/drag-lists";
+import { FAQ_VISIBILITY_KEY } from "@/lib/constants/faq";
 import { appearanceApi, faqApi } from "@/services/api";
 import {
   EMPTY_FAQ_SECTION,
@@ -102,6 +107,7 @@ const FAQManager = () => {
 
   const isFull = max > 0 && faqs.length >= max;
   const isReordered = ids(faqs).join() !== ids(saved).join();
+  const sectionVisible = isVisible(visibility, FAQ_VISIBILITY_KEY);
 
   const fetchFAQs = async () => {
     try {
@@ -196,20 +202,22 @@ const FAQManager = () => {
       widthClassName: "w-32",
       cell: (faq) => (
         <div className="flex justify-end gap-2">
-          <button
+          <Button
+            variant="none"
             onClick={() => navigate(`/admin/faq/${faq._id}`)}
             className="p-2 rounded-lg bg-info/10 text-info hover:bg-info/15 transition-colors"
             title="Edit"
           >
             <Edit2 size={16} />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="none"
             onClick={() => setDeleteModal(faq._id)}
             className="p-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/15 transition-colors"
             title="Delete"
           >
             <Trash2 size={16} />
-          </button>
+          </Button>
         </div>
       ),
     },
@@ -248,29 +256,23 @@ const FAQManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-ink">
-            FAQs
-            <span className="text-ink-faint font-normal text-2xl">
-              {" "}
-              ({faqs.length}/{max})
-            </span>
-          </h1>
-          <p className="text-ink-mute text-sm mt-2">
-            Manage frequently asked questions
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/admin/faq/new")}
-          disabled={isFull}
-          title={isFull ? `The list is limited to ${max} FAQs` : undefined}
-          className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-bold uppercase tracking-wider text-sm hover:shadow-lg hover:shadow-accent/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-        >
-          <Plus size={18} /> New FAQ
-        </button>
-      </div>
+      <PageHeader
+        title="FAQs"
+        count={faqs.length}
+        max={max}
+        description="Manage frequently asked questions. The switch hides the whole section; nothing is deleted."
+        action={
+          <SectionVisibilitySwitch
+            visible={sectionVisible}
+            onChange={(visible) =>
+              setVisibility((prev) => ({
+                ...prev,
+                [FAQ_VISIBILITY_KEY]: visible,
+              }))
+            }
+          />
+        }
+      />
 
       <AdminInfoCallout
         icon={Palette}
@@ -302,32 +304,54 @@ const FAQManager = () => {
           onVisibilityChange={setVisibility}
         />
 
-        <div className="space-y-3">
+        <SectionCard
+          title="Questions"
+          description="Drag a row by its handle to reorder them."
+          controls={
+            <Button
+              variant="primary"
+              disabled={isFull}
+              size="sm"
+              startIcon={<Plus size={20} />}
+              onClick={() => navigate("/admin/faq/new")}
+              className="text-sm font-bold"
+            >
+              Add FAQ
+            </Button>
+          }
+        >
           {isReordered && (
             <div className="flex items-center justify-between gap-4 rounded-xl border border-line bg-info/10 px-6 py-3">
               <p className="text-sm font-medium text-ink">
                 The order has changed. Save it to publish the new arrangement.
               </p>
               <div className="flex items-center gap-2">
-                <button
+                <Button
+                  variant="none"
+                  size="xs"
                   onClick={() => setFaqs(saved)}
                   disabled={savingOrder}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-raise transition-colors disabled:opacity-50"
+                  startIcon={<RotateCcw size={14} />}
+                  className="gap-1.5 text-sm font-medium text-ink-soft hover:bg-raise"
                 >
-                  <RotateCcw size={14} /> Reset
-                </button>
-                <button
+                  Reset
+                </Button>
+                <Button
+                  variant="none"
+                  size="xs"
                   onClick={saveOrder}
                   disabled={savingOrder}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-info text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  startIcon={
+                    savingOrder ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Save size={14} />
+                    )
+                  }
+                  className="gap-1.5 bg-info px-4 py-2 text-sm font-medium text-white"
                 >
-                  {savingOrder ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Save size={14} />
-                  )}
                   Save order
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -340,7 +364,7 @@ const FAQManager = () => {
             showEmptyMessage
             emptyMessage="No FAQs yet. Create your first one!"
           />
-        </div>
+        </SectionCard>
       </PreviewPanel>
 
       {/* Delete Modal */}
@@ -365,18 +389,22 @@ const FAQManager = () => {
                 This action cannot be undone.
               </p>
               <div className="flex gap-4">
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setDeleteModal(null)}
-                  className="flex-1 px-4 py-2 rounded-lg border border-line text-ink-soft font-bold hover:bg-raise transition-colors"
+                  className="flex-1 font-bold"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="none"
+                  size="sm"
                   onClick={() => handleDelete(deleteModal)}
-                  className="flex-1 px-4 py-2 rounded-lg bg-danger text-white font-bold hover:bg-danger transition-colors"
+                  className="flex-1 bg-danger font-bold text-white"
                 >
                   Delete
-                </button>
+                </Button>
               </div>
             </motion.div>
           </motion.div>
