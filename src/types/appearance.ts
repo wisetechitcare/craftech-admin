@@ -9,18 +9,23 @@ import type {
   VisibilitySection,
 } from "../components/admin/ui/VisibilityToggle";
 
+import type {
+  NavigationDestinationOption,
+  NavigationTarget,
+} from "@/lib/constants/navigation";
 import type { CustomCursorVariant, LayoutVariant } from "./common";
 
 export type { CustomCursorVariant, LayoutVariant };
 
-export interface NavbarLink {
+export interface NavbarItem {
+  destinationKey: string;
   label: string;
-  href: string;
+  visible: boolean;
 }
 
 export interface NavbarContent {
-  links: NavbarLink[];
-  cta: NavbarLink;
+  links: NavbarItem[];
+  cta: NavigationTarget;
 }
 
 interface Limit {
@@ -29,7 +34,6 @@ interface Limit {
 
 export interface NavbarRules {
   label: Limit;
-  href: Limit;
   ctaLabel: Limit;
   links: Limit;
 }
@@ -50,6 +54,7 @@ export interface AppearanceResponse {
   customCursorVariant: CustomCursorVariant;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
+  navigationDestinations: NavigationDestinationOption[];
   visibility: VisibilityMap | null;
   visibilityOptions: VisibilityGroup[];
   /** Always complete — the server repairs it and serves the default when
@@ -72,5 +77,3 @@ export interface AppearanceUpdatePayload {
   visibility?: VisibilityMap;
   sectionOrder?: string[];
 }
-
-export const EMPTY_NAV_LINK: NavbarLink = { label: "", href: "" };

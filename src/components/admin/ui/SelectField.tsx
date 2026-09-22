@@ -31,6 +31,7 @@ export interface SelectFieldProps {
   error?: boolean | FieldError;
   hint?: string;
   tooltip?: ReactNode;
+  labelAction?: ReactNode;
   options: SelectOption[];
   value?: string;
   onValueChange?: (value: string) => void;
@@ -50,6 +51,8 @@ interface SelectFieldWrapperProps {
   required?: boolean;
   labelClassName?: string;
   tooltip?: ReactNode;
+  labelAction?: ReactNode;
+  disabled?: boolean;
   hasError: boolean;
   resolvedHint?: string;
   className?: string;
@@ -61,6 +64,8 @@ function SelectFieldWrapper({
   required = false,
   labelClassName,
   tooltip,
+  labelAction,
+  disabled = false,
   hasError,
   resolvedHint,
   className,
@@ -68,20 +73,25 @@ function SelectFieldWrapper({
 }: SelectFieldWrapperProps) {
   return (
     <div className={className}>
-      {(label || tooltip) && (
-        <div className="mb-2 flex items-center gap-1.5">
-          {label && (
-            <label
-              className={cn(
-                "block text-sm font-medium text-black",
-                labelClassName,
-              )}
-            >
-              {label}
-              {required && <span className="text-error-500"> *</span>}
-            </label>
-          )}
-          {tooltip && <InfoTooltip content={tooltip} label={label} />}
+      {(label || tooltip || labelAction) && (
+        <div className="mb-2 flex min-h-8 items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5">
+            {label && (
+              <label
+                className={cn(
+                  "block text-sm font-medium text-black",
+                  disabled &&
+                    "cursor-not-allowed text-gray-500 opacity-40 dark:text-gray-400",
+                  labelClassName,
+                )}
+              >
+                {label}
+                {required && <span className="text-error-500"> *</span>}
+              </label>
+            )}
+            {tooltip && <InfoTooltip content={tooltip} label={label} />}
+          </div>
+          {labelAction}
         </div>
       )}
 
@@ -482,6 +492,7 @@ export default function SelectField({
   error,
   hint,
   tooltip,
+  labelAction,
   options,
   value,
   onValueChange,
@@ -505,6 +516,8 @@ export default function SelectField({
       required={required}
       labelClassName={labelClassName}
       tooltip={tooltip}
+      labelAction={labelAction}
+      disabled={disabled}
       hasError={hasError}
       resolvedHint={resolvedHint}
       className={className}

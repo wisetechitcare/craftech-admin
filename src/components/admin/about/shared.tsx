@@ -14,6 +14,7 @@ export {
   SectionCard,
 } from "@/components/admin/ui/SectionCard";
 
+import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import type {
   AboutContent,
   AboutItem,
@@ -28,6 +29,7 @@ import { move, patchAt, removeAt } from "@/utils/utils";
 export interface AboutSectionProps {
   content: AboutContent;
   rules: AboutRules;
+  navigationDestinations: NavigationDestinationOption[];
   errors: FieldErrors;
   patch: (changes: Partial<AboutContent>) => void;
   patchSection: <K extends keyof AboutContent>(

@@ -97,6 +97,9 @@ export function useDragItem<T extends HTMLElement = HTMLDivElement>({
   };
 }
 
+export const DRAG_GRIP_ON_CARD_CLASS =
+  "absolute -top-2 left-4 z-10 rounded-md border border-line bg-raise p-1 shadow-sm hover:border-info";
+
 interface DragHandleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
 }
@@ -174,7 +177,7 @@ export const DragBlock = ({
         <DragHandle
           {...handleProps}
           label={label}
-          className="absolute -top-2 left-4 z-10 rounded-md border border-line bg-raise p-1 shadow-sm hover:border-info"
+          className={DRAG_GRIP_ON_CARD_CLASS}
         />
       )}
       {children}

@@ -12,11 +12,10 @@ import {
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
 
-import { FAQ_SECTION_DEFAULTS } from "@/lib/constants/faq";
+import { FAQ_SECTION_DEFAULTS, FAQ_VISIBILITY_KEY } from "@/lib/constants/faq";
 import { appearanceApi, faqApi } from "@/services/api";
 import type { FaqSectionContent } from "@/types/faq";
-
-const VISIBILITY_KEY = "home.faq";
+import { Button } from "@/components/ui/button";
 
 interface FaqSectionContentCardProps {
   content: FaqSectionContent;
@@ -39,6 +38,22 @@ const FaqSectionContentCard = ({
 
   const patch = (changes: Partial<FaqSectionContent>) =>
     onChange({ ...content, ...changes });
+
+  const patchVisibility = (key: string, visible: boolean) =>
+    onVisibilityChange({ ...visibility, [key]: visible });
+
+  // A hidden section takes its parts with it, so their toggles disable.
+  const sectionVisible = isVisible(visibility, FAQ_VISIBILITY_KEY);
+  const fieldToggle = (part: string) => {
+    const key = `${FAQ_VISIBILITY_KEY}.${part}`;
+    return (
+      <VisibilityToggle
+        visible={sectionVisible && isVisible(visibility, key)}
+        disabled={!sectionVisible}
+        onChange={(visible) => patchVisibility(key, visible)}
+      />
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,21 +100,14 @@ const FaqSectionContentCard = ({
     <form onSubmit={handleSubmit}>
       <SectionCard
         title="FAQ Section Content"
-        description="Shown above the questions in every FAQ style. Leave a field empty to keep the text shown as its placeholder. The switch hides the whole section; nothing is deleted."
-        controls={
-          <VisibilityToggle
-            visible={isVisible(visibility, VISIBILITY_KEY)}
-            onChange={(visible) =>
-              onVisibilityChange({ ...visibility, [VISIBILITY_KEY]: visible })
-            }
-          />
-        }
+        description="Shown above the questions in every FAQ style. Leave a field empty to keep the text shown as its placeholder."
       >
         <InputField
           label="Title"
           value={content.title}
           onChange={(e) => patch({ title: e.target.value })}
           placeholder={FAQ_SECTION_DEFAULTS.title}
+          labelAction={fieldToggle("title")}
         />
         <TextArea
           label="Supporting text"
@@ -107,29 +115,35 @@ const FaqSectionContentCard = ({
           onChange={(e) => patch({ description: e.target.value })}
           placeholder={FAQ_SECTION_DEFAULTS.description}
           tooltip="The contact email is added at the end of this text as a link."
+          labelAction={fieldToggle("description")}
         />
-        <InputField
-          className="md:max-w-sm"
-          label="Contact email"
-          type="email"
-          value={content.email}
-          onChange={(e) => patch({ email: e.target.value })}
-          placeholder={FAQ_SECTION_DEFAULTS.email}
-          hint="Only set this if FAQ questions should go to a different address than the site's email in Global Settings."
-        />
+        <div className="md:max-w-sm">
+          <InputField
+            label="Contact email"
+            type="email"
+            value={content.email}
+            onChange={(e) => patch({ email: e.target.value })}
+            placeholder={FAQ_SECTION_DEFAULTS.email}
+            labelAction={fieldToggle("email")}
+            // hint="Only set this if FAQ questions should go to a different address than the site's email in Global Settings."
+          />
+        </div>
         <div className="flex justify-end">
-          <button
+          <Button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 bg-info hover:bg-info text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-sm font-bold"
+            size="sm"
+            startIcon={
+              saving ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <Save className="size-5" />
+              )
+            }
           >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
             Save Changes
-          </button>
+          </Button>
         </div>
       </SectionCard>
     </form>

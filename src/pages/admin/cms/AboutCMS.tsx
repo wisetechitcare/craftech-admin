@@ -16,14 +16,17 @@ import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
   ElementVisibility,
+  SectionVisibilitySwitch,
   VisibilityToggle,
   isVisible,
   type VisibilityMap,
   type VisibilitySection,
 } from "@/components/admin/ui/VisibilityToggle";
-import { AdminInfoCallout } from "@/components/common";
+import { AdminInfoCallout, PageHeader } from "@/components/common";
+import { Button } from "@/components/ui/button";
 
 import { ABOUT_GROUP, AboutSectionKey } from "@/lib/constants/about";
+import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import { DragList } from "@/lib/constants/drag-lists";
 import { aboutApi, appearanceApi } from "@/services/api";
 import {
@@ -104,11 +107,20 @@ export default function AboutCMS() {
   const [sections, setSections] = useState<VisibilitySection[]>([]);
   const [order, setOrder] = useState<string[]>(DEFAULT_ORDER);
   const [orderable, setOrderable] = useState<string[]>(DEFAULT_ORDER);
+  const [navigationDestinations, setNavigationDestinations] = useState<
+    NavigationDestinationOption[]
+  >([]);
 
   const apply = (data: AboutResponse) => {
-    const { variant: v, rules: r, ...rest } = data;
+    const {
+      variant: v,
+      rules: r,
+      navigationDestinations: dests,
+      ...rest
+    } = data;
     setVariant(v);
     setRules(r);
+    setNavigationDestinations(dests);
     setContent(rest);
   };
 
@@ -155,6 +167,22 @@ export default function AboutCMS() {
   // pinned to whatever this form happened to render for it.
   const patchVisibility = (key: string, visible: boolean) =>
     setVisibility((prev) => ({ ...prev, [key]: visible }));
+
+  // /about has no page-level flag of its own — the server's registry lists
+  // "about" as a group, and the site guards one section key at a time. So the
+  // page reads as hidden only once every section it serves is.
+  // ponytail: showing it again marks all of them visible, losing whichever
+  // sections were hidden one by one. A real "about" key in the registry, guarded
+  // in the site's /about render, is the upgrade.
+  const pageVisible =
+    sections.length === 0 ||
+    sections.some((section) => isVisible(visibility, section.key));
+
+  const patchPageVisibility = (visible: boolean) =>
+    setVisibility((prev) => ({
+      ...prev,
+      ...Object.fromEntries(sections.map((section) => [section.key, visible])),
+    }));
 
   // A drop produces nothing but this, the same transform the arrows use.
   const moveSection = (from: number, to: number) =>
@@ -264,6 +292,7 @@ export default function AboutCMS() {
   const sectionProps: AboutSectionProps = {
     content,
     rules,
+    navigationDestinations,
     errors,
     patch,
     patchSection,
@@ -273,13 +302,18 @@ export default function AboutCMS() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-ink">About CMS</h2>
-        <p className="text-sm text-ink-mute">
-          Every section of the About page (/about) — headings, copy, images and
-          all of its lists. Drag a card by its handle to reorder the page.
-        </p>
-      </div>
+      <PageHeader
+        title="About CMS"
+        description="Every section of the About page (/about) — headings, copy, images and all of its lists. Drag a card by its handle to reorder the page. The switch hides every section; nothing is deleted."
+        action={
+          sections.length > 0 && (
+            <SectionVisibilitySwitch
+              visible={pageVisible}
+              onChange={patchPageVisibility}
+            />
+          )
+        }
+      />
 
       {/* Variant is Appearance's to choose; About CMS only reads it, because the
           limits below are written for the tightest of the three layouts. */}
@@ -314,6 +348,8 @@ export default function AboutCMS() {
           },
         }}
         viewportHeight={3200}
+        sectionHidden={!pageVisible}
+        onShowSection={() => patchPageVisibility(true)}
         title={
           <>
             Preview{" "}
@@ -327,15 +363,16 @@ export default function AboutCMS() {
           // Absent means visible, so the empty map IS the default and clearing
           // it is the whole reset — including flags set under the other two
           // layouts. Nothing is written until Save.
-          <button
-            type="button"
+          <Button
+            size="xs"
+            variant="none"
             onClick={() => setVisibility({})}
             disabled={hiddenCount === 0}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-[11px] font-bold text-ink-mute transition-colors hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+            startIcon={<Eye className="w-3 h-3" />}
+            className="shrink-0 gap-1.5 rounded-full border border-line bg-raise px-2.5 py-1 text-xs font-bold text-ink-mute hover:text-ink"
           >
-            <Eye className="w-3 h-3" />
             {hiddenCount ? `Show all (${hiddenCount} hidden)` : "All visible"}
-          </button>
+          </Button>
         }
       >
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -366,18 +403,19 @@ export default function AboutCMS() {
                 Fix the highlighted fields before saving.
               </span>
             )}
-            <button
+            <Button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 bg-info hover:bg-info text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              startIcon={
+                saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )
+              }
             >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
               Save Changes
-            </button>
+            </Button>
           </div>
         </form>
       </PreviewPanel>

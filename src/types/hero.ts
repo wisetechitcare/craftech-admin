@@ -3,6 +3,7 @@
 // payload as `rules`, so the admin renders counters from the same numbers the
 // server enforces and the two can never drift.
 
+import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import { LayoutVariant } from "./common";
 
 export type HeroVariant = LayoutVariant;
@@ -21,12 +22,15 @@ export interface HeroSlide {
   images: string[];
   pos: string;
   title: string;
+  /** The end of the headline, drawn in the accent colour. May be empty. */
+  accent: string;
   subtitle: string;
 }
 
 export interface HeroCta {
   label: string;
-  url: string;
+  destinationKey: string;
+  externalUrl?: string | null;
 }
 
 export interface HeroContent {
@@ -42,7 +46,7 @@ export interface HeroRules {
   subtitle: { max: number };
   eyebrow: { max: number };
   ctaLabel: { max: number };
-  trustStrip: { max: number; segmentMax: number };
+  trustStrip: { max: number; segmentMax: number; itemsMax: number };
   /** `imagesMax` is how many images a single-slide Hero may cross-fade through.
    *  A video has no count: it always stands alone on its slide. */
   slides: { min: number; max: number; imagesMax: number };
@@ -52,6 +56,7 @@ export interface HeroRules {
 export interface HeroResponse extends HeroContent {
   variant: HeroVariant;
   rules: HeroRules;
+  navigationDestinations: NavigationDestinationOption[];
 }
 
 /** Field-level messages from the API, keyed by zod path ("slides.0.title"). */

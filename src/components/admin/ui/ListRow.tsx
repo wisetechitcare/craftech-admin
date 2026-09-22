@@ -1,90 +1,116 @@
 import React from "react";
-import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
-import { DragHandle, dragStateClasses, useDragItem } from "./DragList";
+import {
+  DRAG_GRIP_ON_CARD_CLASS,
+  DragHandle,
+  dragStateClasses,
+  useDragItem,
+} from "./DragList";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/utils";
 
+export type ListRowChrome = "default" | "grip";
+
 interface ListRowProps {
-  title: string;
+  /** Used in the default header and for reorder affordance labels. */
+  title?: string;
   index: number;
   count: number;
   onMove: (from: number, to: number) => void;
   onRemove: (index: number) => void;
-  /** Turns on drag-to-reorder, scoped to rows sharing this id. Optional: a list
-   *  is perfectly usable on the buttons alone, and adopting drag is this prop
-   *  and no other change. */
   listId?: string;
-  /** Greys the delete control, for a list the server gives a minimum length. */
   canRemove?: boolean;
+  /** When false, the remove control is not rendered (e.g. Navbar links). Default true. */
+  showRemove?: boolean;
+  /** default: optional title row plus drag handle and delete. grip: edge grip (About / Navbar-style). */
+  chrome?: ListRowChrome;
+  /** Hides the default header title; drag handle and delete stay unless chrome is grip. */
+  showTitle?: boolean;
   children: React.ReactNode;
 }
 
-/**
- * One entry in an ordered CMS list, with its reorder and delete controls.
- *
- * The arrow buttons are not a fallback for the handle but the other half of it:
- * they work on touch and from the keyboard. Both end in the same
- * `onMove(from, to)`, and order is the array's own order, so nothing here has
- * to be renumbered either way.
- */
 export default function ListRow({
-  title,
+  title = "Item",
   index,
   count,
   onMove,
   onRemove,
   listId,
   canRemove = true,
+  showRemove = true,
+  chrome = "default",
+  showTitle = true,
   children,
 }: ListRowProps) {
   const name = `${title} ${index + 1}`;
+  const draggable = Boolean(listId) && count > 1;
+  const gripChrome = chrome === "grip";
+
   const { ref, handleProps, isDragging, isTarget } = useDragItem({
     listId: listId ?? "",
     index,
     onMove,
-    disabled: !listId || count < 2,
+    disabled: !draggable,
   });
 
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "bg-raise border border-line rounded-xl p-4 space-y-4",
-        dragStateClasses(isDragging, isTarget),
-      )}
+  const cardClassName = cn(
+    "bg-raise border border-line rounded-xl p-4",
+    !gripChrome && "space-y-1",
+    !gripChrome && dragStateClasses(isDragging, isTarget),
+  );
+
+  const removeButton = (
+    <Button
+      type="button"
+      variant="none"
+      onClick={() => onRemove(index)}
+      disabled={!canRemove}
+      aria-label={`Remove ${name}`}
+      className="p-1.5 text-ink-faint hover:text-danger disabled:opacity-30 disabled:cursor-not-allowed"
     >
+      <Trash2 className="size-5" />
+    </Button>
+  );
+
+  if (gripChrome) {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "relative rounded-xl",
+          dragStateClasses(isDragging, isTarget),
+        )}
+      >
+        {draggable && (
+          <DragHandle
+            {...handleProps}
+            label={title}
+            className={DRAG_GRIP_ON_CARD_CLASS}
+          />
+        )}
+        <div className={cardClassName}>
+          {showRemove && (
+            <div className="mb-2 flex justify-end">{removeButton}</div>
+          )}
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className={cardClassName}>
       <div className="flex items-center justify-between">
-        <span className="text-base font-medium uppercase">{name}</span>
-        <div className="flex items-center gap-1">
+        {showTitle ? (
+          <span className="text-base font-medium uppercase">{name}</span>
+        ) : (
+          <span className="sr-only">{name}</span>
+        )}
+        <div className={cn("flex items-center gap-1", !showTitle && "ml-auto")}>
           {listId && <DragHandle {...handleProps} label={name} />}
-          <button
-            type="button"
-            onClick={() => onMove(index, index - 1)}
-            disabled={index === 0}
-            aria-label={`Move ${name} up`}
-            className="p-1.5 text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ArrowUp className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMove(index, index + 1)}
-            disabled={index === count - 1}
-            aria-label={`Move ${name} down`}
-            className="p-1.5 text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ArrowDown className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onRemove(index)}
-            disabled={!canRemove}
-            aria-label={`Remove ${name}`}
-            className="p-1.5 text-ink-faint hover:text-danger disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {showRemove && removeButton}
         </div>
       </div>
       {children}

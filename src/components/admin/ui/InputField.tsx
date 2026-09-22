@@ -15,6 +15,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   warning?: React.ReactNode;
   maxChars?: number;
   tooltip?: React.ReactNode;
+  labelAction?: React.ReactNode;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -39,6 +40,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       warning,
       maxChars,
       tooltip,
+      labelAction,
       ...rest
     },
     ref,
@@ -69,8 +71,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div>
-        {(label || tooltip || maxChars !== undefined) && (
-          <div className="mb-2 flex items-baseline justify-between gap-3">
+        {(label || tooltip || labelAction) && (
+          <div className="mb-2 flex min-h-8 items-center justify-between gap-3">
             <div className="flex items-center gap-1.5">
               <label
                 className={cn(
@@ -83,16 +85,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               </label>
               {tooltip && <InfoTooltip content={tooltip} label={label} />}
             </div>
-            {maxChars !== undefined && (
-              <span
-                className={cn(
-                  "text-xs font-semibold tabular-nums",
-                  over ? "text-error-500" : "text-gray-500",
-                )}
-              >
-                {length} / {maxChars}
-              </span>
-            )}
+            {labelAction}
           </div>
         )}
 
@@ -129,15 +122,27 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
 
-        {resolvedHint && (
-          <p
-            className={cn(
-              "mt-1.5 text-xs leading-relaxed",
-              hasError ? "text-error-500" : "text-gray-500",
+        {(resolvedHint || maxChars !== undefined) && (
+          <div className="mt-1.5 flex justify-between gap-3">
+            <p
+              className={cn(
+                "text-xs leading-relaxed",
+                hasError ? "text-error-500" : "text-gray-500",
+              )}
+            >
+              {resolvedHint}
+            </p>
+            {maxChars !== undefined && (
+              <span
+                className={cn(
+                  "shrink-0 text-xs font-semibold tabular-nums",
+                  over ? "text-error-500" : "text-gray-500",
+                )}
+              >
+                {length} / {maxChars}
+              </span>
             )}
-          >
-            {resolvedHint}
-          </p>
+          </div>
         )}
         {!hasError && warning && (
           <p className="mt-1.5 text-xs text-warn">{warning}</p>

@@ -1,4 +1,9 @@
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+
+import { cn } from "@/utils/utils";
 
 /**
  * The Visible/Hidden controls, shaped by the catalogue the API serves with the
@@ -25,7 +30,8 @@ export type VisibilityMap = Record<string, boolean>;
 
 /** Absent means visible — the server's read contract, restated so an untouched
  *  key shows as Visible instead of as a switch with nothing behind it. */
-export const isVisible = (map: VisibilityMap | null | undefined, key: string) => map?.[key] !== false;
+export const isVisible = (map: VisibilityMap | null | undefined, key: string) =>
+  map?.[key] !== false;
 
 interface VisibilityToggleProps {
   visible: boolean;
@@ -36,21 +42,31 @@ interface VisibilityToggleProps {
 /** The switch. It prints the word rather than only flipping a track: "Visible"
  *  and "Hidden" say what the live site does, where on/off leaves an admin
  *  working out which way round it is. */
-export const VisibilityToggle = ({ visible, disabled, onChange }: VisibilityToggleProps) => (
-  <button
-    type="button"
+export const VisibilityToggle = ({
+  visible,
+  disabled,
+  onChange,
+}: VisibilityToggleProps) => (
+  <Button
+    size="xs"
+    variant="none"
     role="switch"
     aria-checked={visible}
     disabled={disabled}
     onClick={() => onChange(!visible)}
-    className={`flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-      visible ? 'border-info/50 bg-info/10 text-info' : 'border-line bg-raise text-ink-mute'
-    }`}
+    startIcon={
+      visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />
+    }
+    className={cn(
+      "shrink-0 gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold",
+      visible
+        ? "border-info/50 bg-info/10 text-info"
+        : "border-line bg-raise text-ink-mute",
+    )}
   >
-    {visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
     {/* Fixed width so the card header does not jump as the word changes. */}
-    <span className="w-9 text-left">{visible ? 'Visible' : 'Hidden'}</span>
-  </button>
+    <span className="w-9 text-left">{visible ? "Visible" : "Hidden"}</span>
+  </Button>
 );
 
 interface ElementVisibilityProps {
@@ -60,19 +76,52 @@ interface ElementVisibilityProps {
   onChange: (key: string, visible: boolean) => void;
 }
 
+interface SectionVisibilitySwitchProps {
+  visible: boolean;
+  onChange: (visible: boolean) => void;
+}
+
+/** The whole-section switch in a CMS card header. The word stays beside the
+ *  track for the same reason the field toggle prints it. */
+export const SectionVisibilitySwitch = ({
+  visible,
+  onChange,
+}: SectionVisibilitySwitchProps) => (
+  <label className="flex shrink-0 items-center gap-2 font-semibold text-ink">
+    {visible ? "Visible" : "Hidden"}
+    <Switch checked={visible} onCheckedChange={onChange} />
+  </label>
+);
+
 /** The optional pieces inside one section, listed at the foot of its card.
  *  A hidden section takes all of them with it, so their switches disable
  *  rather than sit there looking live; the stored values are untouched and
  *  return exactly as they were when the section is shown again. */
-export const ElementVisibility = ({ elements, map, sectionVisible, onChange }: ElementVisibilityProps) => (
+export const ElementVisibility = ({
+  elements,
+  map,
+  sectionVisible,
+  onChange,
+}: ElementVisibilityProps) => (
   <div className="rounded-lg border border-line bg-raise/50 px-4">
-    <p className="pt-2.5 text-[10px] font-bold text-ink-faint uppercase tracking-wider">Inside this section</p>
+    <p className="pt-2.5 text-[10px] font-bold text-ink-faint uppercase tracking-wider">
+      Inside this section
+    </p>
     <div className="divide-y divide-line">
       {elements.map((element) => (
-        <div key={element.key} className="flex items-center justify-between gap-4 py-2.5">
+        <div
+          key={element.key}
+          className="flex items-center justify-between gap-4 py-2.5"
+        >
           <div className="min-w-0">
-            <div className="text-xs font-semibold text-ink">{element.label}</div>
-            {element.helper && <p className="mt-0.5 text-[11px] text-ink-faint">{element.helper}</p>}
+            <div className="text-xs font-semibold text-ink">
+              {element.label}
+            </div>
+            {element.helper && (
+              <p className="mt-0.5 text-[11px] text-ink-faint">
+                {element.helper}
+              </p>
+            )}
           </div>
           <VisibilityToggle
             visible={sectionVisible && isVisible(map, element.key)}
