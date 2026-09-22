@@ -184,3 +184,20 @@ main::-webkit-scrollbar-thumb:hover { background: #b3c2d2; }
 .animate-subtle-pulse {
   animation: subtlePulse 2s ease-in-out infinite;
 }
+
+/* Rich Text engine (components/common/editor). The only rules that cannot be
+   Tailwind classes: a placeholder is a pseudo-element, and the editor's own
+   paragraphs need a rhythm that its inline styling then overrides. */
+.ProseMirror p {
+  margin: 0;
+}
+.ProseMirror p + p {
+  margin-top: 0.5rem;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9fb0c4;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

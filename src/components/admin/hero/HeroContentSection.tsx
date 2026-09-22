@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import HeroCtaField from "./HeroCtaField";
 import TrustStripFields from "./TrustStripFields";
-import InputField from "@/components/admin/ui/InputField";
+import RichTextField from "@/components/admin/ui/RichTextField";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 
 import { HeroVisibilityKey } from "@/lib/constants/hero";
@@ -30,10 +30,15 @@ export default function HeroContentSection({
 }: HeroContentSectionProps) {
   return (
     <SectionCard title="Hero Content">
-      <InputField
+      <RichTextField
         label="Eyebrow"
         value={content.eyebrow}
-        onChange={(e) => onPatch({ eyebrow: e.target.value })}
+        onChange={(eyebrow) => onPatch({ eyebrow })}
+        allowedFeatures={rules.textFeatures}
+        defaults={{
+          fontFamily: rules.eyebrow.font,
+          fontSize: rules.eyebrow.size,
+        }}
         maxChars={rules.eyebrow.max}
         error={!!errors.eyebrow}
         hint={errors.eyebrow}

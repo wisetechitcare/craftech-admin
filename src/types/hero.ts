@@ -5,6 +5,7 @@
 
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import { LayoutVariant } from "./common";
+import type { RichTextDocument, RichTextFeature } from "./rich-text";
 
 export type HeroVariant = LayoutVariant;
 
@@ -21,10 +22,13 @@ export interface HeroSlide {
    *  each takes exactly one, because its copy changes along with it. */
   images: string[];
   pos: string;
-  title: string;
-  /** The end of the headline, drawn in the accent colour. May be empty. */
-  accent: string;
-  subtitle: string;
+  /** Rich text. Character budgets count plain text, so formatting never costs
+   *  an admin room in the layout. */
+  title: RichTextDocument;
+  /** The end of the headline, drawn in the accent colour unless overridden.
+   *  Shares the title's budget — both are one headline. */
+  accent: RichTextDocument;
+  subtitle: RichTextDocument;
 }
 
 export interface HeroCta {
@@ -35,22 +39,33 @@ export interface HeroCta {
 
 export interface HeroContent {
   slides: HeroSlide[];
-  eyebrow: string;
+  eyebrow: RichTextDocument;
   primaryCta: HeroCta;
   secondaryCta: HeroCta;
   trustStrip: string;
 }
 
+/** A text field's budget plus the typography it inherits, which the editor
+ *  names instead of saying "Default". */
+export interface HeroTextRule {
+  max: number;
+  font: string;
+  size: string;
+}
+
 export interface HeroRules {
-  title: { max: number };
-  subtitle: { max: number };
-  eyebrow: { max: number };
+  title: HeroTextRule;
+  subtitle: HeroTextRule;
+  eyebrow: HeroTextRule;
   ctaLabel: { max: number };
   trustStrip: { max: number; segmentMax: number; itemsMax: number };
   /** `imagesMax` is how many images a single-slide Hero may cross-fade through.
    *  A video has no count: it always stands alone on its slide. */
   slides: { min: number; max: number; imagesMax: number };
   positions: string[];
+  /** Which formatting the text editors offer. Served rather than hardcoded so
+   *  a toolbar can never show a control the server would reject. */
+  textFeatures: RichTextFeature[];
 }
 
 export interface HeroResponse extends HeroContent {

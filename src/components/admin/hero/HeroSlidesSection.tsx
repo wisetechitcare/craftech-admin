@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
-import InputField from "@/components/admin/ui/InputField";
 import ListRow from "@/components/admin/ui/ListRow";
+import RichTextField from "@/components/admin/ui/RichTextField";
 import SelectField from "@/components/admin/ui/SelectField";
-import TextArea from "@/components/admin/ui/TextArea";
 import SlideMedia from "./SlideMedia";
 
 import { HeroVisibilityKey } from "@/lib/constants/hero";
 import { POSITION_LABELS } from "./hero-constants";
 import { DragList } from "@/lib/constants/drag-lists";
+import { richTextToPlain } from "@/lib/editor";
 import type { FieldErrors, HeroRules, HeroSlide } from "@/types/hero";
 import { AddButton } from "../ui/SectionCard";
 
@@ -37,6 +37,15 @@ export default function HeroSlidesSection({
   onRemoveSlide,
   onPatchSlide,
 }: HeroSlidesSectionProps) {
+  const titleDefaults = {
+    fontFamily: rules.title.font,
+    fontSize: rules.title.size,
+  };
+  const subtitleDefaults = {
+    fontFamily: rules.subtitle.font,
+    fontSize: rules.subtitle.size,
+  };
+
   return (
     <div className="bg-paper border border-line rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
@@ -92,30 +101,43 @@ export default function HeroSlidesSection({
             onMove={onMoveSlide}
             onRemove={onRemoveSlide}
           >
-            <InputField
+            <RichTextField
               label="Title"
               required
               value={slide.title}
-              onChange={(e) => onPatchSlide(i, { title: e.target.value })}
-              maxChars={rules.title.max - slide.accent.length}
+              onChange={(title) => onPatchSlide(i, { title })}
+              allowedFeatures={rules.textFeatures}
+              defaults={titleDefaults}
+              placeholder="Building Legacy,"
+              maxChars={rules.title.max - richTextToPlain(slide.accent).length}
               error={!!errors[`slides.${i}.title`]}
               hint={errors[`slides.${i}.title`]}
               labelAction={elementToggle(HeroVisibilityKey.TITLE)}
+              tooltip="Select text to format just that part, or format with nothing selected to change the whole field."
+              className="mb-5"
             />
-            <InputField
+            <RichTextField
               label="Colored text"
               value={slide.accent}
-              onChange={(e) => onPatchSlide(i, { accent: e.target.value })}
-              maxChars={rules.title.max - slide.title.length}
+              onChange={(accent) => onPatchSlide(i, { accent })}
+              allowedFeatures={rules.textFeatures}
+              defaults={titleDefaults}
+              placeholder="Engineering Trust."
+              maxChars={rules.title.max - richTextToPlain(slide.title).length}
+              tooltip="The end of the headline. It is drawn in the accent colour unless you set one here."
+              className="mb-5"
             />
-            <TextArea
+            <RichTextField
               label="Subtitle"
               value={slide.subtitle}
-              onChange={(e) => onPatchSlide(i, { subtitle: e.target.value })}
+              onChange={(subtitle) => onPatchSlide(i, { subtitle })}
+              allowedFeatures={rules.textFeatures}
+              defaults={subtitleDefaults}
               maxChars={rules.subtitle.max}
               error={!!errors[`slides.${i}.subtitle`]}
               hint={errors[`slides.${i}.subtitle`]}
               labelAction={elementToggle(HeroVisibilityKey.SUBTITLE)}
+              className="mb-5"
             />
             <SelectField
               className="md:max-w-sm"
