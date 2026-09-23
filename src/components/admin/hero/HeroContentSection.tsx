@@ -9,7 +9,7 @@ import { HeroVisibilityKey } from "@/lib/constants/hero";
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import type { FieldErrors, HeroContent, HeroRules } from "@/types/hero";
 
-interface HeroContentSectionProps {
+interface HeroContentFieldsProps {
   content: HeroContent;
   rules: HeroRules;
   errors: FieldErrors;
@@ -19,19 +19,21 @@ interface HeroContentSectionProps {
   onPatch: (changes: Partial<HeroContent>) => void;
 }
 
-export default function HeroContentSection({
+export function HeroEyebrowSection({
   content,
   rules,
   errors,
-  navigationDestinations,
   elementToggle,
-  ctaDestinationDisabled,
   onPatch,
-}: HeroContentSectionProps) {
+}: Pick<
+  HeroContentFieldsProps,
+  "content" | "rules" | "errors" | "elementToggle" | "onPatch"
+>) {
   return (
-    <SectionCard title="Hero Content">
+    <SectionCard title="Hero content">
       <RichTextField
         label="Eyebrow"
+        required
         value={content.eyebrow}
         onChange={(eyebrow) => onPatch({ eyebrow })}
         allowedFeatures={rules.textFeatures}
@@ -45,7 +47,21 @@ export default function HeroContentSection({
         tooltip="The small kicker above the headline. Floating renders it inside a pill, so it must stay on one line."
         labelAction={elementToggle(HeroVisibilityKey.EYEBROW)}
       />
+    </SectionCard>
+  );
+}
 
+export function HeroCtaTrustSection({
+  content,
+  rules,
+  errors,
+  navigationDestinations,
+  elementToggle,
+  ctaDestinationDisabled,
+  onPatch,
+}: HeroContentFieldsProps) {
+  return (
+    <SectionCard title="Calls to action & trust strip">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <HeroCtaField
           label="Primary CTA — label"

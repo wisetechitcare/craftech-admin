@@ -1,4 +1,4 @@
-export { default as HeroContentSection } from "./HeroContentSection";
+export { HeroCtaTrustSection, HeroEyebrowSection } from "./HeroContentSection";
 export { default as TrustStripFields } from "./TrustStripFields";
 export { default as HeroCtaField } from "./HeroCtaField";
 export { default as HeroSlidesSection } from "./HeroSlidesSection";

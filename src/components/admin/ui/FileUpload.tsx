@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState, type ReactNode } from "react";
 import { Accept, FileRejection, useDropzone } from "react-dropzone";
 import { Upload } from "lucide-react";
 
@@ -8,18 +8,20 @@ interface FileUploadProps {
   acceptTypes: Accept;
   maxFiles?: number;
   maxSizeMB?: number;
+  hint?: ReactNode;
   onFilesChange?: (files: File[]) => void;
-  existingImages?: string[]; // URLs of existing images
-  onExistingImagesChange?: (images: string[]) => void; // Callback when existing images are removed
+  existingImages?: string[];
+  onExistingImagesChange?: (images: string[]) => void;
   error?: string;
-  deletedImages?: string[]; // URLs of deleted images
-  onDeletedImagesChange?: (images: string[]) => void; // Callback when existing images are removed
+  deletedImages?: string[];
+  onDeletedImagesChange?: (images: string[]) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
   acceptTypes,
   maxFiles = 10,
   maxSizeMB = 5,
+  hint,
   onFilesChange,
   existingImages = [],
   onExistingImagesChange,
@@ -33,72 +35,69 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
   const [message, setMessage] = useState<string>("");
   const firstKey = Object.keys(acceptTypes)[0];
+  const maxBytes = maxSizeMB * 1024 * 1024;
 
-  // Update existing images when prop changes
   useEffect(() => {
     if (existingImages) {
       setExistingImageUrls(existingImages);
     }
   }, [existingImages]);
 
-  // Update deleted images when prop changes
   useEffect(() => {
     if (deletedImages) {
       setDeletedImageUrls(deletedImages);
     }
   }, [deletedImages]);
 
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const totalFiles = files.length + existingImageUrls.length;
-      if (acceptedFiles.length + totalFiles > maxFiles) {
-        setMessage(`You can only upload up to ${maxFiles} files.`);
+  const onDrop = (acceptedFiles: File[]) => {
+    const totalFiles = files.length + existingImageUrls.length;
+    if (acceptedFiles.length + totalFiles > maxFiles) {
+      setMessage(`You can only upload up to ${maxFiles} files.`);
+      return;
+    }
+
+    const tooLarge = acceptedFiles.find((file) => file.size > maxBytes);
+    if (tooLarge) {
+      setMessage(
+        `"${tooLarge.name}" is too large. Max allowed size: ${maxSizeMB} MB.`,
+      );
+      return;
+    }
+
+    const updatedFiles = [...files, ...acceptedFiles];
+    setFiles(updatedFiles);
+    setMessage("");
+    onFilesChange?.(updatedFiles);
+  };
+
+  const onDropRejected = (fileRejections: FileRejection[]) => {
+    if (fileRejections.length === 0) return;
+
+    const firstRejection = fileRejections[0];
+    const { errors } = firstRejection;
+
+    for (const dropError of errors) {
+      if (dropError.code === "file-too-large") {
+        setMessage(`File too large. Max allowed size: ${maxSizeMB} MB.`);
         return;
-      } else {
-        setMessage("");
       }
-      const updatedFiles = [...files, ...acceptedFiles];
-      setFiles(updatedFiles);
-      setMessage("");
-      onFilesChange?.(updatedFiles);
-    },
-
-    [files, existingImageUrls.length, maxFiles, onFilesChange],
-  );
-
-  const onDropRejected = useCallback(
-    (fileRejections: FileRejection[]) => {
-      if (fileRejections.length === 0) return;
-
-      const firstRejection = fileRejections[0];
-      const { errors } = firstRejection;
-
-      for (const error of errors) {
-        if (error.code === "file-too-large") {
-          setMessage(`File too large. Max allowed size: ${maxSizeMB}MB.`);
-          return;
-        }
-        if (error.code === "file-invalid-type") {
-          setMessage(`Invalid file type. Please upload ${firstKey} only .`);
-          return;
-        }
-        if (error.code === "too-many-files") {
-          setMessage(`You can only upload maximum ${maxFiles} files.`);
-          return;
-        }
+      if (dropError.code === "file-invalid-type") {
+        setMessage(`Invalid file type. Please upload ${firstKey} only .`);
+        return;
       }
-    },
-    [maxFiles, maxSizeMB, firstKey],
-  );
+      if (dropError.code === "too-many-files") {
+        setMessage(`You can only upload maximum ${maxFiles} files.`);
+        return;
+      }
+    }
+  };
 
   const handleRemove = (index: number) => {
-    // If removing an existing image (URL)
     if (index < existingImageUrls.length) {
       const updated = existingImageUrls.filter((_, i) => i !== index);
       setExistingImageUrls(updated);
       onExistingImagesChange?.(updated);
 
-      // Add to deleted images
       const updatedDeletedImages = [
         ...deletedImageUrls,
         existingImageUrls[index],
@@ -106,7 +105,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setDeletedImageUrls(updatedDeletedImages);
       onDeletedImagesChange?.(updatedDeletedImages);
     } else {
-      // If removing a newly uploaded file
       const fileIndex = index - existingImageUrls.length;
       const updated = files.filter((_, i) => i !== fileIndex);
       setFiles(updated);
@@ -123,8 +121,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
     accept: acceptTypes,
     multiple: true,
     maxFiles,
-    maxSize: maxSizeMB * 1024 * 1024,
+    maxSize: maxBytes,
   });
+
+  const defaultHint = `Supports continuous high-res JPEG, PNG, or WebP formats up to ${maxSizeMB}MB`;
 
   return (
     <div className="space-y-4">
@@ -143,19 +143,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
           Drag and drop images, or{" "}
           <span className="underline">browse files</span>
         </p>
-        <p className="mt-2 text-sm text-gray-500">
-          Supports continuous high-res JPEG, PNG, or WebP formats up to{" "}
-          {maxSizeMB}MB
-        </p>
+        {hint ?? <p className="mt-2 text-sm text-gray-500">{defaultHint}</p>}
       </div>
 
       {(message || error) && (
         <p className="text-red-600 text-sm">{message || error}</p>
       )}
 
-      {/* File Preview */}
       <div className="flex flex-wrap gap-3">
-        {/* Existing images from URLs */}
         {existingImageUrls.map((url, index) => (
           <div key={`existing-${index}`} className="relative">
             <button
@@ -172,7 +167,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
             <p className="text-xs mt-1 truncate w-24">Image {index + 1}</p>
           </div>
         ))}
-        {/* Newly uploaded files */}
         {files.map((file, index) => {
           const displayIndex = existingImageUrls.length + index;
           return (
