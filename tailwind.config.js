@@ -75,18 +75,21 @@ export default {
         destructive: "#c0271f",
       },
 
+      // System faces only. The admin never loaded Inter, Playfair Display,
+      // Roboto or Fira Code — it only named them, so it has always rendered in
+      // the system fallbacks. Naming them became a bug once the rich-text font
+      // picker started loading Google families: picking Inter made that name
+      // resolve, and the whole admin re-rendered in it.
       fontFamily: {
-        display: ['"Playfair Display"', "Georgia", "serif"],
+        display: ["Georgia", "serif"],
         sans: [
-          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
           '"Segoe UI"',
-          "Roboto",
           "Arial",
           "sans-serif",
         ],
-        mono: ['"Fira Code"', "ui-monospace", "monospace"],
+        mono: ["ui-monospace", "monospace"],
       },
 
       fontSize: {

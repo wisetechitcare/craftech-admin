@@ -1,11 +1,12 @@
+import { emptyRichText } from "@/lib/editor";
 import type { HeroSlide } from "@/types/hero";
 
 export const EMPTY_SLIDE: HeroSlide = {
   images: [],
   pos: "center center",
-  title: "",
-  accent: "",
-  subtitle: "",
+  title: emptyRichText(),
+  accent: emptyRichText(),
+  subtitle: emptyRichText(),
 };
 
 export const POSITION_LABELS: Record<string, string> = {

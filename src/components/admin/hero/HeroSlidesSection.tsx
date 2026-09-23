@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
-import InputField from "@/components/admin/ui/InputField";
 import ListRow from "@/components/admin/ui/ListRow";
+import RichTextField from "@/components/admin/ui/RichTextField";
 import SelectField from "@/components/admin/ui/SelectField";
-import TextArea from "@/components/admin/ui/TextArea";
 import SlideMedia from "./SlideMedia";
 
 import { HeroVisibilityKey } from "@/lib/constants/hero";
 import { POSITION_LABELS } from "./hero-constants";
 import { DragList } from "@/lib/constants/drag-lists";
+import { richTextToPlain } from "@/lib/editor";
 import type { FieldErrors, HeroRules, HeroSlide } from "@/types/hero";
 import { AddButton } from "../ui/SectionCard";
 
@@ -37,17 +37,26 @@ export default function HeroSlidesSection({
   onRemoveSlide,
   onPatchSlide,
 }: HeroSlidesSectionProps) {
+  const titleDefaults = {
+    fontFamily: rules.title.font,
+    fontSize: rules.title.size,
+  };
+  const subtitleDefaults = {
+    fontFamily: rules.subtitle.font,
+    fontSize: rules.subtitle.size,
+  };
+
   return (
     <div className="bg-paper border border-line rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
-          Hero Slides{" "}
+          Headline lines{" "}
           <span className="text-ink-faint normal-case font-normal">
             ({slideCount}/{rules.slides.max})
           </span>
         </h3>
         <AddButton
-          label="Add slide"
+          label="Add line"
           disabled={slideCount >= rules.slides.max}
           onClick={onAddSlide}
         />
@@ -56,23 +65,23 @@ export default function HeroSlidesSection({
       <div className="mb-4 rounded-lg border border-line bg-raise p-3 text-xs leading-relaxed text-ink-mute">
         {slideCount === 1 ? (
           <p>
-            <strong className="text-ink">Slideshow mode.</strong> With one slide
+            <strong className="text-ink">Slideshow mode.</strong> With one line
             you can add up to {rules.slides.imagesMax} images — the homepage
             cross-fades them behind this one headline, and shows{" "}
-            <strong>no dots</strong>. Add a second slide to give each image its
+            <strong>no dots</strong>. Add a second line to give each image its
             own headline instead.
           </p>
         ) : (
           <p>
-            <strong className="text-ink">Slide mode.</strong> With {slideCount}{" "}
-            slides each takes <strong>one</strong> image and its own headline,
+            <strong className="text-ink">Line mode.</strong> With {slideCount}{" "}
+            lines each takes <strong>one</strong> image and its own headline,
             and visitors step between them using the dots. Delete all but one
-            slide to turn the Hero back into a cross-fading slideshow.
+            line to turn the Hero back into a cross-fading slideshow.
           </p>
         )}
         <p className="mt-1.5">
-          A video always fills its slide on its own — a slide is either one
-          video, or images.
+          A video always fills its line on its own — a line is either one video,
+          or images.
         </p>
       </div>
 
@@ -92,30 +101,47 @@ export default function HeroSlidesSection({
             onMove={onMoveSlide}
             onRemove={onRemoveSlide}
           >
-            <InputField
-              label="Title"
+            <RichTextField
+              label="Line 1"
               required
               value={slide.title}
-              onChange={(e) => onPatchSlide(i, { title: e.target.value })}
-              maxChars={rules.title.max - slide.accent.length}
+              onChange={(title) => onPatchSlide(i, { title })}
+              allowedFeatures={rules.textFeatures}
+              defaults={titleDefaults}
+              placeholder="Building Legacy,"
+              maxChars={rules.title.max - richTextToPlain(slide.accent).length}
               error={!!errors[`slides.${i}.title`]}
               hint={errors[`slides.${i}.title`]}
               labelAction={elementToggle(HeroVisibilityKey.TITLE)}
+              tooltip="Select text to format just that part, or format with nothing selected to change the whole field."
+              className="mb-5"
             />
-            <InputField
-              label="Colored text"
+            <RichTextField
+              label="Line 2"
+              required
               value={slide.accent}
-              onChange={(e) => onPatchSlide(i, { accent: e.target.value })}
-              maxChars={rules.title.max - slide.title.length}
+              onChange={(accent) => onPatchSlide(i, { accent })}
+              allowedFeatures={rules.textFeatures}
+              defaults={titleDefaults}
+              placeholder="Engineering Trust."
+              maxChars={rules.title.max - richTextToPlain(slide.title).length}
+              tooltip="The end of the headline. It is drawn in the accent colour unless you set one here."
+              className="mb-5"
+              error={!!errors[`slides.${i}.accent`]}
+              hint={errors[`slides.${i}.accent`]}
+              labelAction={elementToggle(HeroVisibilityKey.ACCENT)}
             />
-            <TextArea
-              label="Subtitle"
+            <RichTextField
+              label="Line 3"
               value={slide.subtitle}
-              onChange={(e) => onPatchSlide(i, { subtitle: e.target.value })}
+              onChange={(subtitle) => onPatchSlide(i, { subtitle })}
+              allowedFeatures={rules.textFeatures}
+              defaults={subtitleDefaults}
               maxChars={rules.subtitle.max}
               error={!!errors[`slides.${i}.subtitle`]}
               hint={errors[`slides.${i}.subtitle`]}
               labelAction={elementToggle(HeroVisibilityKey.SUBTITLE)}
+              className="mb-5"
             />
             <SelectField
               className="md:max-w-sm"

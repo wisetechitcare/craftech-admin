@@ -6,7 +6,8 @@ import { Save, Loader2, Palette, Eye } from "lucide-react";
 
 import {
   EMPTY_SLIDE,
-  HeroContentSection,
+  HeroCtaTrustSection,
+  HeroEyebrowSection,
   HeroSlidesSection,
   heroClientErrors,
 } from "@/components/admin/hero";
@@ -318,6 +319,14 @@ export default function HeroCMS() {
         }
       >
         <form onSubmit={handleSubmit} className="space-y-6">
+          <HeroEyebrowSection
+            content={content}
+            rules={rules}
+            errors={errors}
+            elementToggle={elementToggle}
+            onPatch={patch}
+          />
+
           <HeroSlidesSection
             slides={content.slides}
             rules={rules}
@@ -331,7 +340,7 @@ export default function HeroCMS() {
             onPatchSlide={patchSlide}
           />
 
-          <HeroContentSection
+          <HeroCtaTrustSection
             content={content}
             rules={rules}
             errors={errors}

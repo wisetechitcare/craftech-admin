@@ -1,5 +1,6 @@
 import { trustStripSegments } from "./trust-strip";
 
+import { richTextToPlain } from "@/lib/editor";
 import {
   isHeroVideo,
   type FieldErrors,
@@ -8,7 +9,8 @@ import {
 } from "@/types/hero";
 
 /** Mirrors the server's length rules so Save can be blocked before a round trip.
- *  Keys are the zod paths the API returns, so both sources render identically. */
+ *  Keys are the zod paths the API returns, so both sources render identically.
+ *  Rich-text fields are measured as PLAIN text, exactly as the server does. */
 export function heroClientErrors(
   content: HeroContent,
   rules: HeroRules,
@@ -21,7 +23,10 @@ export function heroClientErrors(
   };
 
   content.slides.forEach((slide, i) => {
-    if (!slide.title.trim()) errors[`slides.${i}.title`] = "Title is required.";
+    const title = richTextToPlain(slide.title);
+    const accent = richTextToPlain(slide.accent);
+
+    if (!title.trim()) errors[`slides.${i}.title`] = "Title is required.";
     if (!slide.images.length)
       errors[`slides.${i}.images`] = "An image or video is required.";
     if (slide.images.some(isHeroVideo) && slide.images.length > 1) {
@@ -34,16 +39,22 @@ export function heroClientErrors(
     }
     cap(
       `slides.${i}.title`,
-      slide.title + slide.accent,
+      title + accent,
       rules.title.max,
       "Title and accent text together",
     );
-    cap(`slides.${i}.subtitle`, slide.subtitle, rules.subtitle.max, "Subtitle");
+    cap(
+      `slides.${i}.subtitle`,
+      richTextToPlain(slide.subtitle),
+      rules.subtitle.max,
+      "Subtitle",
+    );
   });
   if (!content.slides.length) errors.slides = "At least one slide is required.";
 
-  if (!content.eyebrow.trim()) errors.eyebrow = "Eyebrow is required.";
-  cap("eyebrow", content.eyebrow, rules.eyebrow.max, "Eyebrow");
+  const eyebrow = richTextToPlain(content.eyebrow);
+  if (!eyebrow.trim()) errors.eyebrow = "Eyebrow is required.";
+  cap("eyebrow", eyebrow, rules.eyebrow.max, "Eyebrow");
   cap(
     "primaryCta.label",
     content.primaryCta.label,

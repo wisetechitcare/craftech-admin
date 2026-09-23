@@ -11,6 +11,7 @@ import type {
   FaqSectionContent,
 } from "../types/faq";
 import type { HeroContent, HeroResponse } from "../types/hero";
+import type { FontPage, FontQuery } from "../types/rich-text";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -182,6 +183,17 @@ export const heroApi = {
   get: () => api.get<{ success: boolean; data: HeroResponse }>("/cms/hero"),
   update: (data: HeroContent) =>
     api.put<{ success: boolean; data: HeroResponse }>("/cms/hero", data),
+};
+
+// ── Fonts ───────────────────────────────────────────────────────────────────
+// The catalogue behind every rich-text family control. Searching, filtering and
+// paging are the server's job — see craftech-backend-ts/src/domain/fonts.
+export const fontsApi = {
+  list: (params?: FontQuery) =>
+    api.get<{ success: boolean; message?: string; data: FontPage }>(
+      "/cms/fonts",
+      { params },
+    ),
 };
 
 // ── Blog ────────────────────────────────────────────────────────────────────

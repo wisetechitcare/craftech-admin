@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -9,6 +10,10 @@ import {
 import type { FieldError } from "react-hook-form";
 import { ChevronDown, Search } from "lucide-react";
 
+import DropdownPanel from "./DropdownPanel";
+import { InfoTooltip } from "./Tooltip";
+
+import { useClickOutside } from "@/hooks";
 import {
   // SELECT_CREATABLE_EMPTY_MESSAGE,
   SELECT_EMPTY_MESSAGE,
@@ -16,8 +21,6 @@ import {
   SELECT_SEARCH_PLACEHOLDER,
 } from "@/lib/constants/common";
 import { cn } from "@/utils/utils";
-
-import { InfoTooltip } from "./Tooltip";
 
 export interface SelectOption {
   value: string;
@@ -46,7 +49,7 @@ export interface SelectFieldProps {
   "aria-label"?: string;
 }
 
-interface SelectFieldWrapperProps {
+export interface SelectFieldWrapperProps {
   label?: string;
   required?: boolean;
   labelClassName?: string;
@@ -59,7 +62,10 @@ interface SelectFieldWrapperProps {
   children: ReactNode;
 }
 
-function SelectFieldWrapper({
+/** Exported so anything that opens a dropdown — the rich-text toolbar's font
+ *  and colour controls — carries the same label, hint and error row as a
+ *  SelectField sitting beside it. */
+export function SelectFieldWrapper({
   label,
   required = false,
   labelClassName,
@@ -111,6 +117,26 @@ function SelectFieldWrapper({
   );
 }
 
+/** Shared by the plain trigger and the creatable input below. */
+const selectTriggerClassName = ({
+  disabled = false,
+  hasError = false,
+  className,
+}: {
+  disabled?: boolean;
+  hasError?: boolean;
+  className?: string;
+}): string =>
+  cn(
+    "flex h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs transition-colors duration-200 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90",
+    disabled
+      ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500 opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+      : hasError
+        ? "border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:border-error-500 dark:text-error-400 dark:focus:border-error-800"
+        : "border-gray-300 bg-transparent text-gray-800 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800",
+    className,
+  );
+
 const optionButtonClassName = cn(
   "w-full cursor-pointer px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-brand-500/10 hover:text-ink",
   "data-[selected=true]:bg-brand-500/15 data-[selected=true]:font-medium data-[selected=true]:text-ink",
@@ -128,124 +154,66 @@ function filterOptions(options: SelectOption[], query: string) {
   );
 }
 
-function useClickOutside(
-  containerRef: RefObject<HTMLDivElement | null>,
-  onClose: () => void,
-) {
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [containerRef, onClose]);
-}
-
-interface SelectOptionsListProps {
-  filteredOptions: SelectOption[];
-  emptyMessage: string;
+interface SelectDropdownProps {
+  anchorRef: RefObject<HTMLElement | null>;
+  open: boolean;
+  onClose: () => void;
+  options: SelectOption[];
   onSelectOption: (option: SelectOption) => void;
   isOptionSelected: (option: SelectOption) => boolean;
   loading: boolean;
+  /** Absent means the list is not searchable. */
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
-function SelectOptionsList({
-  filteredOptions,
-  emptyMessage,
+// One list for both the plain and the searchable select: the two were the same
+// markup twice, differing only in whether a search box sat above it.
+function SelectDropdown({
+  anchorRef,
+  open,
+  onClose,
+  options,
   onSelectOption,
   isOptionSelected,
   loading,
-}: SelectOptionsListProps) {
-  return (
-    <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-      <ul role="listbox" className="max-h-56 overflow-y-auto py-1">
-        {loading ? (
-          <li className="px-4 py-2.5 text-sm text-gray-500">
-            {SELECT_LOADING_PLACEHOLDER}
-          </li>
-        ) : filteredOptions.length > 0 ? (
-          filteredOptions.map((option) => (
-            <li key={option.value}>
-              <button
-                type="button"
-                role="option"
-                data-selected={isOptionSelected(option)}
-                aria-selected={isOptionSelected(option)}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => onSelectOption(option)}
-                className={optionButtonClassName}
-              >
-                {option.label}
-              </button>
-            </li>
-          ))
-        ) : (
-          <li className="px-4 py-2.5 text-sm text-gray-500">{emptyMessage}</li>
-        )}
-      </ul>
-    </div>
-  );
-}
-
-function SearchableSelectDropdown({
   searchQuery,
   onSearchChange,
-  filteredOptions,
-  emptyMessage,
-  onSelectOption,
-  isOptionSelected,
-  loading,
-}: {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  filteredOptions: SelectOption[];
-  emptyMessage: string;
-  onSelectOption: (option: SelectOption) => void;
-  isOptionSelected: (option: SelectOption) => boolean;
-  loading: boolean;
-}) {
+}: SelectDropdownProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchable = onSearchChange !== undefined;
 
   useEffect(() => {
-    if (!loading) {
+    if (open && !loading) {
       searchInputRef.current?.focus();
     }
-  }, [loading]);
+  }, [open, loading]);
 
   return (
-    <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-      {!loading && (
+    <DropdownPanel anchorRef={anchorRef} open={open} onClose={onClose}>
+      {searchable && !loading && (
         <div className="border-b border-gray-100 p-2 dark:border-gray-700">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
             <input
               ref={searchInputRef}
               type="text"
-              value={searchQuery}
+              value={searchQuery ?? ""}
               placeholder={SELECT_SEARCH_PLACEHOLDER}
-              onChange={(event) => onSearchChange(event.target.value)}
+              onChange={(event) => onSearchChange?.(event.target.value)}
               className="h-10 w-full rounded-md border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             />
           </div>
         </div>
       )}
 
-      <ul role="listbox" className="max-h-56 overflow-y-auto py-1">
+      <ul role="listbox" className="py-1">
         {loading ? (
           <li className="px-4 py-2.5 text-sm text-gray-500">
             {SELECT_LOADING_PLACEHOLDER}
           </li>
-        ) : filteredOptions.length > 0 ? (
-          filteredOptions.map((option) => (
+        ) : options.length > 0 ? (
+          options.map((option) => (
             <li key={option.value}>
               <button
                 type="button"
@@ -261,10 +229,12 @@ function SearchableSelectDropdown({
             </li>
           ))
         ) : (
-          <li className="px-4 py-2.5 text-sm text-gray-500">{emptyMessage}</li>
+          <li className="px-4 py-2.5 text-sm text-gray-500">
+            {SELECT_EMPTY_MESSAGE}
+          </li>
         )}
       </ul>
-    </div>
+    </DropdownPanel>
   );
 }
 
@@ -295,7 +265,7 @@ function DefaultSelectField({
 }: DefaultSelectFieldProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const selectedOption = options.find((option) => option.value === value);
   const filteredOptions = useMemo(
@@ -303,17 +273,15 @@ function DefaultSelectField({
     [options, searchQuery],
   );
 
-  const closeDropdown = () => {
+  const closeDropdown = useCallback(() => {
     setIsOpen(false);
     setSearchQuery("");
-  };
+  }, []);
 
-  useClickOutside(containerRef, closeDropdown);
-
-  const handleOpenDropdown = () => {
+  const handleToggleDropdown = () => {
     if (disabled) return;
 
-    setIsOpen(true);
+    setIsOpen((previous) => !previous);
     setSearchQuery("");
   };
 
@@ -323,57 +291,43 @@ function DefaultSelectField({
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
       <button
+        ref={triggerRef}
         type="button"
         aria-label={ariaLabel}
         aria-invalid={hasError}
         aria-expanded={isOpen}
         disabled={disabled}
-        onClick={handleOpenDropdown}
-        className={cn(
-          "flex h-11 w-full cursor-pointer items-center justify-between rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs transition-colors duration-200 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90",
-          disabled
-            ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500 opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-            : hasError
-              ? "border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:border-error-500 dark:text-error-400 dark:focus:border-error-800"
-              : "border-gray-300 bg-transparent text-gray-800 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800",
-          triggerClassName,
-        )}
+        onClick={handleToggleDropdown}
+        className={selectTriggerClassName({
+          disabled,
+          hasError,
+          className: triggerClassName,
+        })}
       >
         <span className={cn("truncate", !selectedOption && "text-gray-400")}>
           {selectedOption?.label || placeholder}
         </span>
         <ChevronDown
           className={cn(
-            "ml-2 size-4 shrink-0 text-gray-500 transition-transform duration-200",
+            "size-4 shrink-0 text-gray-500 transition-transform duration-200",
             isOpen && "rotate-180",
           )}
         />
       </button>
 
-      {isOpen &&
-        !disabled &&
-        (searchable ? (
-          <SearchableSelectDropdown
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            filteredOptions={filteredOptions}
-            emptyMessage={SELECT_EMPTY_MESSAGE}
-            onSelectOption={handleSelectOption}
-            isOptionSelected={(option) => option.value === value}
-            loading={loading}
-          />
-        ) : (
-          <SelectOptionsList
-            filteredOptions={options}
-            emptyMessage={SELECT_EMPTY_MESSAGE}
-            onSelectOption={handleSelectOption}
-            isOptionSelected={(option) => option.value === value}
-            loading={loading}
-          />
-        ))}
-    </div>
+      <SelectDropdown
+        anchorRef={triggerRef}
+        open={isOpen && !disabled}
+        onClose={closeDropdown}
+        options={searchable ? filteredOptions : options}
+        onSelectOption={handleSelectOption}
+        isOptionSelected={(option) => option.value === value}
+        loading={loading}
+        {...(searchable ? { searchQuery, onSearchChange: setSearchQuery } : {})}
+      />
+    </>
   );
 }
 
@@ -445,15 +399,14 @@ function CreatableSelectField({
             onValueChange?.(event.target.value);
             setIsOpen(true);
           }}
-          className={cn(
-            "h-11 w-full appearance-none rounded-lg border px-4 py-2.5 pr-10 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30",
-            disabled
-              ? "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500 opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-              : hasError
-                ? "border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:border-error-500 dark:text-error-400 dark:focus:border-error-800"
-                : "border-gray-300 bg-transparent text-gray-800 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800",
-            triggerClassName,
-          )}
+          className={selectTriggerClassName({
+            disabled,
+            hasError,
+            className: cn(
+              "appearance-none pr-10 placeholder:text-gray-400 dark:placeholder:text-white/30",
+              triggerClassName,
+            ),
+          })}
         />
 
         <button
