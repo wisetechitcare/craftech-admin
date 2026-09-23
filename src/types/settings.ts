@@ -25,6 +25,7 @@ export interface SiteSettings {
   state?: string | null;
   postalCode?: string | null;
   country?: string | null;
+  mapEmbedUrl?: string | null;
   businessHours?: BusinessHours | null;
   socialLinks?: SocialLinks | null;
   website?: string | null;

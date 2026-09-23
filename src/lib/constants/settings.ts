@@ -32,6 +32,7 @@ export const SETTINGS_TAB_FIELDS: Record<SettingsTab, (keyof SiteSettings)[]> =
       "state",
       "postalCode",
       "country",
+      "mapEmbedUrl",
       "businessHours",
     ],
     [SettingsTab.SOCIAL]: ["socialLinks"],

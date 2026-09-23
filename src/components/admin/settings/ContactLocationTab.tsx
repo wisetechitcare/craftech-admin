@@ -114,6 +114,22 @@ const ContactLocationTab = (props: SettingsTabProps) => {
         </div>
       </SectionCard>
 
+      <SectionCard
+        title="Map embed"
+        description="Paste Google Maps Share → Embed a map (URL or iframe). The floating contact layout draws one world-map pin from this link."
+      >
+        <InputField
+          label="Google Maps embed"
+          value={data.mapEmbedUrl ?? ""}
+          onChange={(e) => patch({ mapEmbedUrl: e.target.value })}
+          error={!!errors.mapEmbedUrl}
+          hint={
+            errors.mapEmbedUrl ??
+            "Use https://www.google.com/maps/embed?... or paste the iframe HTML."
+          }
+        />
+      </SectionCard>
+
       <BusinessHoursFields {...props} />
     </div>
   );
