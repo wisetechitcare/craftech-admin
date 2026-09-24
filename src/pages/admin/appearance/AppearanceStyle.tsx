@@ -13,7 +13,11 @@ import type { AppearanceUpdatePayload } from "@/types/appearance";
 import type { LayoutVariant } from "@/types/common";
 
 type StyleField =
-  "navbarVariant" | "heroVariant" | "aboutVariant" | "faqVariant";
+  | "navbarVariant"
+  | "heroVariant"
+  | "aboutVariant"
+  | "faqVariant"
+  | "contactVariant";
 
 interface AppearanceStyleProps {
   field: StyleField;

@@ -131,6 +131,17 @@ function App() {
                 />
               }
             />
+            <Route
+              path="contact"
+              element={
+                <AppearanceStyle
+                  key="contact"
+                  field="contactVariant"
+                  label="Contact Style"
+                  section={PreviewSection.CONTACT}
+                />
+              }
+            />
           </Route>
           <Route path="site-identity" element={<SiteIdentityLayout />}>
             <Route

@@ -11,6 +11,7 @@ export enum PreviewSection {
   HERO = "hero",
   ABOUT = "about",
   FAQ = "faq",
+  CONTACT = "contact",
 }
 
 /** The slice of the website's CMS context an editing screen overrides. Keys are
