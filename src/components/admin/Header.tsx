@@ -24,6 +24,11 @@ const breadcrumbMap: Record<string, Crumb[]> = {
     { label: "Home", href: "/admin/hero" },
     { label: "FAQ Section" },
   ],
+  "/admin/contact": [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Home", href: "/admin/hero" },
+    { label: "Contact Section" },
+  ],
   "/admin/process": [
     { label: "Dashboard", href: "/admin" },
     { label: "Process Blueprint" },

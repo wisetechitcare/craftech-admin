@@ -9,7 +9,9 @@ import TextArea from "../../../components/admin/ui/TextArea";
 import { teamApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import SelectField from "../../../components/admin/ui/SelectField";
-import { toSelectOptions } from "../../../utils/utils";
+import { PhoneField } from "@/components/common";
+import { PHONE_ERROR_MESSAGE } from "@/lib/constants/common";
+import { isValidPhone, toSelectOptions } from "../../../utils/utils";
 
 const teamValidationSchema = z.object({
   name: z.string().min(2, "Name required"),
@@ -19,7 +21,11 @@ const teamValidationSchema = z.object({
   description: z.string().optional(),
   image: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .trim()
+    .refine((value) => !value || isValidPhone(value), PHONE_ERROR_MESSAGE)
+    .optional(),
   linkedin: z.string().optional(),
   twitter: z.string().optional(),
   yearsOfExperience: z.number().optional(),
@@ -263,9 +269,8 @@ const TeamForm = () => {
               placeholder="email@example.com"
             />
 
-            <InputField
+            <PhoneField
               label="Phone"
-              type="tel"
               {...register("phone")}
               error={!!errors.phone}
               hint={errors.phone?.message as string}

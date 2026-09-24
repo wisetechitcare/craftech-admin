@@ -1,122 +1,172 @@
-import BusinessHoursFields from "./BusinessHoursFields";
+import AddressListFields from "./AddressListFields";
+import ContactChannelColumn from "./ContactChannelColumn";
 
 import InputField from "@/components/admin/ui/InputField";
+import SelectField from "@/components/admin/ui/SelectField";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
+import {
+  SectionVisibilitySwitch,
+  isVisible,
+  type VisibilityMap,
+} from "@/components/admin/ui/VisibilityToggle";
 
-import type { SettingsTabProps, SiteSettings } from "@/types/settings";
+import {
+  CONTACT_SLOTS,
+  ContactVisibilitySection,
+  contactSlotVisibilityKey,
+} from "@/lib/constants/settings";
+import type { SettingsTabProps } from "@/types/settings";
+import { removeAt } from "@/utils/utils";
 
-type ContactField =
-  | "primaryPhone"
-  | "alternatePhone"
-  | "whatsappNumber"
-  | "businessEmail"
-  | "officeAddress"
-  | "city"
-  | "state"
-  | "postalCode"
-  | "country";
+type ContactChannel = "phone" | "email" | "address";
 
-interface FieldSpec {
-  key: ContactField;
-  label: string;
-  hint?: string;
-  type?: string;
-  placeholder?: string;
-  wide?: boolean;
-}
+/**
+ * Removing a row moves every row below it up one, so its visibility flag has to
+ * move with it. Left alone, deleting a shown number would hand its neighbour
+ * the flag of the row that used to sit there — the next number quietly
+ * disappearing from the site, or a hidden one reappearing.
+ */
+const shiftVisibilityAfterRemove = (
+  visibility: VisibilityMap,
+  channel: ContactChannel,
+  removed: number,
+): VisibilityMap => {
+  const next = { ...visibility };
+  for (let index = removed; index < CONTACT_SLOTS - 1; index += 1) {
+    const from = contactSlotVisibilityKey(channel, index + 1);
+    const to = contactSlotVisibilityKey(channel, index);
+    if (from in next) {
+      next[to] = next[from];
+    } else {
+      delete next[to];
+    }
+  }
+  delete next[contactSlotVisibilityKey(channel, CONTACT_SLOTS - 1)];
+  return next;
+};
 
-const CONTACT_FIELDS: FieldSpec[] = [
-  {
-    key: "primaryPhone",
-    label: "Phone",
-    type: "tel",
-    placeholder: "+1 555 010 0000",
-    hint: "Footer, contact section, the mobile call button and search results.",
-  },
-  {
-    key: "alternatePhone",
-    label: "Secondary phone",
-    type: "tel",
-    hint: "Optional. Listed under the phone in the footer and contact section.",
-  },
-  {
-    key: "whatsappNumber",
-    label: "WhatsApp number",
-    type: "tel",
-    placeholder: "+1 555 010 0000",
-    hint: "Include the country code. Empty hides every WhatsApp button.",
-  },
-  {
-    key: "businessEmail",
-    label: "Email",
-    type: "email",
-    placeholder: "hello@example.com",
-    hint: "Footer, contact section and search results. The FAQ uses it unless the FAQ sets its own.",
-  },
-];
-
-const ADDRESS_FIELDS: FieldSpec[] = [
-  {
-    key: "officeAddress",
-    label: "Street address",
-    hint: "Leave the address empty if visitors have nowhere to visit.",
-    wide: true,
-  },
-  { key: "city", label: "City" },
-  { key: "state", label: "State / region" },
-  { key: "postalCode", label: "Postal code" },
-  { key: "country", label: "Country" },
-];
-
-const ContactLocationTab = (props: SettingsTabProps) => {
-  const { data, errors, patch } = props;
-
-  const renderField = ({
-    key,
-    label,
-    hint,
-    type,
-    placeholder,
-    wide,
-  }: FieldSpec) => (
-    <div key={key} className={wide ? "md:col-span-2" : undefined}>
-      <InputField
-        label={label}
-        type={type}
-        placeholder={placeholder}
-        value={data[key] ?? ""}
-        onChange={(e) =>
-          patch({ [key]: e.target.value } as Partial<SiteSettings>)
-        }
-        error={!!errors[key]}
-        hint={errors[key] ?? hint}
-      />
-    </div>
+const ContactLocationTab = ({
+  data,
+  errors,
+  patch,
+  visibility,
+  setVisibility,
+  patchVisibility,
+}: SettingsTabProps) => {
+  const phones = data.phones ?? [];
+  const emails = data.emails ?? [];
+  const addresses = data.addresses ?? [];
+  const contactInfoVisible = isVisible(
+    visibility,
+    ContactVisibilitySection.CONTACT_INFO,
   );
+
+  const removeSlot = (channel: ContactChannel, index: number) =>
+    setVisibility((current) =>
+      shiftVisibilityAfterRemove(current, channel, index),
+    );
+
+  const whatsappOptions = phones.flatMap((phone, index) =>
+    phone.trim()
+      ? [{ value: String(index), label: `${index + 1} — ${phone}` }]
+      : [],
+  );
+  // The stored pick can point at a row that has since been cleared or removed.
+  // Showing the server's own fallback — the first number there is — beats a
+  // select displaying an index that is no longer one of its options.
+  const whatsappValue = String(data.whatsappPhoneIndex ?? -1);
+  const whatsappSelected = whatsappOptions.some(
+    (option) => option.value === whatsappValue,
+  )
+    ? whatsappValue
+    : (whatsappOptions[0]?.value ?? "");
 
   return (
     <div className="space-y-6">
       <SectionCard
-        title="Contact"
-        description="The one place the website reads contact details from. Anything left empty is simply not shown."
+        title="Contact information"
+        description="Up to four numbers and four addresses. Whichever is filled in first is the one the website uses wherever it can only show one."
+        controls={
+          <SectionVisibilitySwitch
+            visible={contactInfoVisible}
+            onChange={(visible) =>
+              patchVisibility(ContactVisibilitySection.CONTACT_INFO, visible)
+            }
+          />
+        }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {CONTACT_FIELDS.map(renderField)}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+          <ContactChannelColumn
+            channel="phone"
+            title="Phone numbers"
+            label="Phone number"
+            addLabel="Add phone"
+            placeholder="+1 555 010 0000"
+            field="phones"
+            errors={errors}
+            values={phones}
+            visibility={visibility}
+            sectionVisible={contactInfoVisible}
+            onChange={(next) => patch({ phones: next })}
+            onRemove={(index) => {
+              patch({ phones: removeAt(phones, index) });
+              removeSlot("phone", index);
+            }}
+            patchVisibility={patchVisibility}
+          />
+          <ContactChannelColumn
+            channel="email"
+            title="Email addresses"
+            label="Email"
+            addLabel="Add email"
+            placeholder="hello@example.com"
+            field="emails"
+            errors={errors}
+            values={emails}
+            visibility={visibility}
+            sectionVisible={contactInfoVisible}
+            onChange={(next) => patch({ emails: next })}
+            onRemove={(index) => {
+              patch({ emails: removeAt(emails, index) });
+              removeSlot("email", index);
+            }}
+            patchVisibility={patchVisibility}
+          />
         </div>
+
+        {whatsappOptions.length > 1 && (
+          <div className="border-t border-line pt-5">
+            <SelectField
+              label="WhatsApp number"
+              value={whatsappSelected}
+              onValueChange={(value) =>
+                patch({ whatsappPhoneIndex: Number(value) })
+              }
+              options={whatsappOptions}
+            />
+            <p className="mt-2 text-xs text-ink-mute">
+              Which of these numbers every WhatsApp button opens a chat with.
+              With one number on file it is used without asking.
+            </p>
+          </div>
+        )}
       </SectionCard>
 
-      <SectionCard
-        title="Address"
-        description="Shown in the footer and contact section, and given to search engines."
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {ADDRESS_FIELDS.map(renderField)}
-        </div>
-      </SectionCard>
+      <AddressListFields
+        errors={errors}
+        values={addresses}
+        visibility={visibility}
+        onChange={(next) => patch({ addresses: next })}
+        onRemove={(index) => {
+          patch({ addresses: removeAt(addresses, index) });
+          removeSlot("address", index);
+        }}
+        patchVisibility={patchVisibility}
+      />
 
       <SectionCard
         title="Map embed"
-        description="Paste Google Maps Share → Embed a map (URL or iframe). The floating contact layout draws one world-map pin from this link."
+        description="Paste Google Maps Share → Embed a map (URL or iframe) for the head office. Branches are listed but never pinned."
       >
         <InputField
           label="Google Maps embed"
@@ -129,8 +179,6 @@ const ContactLocationTab = (props: SettingsTabProps) => {
           }
         />
       </SectionCard>
-
-      <BusinessHoursFields {...props} />
     </div>
   );
 };

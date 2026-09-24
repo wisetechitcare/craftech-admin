@@ -36,6 +36,7 @@ import BlogForm from "./pages/admin/blog/BlogForm";
 import TeamManager from "./pages/admin/team/TeamManager";
 import TeamForm from "./pages/admin/team/TeamForm";
 import FAQManager from "./pages/admin/faq/FAQManager";
+import ContactCMS from "./pages/admin/cms/ContactCMS";
 import FAQForm from "./pages/admin/faq/FAQForm";
 import MediaLibrary from "./pages/admin/media/MediaLibrary";
 
@@ -72,6 +73,7 @@ function App() {
         >
           <Route index element={<DashboardHome />} />
           <Route path="hero" element={<HeroCMS />} />
+          <Route path="contact" element={<ContactCMS />} />
           <Route path="about" element={<AboutCMS />} />
           <Route path="stats" element={<StatsCMS />} />
           {/* The old combined page split into the three above; keep bookmarks working. */}
@@ -139,6 +141,7 @@ function App() {
                   field="contactVariant"
                   label="Contact Style"
                   section={PreviewSection.CONTACT}
+                  viewportHeight={1200}
                 />
               }
             />

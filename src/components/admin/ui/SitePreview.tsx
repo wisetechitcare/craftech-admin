@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import type { AboutContent } from "@/types/about";
 import type { AppearanceUpdatePayload } from "@/types/appearance";
+import type { ContactSectionContent } from "@/types/contact";
 import type { FaqItem, FaqSectionContent } from "@/types/faq";
 import type { HeroContent } from "@/types/hero";
 
@@ -20,6 +21,7 @@ export interface PreviewDraft {
   heroContent?: HeroContent;
   aboutContent?: AboutContent;
   faqContent?: { faqs: FaqItem[]; section: FaqSectionContent };
+  contactContent?: { section: ContactSectionContent };
   appearance?: AppearanceUpdatePayload;
 }
 

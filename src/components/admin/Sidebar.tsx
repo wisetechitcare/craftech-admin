@@ -58,6 +58,7 @@ const navGroups: NavGroup[] = [
         subItems: [
           { name: "Hero Section", path: "/admin/hero", icon: PanelTop },
           { name: "FAQ Section", path: "/admin/faq", icon: HelpCircle },
+          { name: "Contact Section", path: "/admin/contact", icon: Mail },
         ],
       },
       { name: "About", icon: Info, path: "/admin/about" },
