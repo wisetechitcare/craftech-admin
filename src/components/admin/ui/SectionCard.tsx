@@ -12,8 +12,13 @@ interface ListHeaderProps {
   /** Present on the lists that cap their length: renders " (3/6)". */
   count?: number;
   max?: number;
-  /** The Visible/Hidden switch, the Add button, or both. */
+  /** The Visible/Hidden switch, the Add button, or both. Sits opposite the
+   *  title, against the far edge of the card. */
   controls?: React.ReactNode;
+  /** Controls that belong beside the title rather than across the card from it
+   *  — an Add button reads as part of the list it adds to, where the full
+   *  card's width between the two leaves it looking unrelated. */
+  titleControls?: React.ReactNode;
   /** Sections head their card with an h3; lists nested inside one use an h4. */
   nested?: boolean;
 }
@@ -26,6 +31,7 @@ export const ListHeader = ({
   count,
   max,
   controls,
+  titleControls,
   nested,
 }: ListHeaderProps) => {
   const heading = (
@@ -43,15 +49,18 @@ export const ListHeader = ({
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        {nested ? (
-          <h4 className="text-xs font-semibold text-ink uppercase tracking-wider">
-            {heading}
-          </h4>
-        ) : (
-          <h3 className={HEADING}>{heading}</h3>
-        )}
+        <div className="flex items-center gap-3">
+          {nested ? (
+            <h4 className="text-xs font-semibold text-ink uppercase tracking-wider">
+              {heading}
+            </h4>
+          ) : (
+            <h3 className={HEADING}>{heading}</h3>
+          )}
+          {titleControls}
+        </div>
         {description && (
-          <p className="mt-1 text-[11px] text-ink-faint">{description}</p>
+          <p className="mt-1 text-xs text-ink-faint">{description}</p>
         )}
       </div>
       {controls}

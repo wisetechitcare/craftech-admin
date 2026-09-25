@@ -5,6 +5,22 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const PHONE_MIN_DIGITS = 10;
+const PHONE_MAX_DIGITS = 18;
+
+const PHONE_PATTERN = new RegExp(
+  `^\\+?\\d{${PHONE_MIN_DIGITS},${PHONE_MAX_DIGITS}}$`,
+);
+
+// What a phone field may hold: digits, and a leading + for the country code.
+// Applied on change so pasted text is cleaned the same way typed text is.
+export const sanitizePhoneValue = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, PHONE_MAX_DIGITS);
+  return value.trimStart().startsWith("+") ? `+${digits}` : digits;
+};
+
+export const isValidPhone = (value: string) => PHONE_PATTERN.test(value.trim());
+
 // A plain list of strings as SelectField wants it. The label IS the value for
 // every caller — categories, statuses, departments — so there is nothing to map
 // beyond the shape. Structurally typed rather than importing SelectOption, which

@@ -23,16 +23,11 @@ export const SETTINGS_TAB_FIELDS: Record<SettingsTab, (keyof SiteSettings)[]> =
   {
     [SettingsTab.GENERAL]: ["companyName", "companyDescription"],
     [SettingsTab.CONTACT]: [
-      "primaryPhone",
-      "alternatePhone",
-      "whatsappNumber",
-      "businessEmail",
-      "officeAddress",
-      "city",
-      "state",
-      "postalCode",
-      "country",
-      "businessHours",
+      "phones",
+      "emails",
+      "addresses",
+      "whatsappPhoneIndex",
+      "mapEmbedUrl",
     ],
     [SettingsTab.SOCIAL]: ["socialLinks"],
     [SettingsTab.SEO]: [
@@ -47,37 +42,46 @@ export const SETTINGS_TAB_FIELDS: Record<SettingsTab, (keyof SiteSettings)[]> =
     [SettingsTab.ADVANCED]: ["maintenanceMode", "maintenanceMessage"],
   };
 
-/** Mirrors BUSINESS_DAYS in the backend's validation schemas. */
-export enum BusinessDay {
-  MONDAY = "monday",
-  TUESDAY = "tuesday",
-  WEDNESDAY = "wednesday",
-  THURSDAY = "thursday",
-  FRIDAY = "friday",
-  SATURDAY = "saturday",
-  SUNDAY = "sunday",
-}
-
-export const BUSINESS_DAYS = Object.values(BusinessDay);
-
-/** Pre-filled when a closed day is switched open, so the row is valid at once. */
-export const DEFAULT_OPEN_HOURS = { open: "09:00", close: "17:00" };
-
+/** Mirrors SOCIAL_PLATFORMS in the backend's domain/contact/channels.ts. */
 export enum SocialPlatform {
   INSTAGRAM = "instagram",
   LINKEDIN = "linkedin",
   FACEBOOK = "facebook",
   TWITTER = "twitter",
   YOUTUBE = "youtube",
+  GITHUB = "github",
 }
 
-export const SOCIAL_PLATFORMS: { key: SocialPlatform; label: string }[] = [
-  { key: SocialPlatform.INSTAGRAM, label: "Instagram" },
-  { key: SocialPlatform.LINKEDIN, label: "LinkedIn" },
-  { key: SocialPlatform.FACEBOOK, label: "Facebook" },
-  { key: SocialPlatform.TWITTER, label: "X (Twitter)" },
-  { key: SocialPlatform.YOUTUBE, label: "YouTube" },
-];
+export const SOCIAL_PLATFORM_LABELS: Record<SocialPlatform, string> = {
+  [SocialPlatform.INSTAGRAM]: "Instagram",
+  [SocialPlatform.LINKEDIN]: "LinkedIn",
+  [SocialPlatform.FACEBOOK]: "Facebook",
+  [SocialPlatform.TWITTER]: "X (Twitter)",
+  [SocialPlatform.YOUTUBE]: "YouTube",
+  [SocialPlatform.GITHUB]: "GitHub",
+};
+
+/** How many phone numbers, emails and addresses Global Settings accepts.
+ *  Mirrors CONTACT_SLOTS in the backend's domain/contact/channels.ts — one past
+ *  this point would fail validation, so the Add button stops here. */
+export const CONTACT_SLOTS = 4;
+
+/** Mirrors the `contactDetails` group in the backend's visibility registry. */
+export enum ContactVisibilitySection {
+  CONTACT_INFO = "contactDetails.contactInfo",
+  ADDRESSES = "contactDetails.addresses",
+  SOCIAL = "contactDetails.social",
+}
+
+/** Takes the row's array index; the key itself counts from 1, the way the
+ *  field labels do. Kept identical to the frontend's helper of the same name. */
+export const contactSlotVisibilityKey = (
+  channel: "phone" | "email" | "address",
+  index: number,
+) => `contactDetails.${channel}.${index + 1}`;
+
+export const socialVisibilityKey = (platform: SocialPlatform) =>
+  `contactDetails.social.${platform}`;
 
 /** Mirrors the backend's settingsSchema max lengths. */
 export const SETTINGS_LIMITS = {

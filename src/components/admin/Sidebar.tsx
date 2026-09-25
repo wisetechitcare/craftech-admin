@@ -22,6 +22,7 @@ import {
   BookOpen,
   BarChart3,
   HelpCircle,
+  Mail,
   Palette,
   Info,
   Menu,
@@ -57,6 +58,7 @@ const navGroups: NavGroup[] = [
         subItems: [
           { name: "Hero Section", path: "/admin/hero", icon: PanelTop },
           { name: "FAQ Section", path: "/admin/faq", icon: HelpCircle },
+          { name: "Contact Section", path: "/admin/contact", icon: Mail },
         ],
       },
       { name: "About", icon: Info, path: "/admin/about" },
@@ -130,6 +132,11 @@ const navGroups: NavGroup[] = [
           { name: "Hero", path: "/admin/appearance/hero", icon: PanelTop },
           { name: "About", path: "/admin/appearance/about", icon: Info },
           { name: "FAQ", path: "/admin/appearance/faq", icon: HelpCircle },
+          {
+            name: "Contact",
+            path: "/admin/appearance/contact",
+            icon: Mail,
+          },
         ],
       },
       { name: "Settings", icon: Settings, path: "/admin/settings" },

@@ -5,6 +5,7 @@ import type {
   AppearanceResponse,
   AppearanceUpdatePayload,
 } from "../types/appearance";
+import type { ContactSectionContent } from "../types/contact";
 import type {
   FaqListResponse,
   FaqPayload,
@@ -208,6 +209,22 @@ export const blogApi = {
   create: (data: any) => api.post("/cms/blog", data),
   update: (id: string, data: any) => api.put(`/cms/blog/${id}`, data),
   remove: (id: string) => api.delete(`/cms/blog/${id}`),
+};
+
+// ── Contact ─────────────────────────────────────────────────────────────────
+export const contactApi = {
+  getSection: () =>
+    api.get<{
+      success: boolean;
+      message?: string;
+      data: ContactSectionContent;
+    }>("/cms/contact/section"),
+  updateSection: (data: ContactSectionContent) =>
+    api.put<{
+      success: boolean;
+      message?: string;
+      data: ContactSectionContent;
+    }>("/cms/contact/section", data),
 };
 
 // ── FAQ ─────────────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import {
   SeoTab,
   SocialLinksTab,
 } from "@/components/admin/settings";
+import type { VisibilityMap } from "@/components/admin/ui/VisibilityToggle";
 import { AdminInfoCallout } from "@/components/common";
 
 import { cn } from "@/utils/utils";
@@ -18,7 +19,7 @@ import {
   SETTINGS_TAB_FIELDS,
   SettingsTab,
 } from "@/lib/constants/settings";
-import { cmsApi } from "@/services/api";
+import { appearanceApi, cmsApi } from "@/services/api";
 import type { SettingsTabProps, SiteSettings } from "@/types/settings";
 
 const TAB_CONTENT: Record<
@@ -51,6 +52,11 @@ const humanize = (field: string) =>
 export default function Settings() {
   const [data, setData] = useState<SiteSettings | null>(null);
   const [saved, setSaved] = useState<SiteSettings | null>(null);
+  // Which contact details the website draws lives on Appearance, not on the
+  // settings row: hiding a number is a presentation decision and the number
+  // behind it has to survive it.
+  const [visibility, setVisibility] = useState<VisibilityMap>({});
+  const [savedVisibility, setSavedVisibility] = useState<VisibilityMap>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -71,7 +77,9 @@ export default function Settings() {
     );
   }, [data, saved]);
   const changedFields = Object.keys(changes);
-  const changeCount = changedFields.length;
+  const visibilityChanged =
+    JSON.stringify(visibility) !== JSON.stringify(savedVisibility);
+  const changeCount = changedFields.length + (visibilityChanged ? 1 : 0);
 
   useEffect(() => {
     if (!changeCount) return;
@@ -87,6 +95,11 @@ export default function Settings() {
     setData(settings);
     setSaved(settings);
     setFieldErrors({});
+  };
+
+  const adoptVisibility = (map: VisibilityMap) => {
+    setVisibility(map);
+    setSavedVisibility(map);
   };
 
   const fetchSettings = async () => {
@@ -114,8 +127,32 @@ export default function Settings() {
     }
   };
 
+  const fetchVisibility = async () => {
+    let message = "Failed to load section visibility";
+    let isError = true;
+
+    try {
+      const response = await appearanceApi.get();
+      message = response.data?.message || message;
+
+      if (response.data?.success) {
+        isError = false;
+        adoptVisibility(response.data.data.visibility ?? {});
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+      }
+    } finally {
+      if (isError) {
+        toast.error(message);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
+    fetchVisibility();
   }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -129,13 +166,29 @@ export default function Settings() {
     setFieldErrors({});
 
     try {
-      const response = await cmsApi.updateSettings(changes);
-      message = response.data?.message || message;
+      // A visibility-only save must not PUT an empty settings patch: that is a
+      // write that changes nothing and still stamps the row as updated.
+      const response = changedFields.length
+        ? await cmsApi.updateSettings(changes)
+        : null;
+      message = response?.data?.message || message;
 
-      if (response.data?.success) {
+      if (!response || response.data?.success) {
+        if (response) adopt(response.data.data as SiteSettings);
+
+        if (visibilityChanged) {
+          const saveMessage = "Settings saved";
+          message = "Settings saved, but what is shown did not. Try again.";
+          const { data: appearance } = await appearanceApi.update({
+            visibility,
+          });
+          adoptVisibility(appearance.data.visibility ?? {});
+          message = saveMessage;
+        } else {
+          message = "Settings saved";
+        }
+
         isError = false;
-        adopt(response.data.data as SiteSettings);
-        message = "Settings saved";
       }
     } catch (error) {
       if (isAxiosError(error)) {
@@ -164,6 +217,8 @@ export default function Settings() {
   if (!data) return null;
 
   const patch = (next: Partial<SiteSettings>) => setData({ ...data, ...next });
+  const patchVisibility = (key: string, visible: boolean) =>
+    setVisibility((prev) => ({ ...prev, [key]: visible }));
   const TabContent = TAB_CONTENT[activeTab];
   const flaggedTabs = new Set(
     [...changedFields, ...Object.keys(fieldErrors)].map(
@@ -224,12 +279,22 @@ export default function Settings() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <TabContent data={data} errors={fieldErrors} patch={patch} />
+        <TabContent
+          data={data}
+          errors={fieldErrors}
+          patch={patch}
+          visibility={visibility}
+          patchVisibility={patchVisibility}
+          setVisibility={setVisibility}
+        />
 
         <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => saved && adopt(saved)}
+            onClick={() => {
+              if (saved) adopt(saved);
+              setVisibility(savedVisibility);
+            }}
             disabled={!changeCount}
             className="px-6 py-2 text-ink border border-line rounded-lg font-bold text-sm hover:bg-paper transition-colors disabled:opacity-50"
           >

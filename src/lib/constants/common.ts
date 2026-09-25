@@ -1,3 +1,6 @@
+export const PHONE_ERROR_MESSAGE =
+  "Enter 10 to 18 digits, with or without a + country code";
+
 export const SELECT_EMPTY_MESSAGE = "No options found";
 // export const SELECT_CREATABLE_EMPTY_MESSAGE =
 //   "No matching options found. Continue typing to create a new one.";

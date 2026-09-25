@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import type { AboutContent } from "@/types/about";
 import type { AppearanceUpdatePayload } from "@/types/appearance";
+import type { ContactSectionContent } from "@/types/contact";
 import type { FaqItem, FaqSectionContent } from "@/types/faq";
 import type { HeroContent } from "@/types/hero";
 
@@ -11,6 +12,7 @@ export enum PreviewSection {
   HERO = "hero",
   ABOUT = "about",
   FAQ = "faq",
+  CONTACT = "contact",
 }
 
 /** The slice of the website's CMS context an editing screen overrides. Keys are
@@ -19,6 +21,7 @@ export interface PreviewDraft {
   heroContent?: HeroContent;
   aboutContent?: AboutContent;
   faqContent?: { faqs: FaqItem[]; section: FaqSectionContent };
+  contactContent?: { section: ContactSectionContent };
   appearance?: AppearanceUpdatePayload;
 }
 
