@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { PreviewDraft } from "@/components/admin/ui/SitePreview";
 
 import { CustomCursorVariant } from "@/types/common";
+import { SITE_URL } from "@/lib/utils/common";
 
-const SITE_URL = import.meta.env.VITE_SITE_URL as string | undefined;
 const VIEWPORT_WIDTH = 1024;
 const VIEWPORT_HEIGHT = 320;
 
@@ -25,9 +25,7 @@ const CursorPreview = ({ variant }: CursorPreviewProps) => {
     [variant],
   );
 
-  const origin = SITE_URL
-    ? new URL(SITE_URL, window.location.href).origin
-    : null;
+  const origin = SITE_URL ?? null;
 
   useEffect(() => {
     if (!origin) return;

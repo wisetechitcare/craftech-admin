@@ -25,3 +25,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   startIcon?: ReactNode;
   endIcon?: ReactNode;
 }
+
+/** One copy field on a section content card. `key` is both the content field
+ *  and the element part of its visibility key (`<section>.<key>`). */
+export interface SectionCopyField<T> {
+  key: keyof T & string;
+  label: string;
+  placeholder: string;
+  multiline?: boolean;
+  type?: string;
+  tooltip?: string;
+  /** Rendered in a narrow column, as a short value like an email is. */
+  narrow?: boolean;
+}

@@ -19,13 +19,13 @@ import {
   PageHeader,
   type Column,
 } from "@/components/common";
-import FaqSectionContentCard from "@/components/admin/faq/FaqSectionContentCard";
 import {
   DragHandle,
   dragStateClasses,
   useDragItem,
 } from "@/components/admin/ui/DragList";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
+import SectionContentCard from "@/components/admin/ui/SectionContentCard";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
@@ -36,7 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { DragList } from "@/lib/constants/drag-lists";
-import { FAQ_VISIBILITY_KEY } from "@/lib/constants/faq";
+import { FAQ_SECTION_FIELDS, FAQ_VISIBILITY_KEY } from "@/lib/constants/faq";
 import { appearanceApi, faqApi } from "@/services/api";
 import {
   EMPTY_FAQ_SECTION,
@@ -297,9 +297,14 @@ const FAQManager = () => {
           setVisibility((prev) => ({ ...prev, "home.faq": true }))
         }
       >
-        <FaqSectionContentCard
+        <SectionContentCard
+          name="FAQ"
+          description="Shown above the questions in every FAQ style. Leave a field empty to keep the text shown as its placeholder."
+          fields={FAQ_SECTION_FIELDS}
           content={section}
           onChange={setSection}
+          onSave={faqApi.updateSection}
+          visibilityKey={FAQ_VISIBILITY_KEY}
           visibility={visibility}
           onVisibilityChange={setVisibility}
         />

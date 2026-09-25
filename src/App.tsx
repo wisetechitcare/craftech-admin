@@ -38,6 +38,7 @@ import TeamForm from "./pages/admin/team/TeamForm";
 import FAQManager from "./pages/admin/faq/FAQManager";
 import ContactCMS from "./pages/admin/cms/ContactCMS";
 import FAQForm from "./pages/admin/faq/FAQForm";
+import GalleryManager from "./pages/admin/gallery/GalleryManager";
 import MediaLibrary from "./pages/admin/media/MediaLibrary";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -181,6 +182,7 @@ function App() {
           <Route path="faq" element={<FAQManager />} />
           <Route path="faq/new" element={<FAQForm />} />
           <Route path="faq/:id" element={<FAQForm />} />
+          <Route path="gallery" element={<GalleryManager />} />
         </Route>
       </Routes>
     </AuthProvider>

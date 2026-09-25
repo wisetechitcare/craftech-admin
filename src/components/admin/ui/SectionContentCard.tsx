@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { isAxiosError } from "axios";
+import { isAxiosError, type AxiosResponse } from "axios";
 import toast from "react-hot-toast";
 import { Loader2, Save } from "lucide-react";
 
@@ -11,46 +11,58 @@ import {
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
-
-import { FAQ_SECTION_DEFAULTS, FAQ_VISIBILITY_KEY } from "@/lib/constants/faq";
-import { appearanceApi, faqApi } from "@/services/api";
-import type { FaqSectionContent } from "@/types/faq";
 import { Button } from "@/components/ui/button";
 
-interface FaqSectionContentCardProps {
-  content: FaqSectionContent;
-  onChange: (content: FaqSectionContent) => void;
+import { appearanceApi } from "@/services/api";
+import type { SectionCopyField } from "@/types/common";
+import { cn } from "@/utils/utils";
+
+interface SectionContentCardProps<T extends { [K in keyof T]: string }> {
+  /** The section's name in the card title and the toasts: "FAQ", "Gallery". */
+  name: string;
+  description: string;
+  fields: SectionCopyField<T>[];
+  content: T;
+  onChange: (content: T) => void;
+  onSave: (
+    content: T,
+  ) => Promise<AxiosResponse<{ success: boolean; message?: string; data: T }>>;
+  /** The section's own visibility key; each field toggles `<key>.<field>`. */
+  visibilityKey: string;
   /** The whole stored map — Appearance replaces it on write, so the other
    *  pages' flags have to travel with this one. */
   visibility: VisibilityMap;
   onVisibilityChange: (visibility: VisibilityMap) => void;
 }
 
-/** The FAQ section's heading, supporting text and contact email — the copy
- *  every FAQ style draws above its questions — and whether it is drawn at all. */
-const FaqSectionContentCard = ({
+/** A homepage section's own copy, and whether each part of it is drawn. */
+const SectionContentCard = <T extends { [K in keyof T]: string }>({
+  name,
+  description,
+  fields,
   content,
   onChange,
+  onSave,
+  visibilityKey,
   visibility,
   onVisibilityChange,
-}: FaqSectionContentCardProps) => {
+}: SectionContentCardProps<T>) => {
   const [saving, setSaving] = useState<boolean>(false);
 
-  const patch = (changes: Partial<FaqSectionContent>) =>
-    onChange({ ...content, ...changes });
-
-  const patchVisibility = (key: string, visible: boolean) =>
-    onVisibilityChange({ ...visibility, [key]: visible });
+  const patch = (key: keyof T, value: string) =>
+    onChange({ ...content, [key]: value });
 
   // A hidden section takes its parts with it, so their toggles disable.
-  const sectionVisible = isVisible(visibility, FAQ_VISIBILITY_KEY);
+  const sectionVisible = isVisible(visibility, visibilityKey);
   const fieldToggle = (part: string) => {
-    const key = `${FAQ_VISIBILITY_KEY}.${part}`;
+    const key = `${visibilityKey}.${part}`;
     return (
       <VisibilityToggle
         visible={sectionVisible && isVisible(visibility, key)}
         disabled={!sectionVisible}
-        onChange={(visible) => patchVisibility(key, visible)}
+        onChange={(visible) =>
+          onVisibilityChange({ ...visibility, [key]: visible })
+        }
       />
     );
   };
@@ -58,13 +70,13 @@ const FaqSectionContentCard = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let message = "Failed to save the FAQ section content";
+    let message = `Failed to save the ${name} section content`;
     let isError = true;
 
     setSaving(true);
 
     try {
-      const response = await faqApi.updateSection(content);
+      const response = await onSave(content);
 
       message = response.data?.message || message;
 
@@ -74,7 +86,7 @@ const FaqSectionContentCard = ({
         // Visibility is Appearance's record, so it is its own request, sent on
         // every save the way the Hero page sends it.
         const saved = message;
-        message = "FAQ section saved, but its visibility did not. Try again.";
+        message = `${name} section saved, but its visibility did not. Try again.`;
         const { data: appearance } = await appearanceApi.update({ visibility });
         onVisibilityChange(appearance.data.visibility ?? {});
 
@@ -98,36 +110,33 @@ const FaqSectionContentCard = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <SectionCard
-        title="FAQ Section Content"
-        description="Shown above the questions in every FAQ style. Leave a field empty to keep the text shown as its placeholder."
-      >
-        <InputField
-          label="Title"
-          value={content.title}
-          onChange={(e) => patch({ title: e.target.value })}
-          placeholder={FAQ_SECTION_DEFAULTS.title}
-          labelAction={fieldToggle("title")}
-        />
-        <TextArea
-          label="Supporting text"
-          value={content.description}
-          onChange={(e) => patch({ description: e.target.value })}
-          placeholder={FAQ_SECTION_DEFAULTS.description}
-          tooltip="The contact email is added at the end of this text as a link."
-          labelAction={fieldToggle("description")}
-        />
-        <div className="md:max-w-sm">
-          <InputField
-            label="Contact email"
-            type="email"
-            value={content.email}
-            onChange={(e) => patch({ email: e.target.value })}
-            placeholder={FAQ_SECTION_DEFAULTS.email}
-            labelAction={fieldToggle("email")}
-            // hint="Only set this if FAQ questions should go to a different address than the site's email in Global Settings."
-          />
-        </div>
+      <SectionCard title={`${name} Section Content`} description={description}>
+        {fields.map((field) => {
+          const input = field.multiline ? (
+            <TextArea
+              label={field.label}
+              value={content[field.key]}
+              onChange={(e) => patch(field.key, e.target.value)}
+              placeholder={field.placeholder}
+              tooltip={field.tooltip}
+              labelAction={fieldToggle(field.key)}
+            />
+          ) : (
+            <InputField
+              label={field.label}
+              type={field.type}
+              value={content[field.key]}
+              onChange={(e) => patch(field.key, e.target.value)}
+              placeholder={field.placeholder}
+              labelAction={fieldToggle(field.key)}
+            />
+          );
+          return (
+            <div key={field.key} className={cn(field.narrow && "md:max-w-sm")}>
+              {input}
+            </div>
+          );
+        })}
         <div className="flex justify-end">
           <Button
             type="submit"
@@ -150,4 +159,4 @@ const FaqSectionContentCard = ({
   );
 };
 
-export default FaqSectionContentCard;
+export default SectionContentCard;

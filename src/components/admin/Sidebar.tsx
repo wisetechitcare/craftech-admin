@@ -58,6 +58,7 @@ const navGroups: NavGroup[] = [
         subItems: [
           { name: "Hero Section", path: "/admin/hero", icon: PanelTop },
           { name: "FAQ Section", path: "/admin/faq", icon: HelpCircle },
+          { name: "Gallery Section", path: "/admin/gallery", icon: ImageIcon },
           { name: "Contact Section", path: "/admin/contact", icon: Mail },
         ],
       },
@@ -274,7 +275,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                     to={subItem.path}
                     onClick={onClose}
                     className={cn(
-                      "group flex items-center gap-2.5 py-2 pr-2 rounded-[10px] text-[0.8rem] transition-colors duration-150",
+                      "group flex items-center gap-2.5 py-2 pr-2 rounded-[10px] text-xs transition-colors duration-150",
                       active
                         ? "text-ink font-semibold"
                         : "text-ink-soft font-medium hover:text-ink",
@@ -289,9 +290,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                       />
                     )}
                     <span className="truncate">{subItem.name}</span>
-                    {active && (
-                      <ChevronRight className="ml-auto w-3 h-3 text-accent/70" />
-                    )}
                   </Link>
                 </li>
               );

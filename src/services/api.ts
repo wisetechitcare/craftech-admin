@@ -11,6 +11,11 @@ import type {
   FaqPayload,
   FaqSectionContent,
 } from "../types/faq";
+import type {
+  GalleryImagePayload,
+  GalleryListResponse,
+  GallerySectionContent,
+} from "../types/gallery";
 import type { HeroContent, HeroResponse } from "../types/hero";
 import type { FontPage, FontQuery } from "../types/rich-text";
 
@@ -246,6 +251,34 @@ export const faqApi = {
       "/cms/faq/section",
       data,
     ),
+};
+
+// ── Gallery ─────────────────────────────────────────────────────────────────
+// The media library's images, in gallery order.
+export const galleryApi = {
+  list: () => api.get<GalleryListResponse>("/cms/gallery"),
+  create: (data: GalleryImagePayload) => api.post("/cms/gallery", data),
+  /** The whole list in its new order, sent once when the admin saves. */
+  reorder: (ids: string[]) =>
+    api.put<GalleryListResponse>("/cms/gallery/reorder", { ids }),
+  /** One tile, a selection, or every image — one request either way. */
+  removeMany: (ids: string[]) =>
+    api.delete<{ success: boolean; message?: string; data: { count: number } }>(
+      "/cms/gallery",
+      { data: { ids } },
+    ),
+  getSection: () =>
+    api.get<{
+      success: boolean;
+      message?: string;
+      data: GallerySectionContent;
+    }>("/cms/gallery/section"),
+  updateSection: (data: GallerySectionContent) =>
+    api.put<{
+      success: boolean;
+      message?: string;
+      data: GallerySectionContent;
+    }>("/cms/gallery/section", data),
 };
 
 // ── Team ────────────────────────────────────────────────────────────────────

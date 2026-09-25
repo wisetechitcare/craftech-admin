@@ -4,7 +4,9 @@ import type { AboutContent } from "@/types/about";
 import type { AppearanceUpdatePayload } from "@/types/appearance";
 import type { ContactSectionContent } from "@/types/contact";
 import type { FaqItem, FaqSectionContent } from "@/types/faq";
+import type { GalleryImage, GallerySectionContent } from "@/types/gallery";
 import type { HeroContent } from "@/types/hero";
+import { SITE_URL } from "@/lib/utils/common";
 
 /** The sections the website exposes at /preview/<section> for this panel. */
 export enum PreviewSection {
@@ -12,6 +14,7 @@ export enum PreviewSection {
   HERO = "hero",
   ABOUT = "about",
   FAQ = "faq",
+  GALLERY = "gallery",
   CONTACT = "contact",
 }
 
@@ -21,11 +24,10 @@ export interface PreviewDraft {
   heroContent?: HeroContent;
   aboutContent?: AboutContent;
   faqContent?: { faqs: FaqItem[]; section: FaqSectionContent };
+  galleryContent?: { images: GalleryImage[]; section: GallerySectionContent };
   contactContent?: { section: ContactSectionContent };
   appearance?: AppearanceUpdatePayload;
 }
-
-const SITE_URL = import.meta.env.VITE_SITE_URL as string | undefined;
 
 /** Width the section renders at before being scaled into the panel. Narrowing
  *  the iframe instead would draw the mobile layout, which is not the one being
@@ -58,9 +60,7 @@ export default function SitePreview({
   const [ready, setReady] = useState<boolean>(false);
   const [scale, setScale] = useState<number>(0);
 
-  const origin = SITE_URL
-    ? new URL(SITE_URL, window.location.href).origin
-    : null;
+  const origin = SITE_URL ?? null;
 
   useEffect(() => {
     if (!origin) return;
