@@ -1,8 +1,3 @@
-import React, { useState } from "react";
-import { isAxiosError } from "axios";
-import toast from "react-hot-toast";
-import { Loader2, Save } from "lucide-react";
-
 import InputField from "@/components/admin/ui/InputField";
 import ListRow from "@/components/admin/ui/ListRow";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
@@ -13,7 +8,6 @@ import {
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
-import { Button } from "@/components/ui/button";
 
 import { DragList } from "@/lib/constants/drag-lists";
 import {
@@ -24,7 +18,6 @@ import {
   CONTACT_SUBMIT_LABEL_DEFAULTS,
   CONTACT_VISIBILITY_KEY,
 } from "@/lib/constants/contact";
-import { appearanceApi, contactApi } from "@/services/api";
 import { move } from "@/utils/utils";
 import type {
   ContactFormFieldKey,
@@ -50,8 +43,6 @@ const ContactSectionContentCard = ({
   visibility,
   onVisibilityChange,
 }: ContactSectionContentCardProps) => {
-  const [saving, setSaving] = useState<boolean>(false);
-
   const patch = (changes: Partial<ContactSectionContent>) =>
     onChange({ ...content, ...changes });
 
@@ -89,51 +80,11 @@ const ContactSectionContentCard = ({
     ...new Set([...(content.fieldOrder ?? []), ...CONTACT_FORM_FIELD_KEYS]),
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    let message = "Failed to save the Contact section content";
-    let isError = true;
-
-    setSaving(true);
-
-    try {
-      const response = await contactApi.updateSection(content);
-
-      message = response.data?.message || message;
-
-      if (response.data?.success) {
-        onChange(response.data.data);
-
-        const saved = message;
-        message =
-          "Contact section saved, but its visibility did not. Try again.";
-        const { data: appearance } = await appearanceApi.update({ visibility });
-        onVisibilityChange(appearance.data.visibility ?? {});
-
-        isError = false;
-        message = saved;
-      }
-    } catch (error) {
-      if (isAxiosError(error)) {
-        message = error.response?.data?.message || message;
-      }
-    } finally {
-      if (isError) {
-        toast.error(message);
-      } else {
-        toast.success(message);
-      }
-
-      setSaving(false);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
       <SectionCard
         title="Contact Us"
-        description="Heading and supporting text. Email, phone, address and social links stay in Global Settings → Contact & Location."
+        description="Heading and supporting text."
       >
         <InputField
           label="Title"
@@ -213,7 +164,7 @@ const ContactSectionContentCard = ({
 
       <SectionCard
         title="Form submission"
-        description="WhatsApp opens a chat with the number from Global Settings. Email keeps the existing lead flow."
+        description="WhatsApp opens a chat with the WhatsApp number under Contact information. Email keeps the existing lead flow."
       >
         <SelectField
           label="Submission type"
@@ -230,25 +181,7 @@ const ContactSectionContentCard = ({
           placeholder={submitPlaceholder}
         />
       </SectionCard>
-
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={saving}
-          className="text-sm font-bold"
-          size="sm"
-          startIcon={
-            saving ? (
-              <Loader2 className="size-5 animate-spin" />
-            ) : (
-              <Save className="size-5" />
-            )
-          }
-        >
-          Save Changes
-        </Button>
-      </div>
-    </form>
+    </>
   );
 };
 

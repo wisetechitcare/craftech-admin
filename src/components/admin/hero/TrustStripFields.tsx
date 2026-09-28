@@ -80,18 +80,11 @@ export default function TrustStripFields({
         {labelAction}
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-ink-mute">
-          Add a line for each badge — separators are filled in for you.
-        </p>
-        <AddButton
-          label="Add claim"
-          disabled={atItemCap || storedLength >= totalMax}
-          onClick={() => emit([...points, ""])}
-        />
-      </div>
+      <p className="text-xs text-ink-mute">
+        Add a line for each badge — separators are filled in for you.
+      </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
         {points.map((point, index) => (
           <div
             key={index}
@@ -126,6 +119,13 @@ export default function TrustStripFields({
             </ListRow>
           </div>
         ))}
+      </div>
+      <div className="mt-3">
+        <AddButton
+          label="Add claim"
+          disabled={atItemCap || storedLength >= totalMax}
+          onClick={() => emit([...points, ""])}
+        />
       </div>
       {hint && (
         <p

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { Save, Loader2, Palette, Eye } from "lucide-react";
@@ -282,16 +281,9 @@ export default function HeroCMS() {
         description={
           <>
             Hero style: <strong>{HERO_VARIANT_LABELS[variant]}</strong> —
-            character limits below are set by this layout.
+            character limits below are set by this layout. Change it on the
+            Appearance tab.
           </>
-        }
-        action={
-          <Link
-            to="/admin/appearance/hero"
-            className="text-xs font-bold text-info underline underline-offset-2"
-          >
-            Change in Appearance
-          </Link>
         }
       />
 

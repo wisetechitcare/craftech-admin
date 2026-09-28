@@ -17,7 +17,8 @@ type StyleField =
   | "heroVariant"
   | "aboutVariant"
   | "faqVariant"
-  | "contactVariant";
+  | "contactVariant"
+  | "galleryVariant";
 
 interface AppearanceStyleProps {
   field: StyleField;

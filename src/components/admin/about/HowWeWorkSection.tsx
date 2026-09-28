@@ -31,20 +31,7 @@ const HowWeWorkSection = ({
       description="The process steps, in the order they are performed."
       count={howWeWork.steps.length}
       max={rules.lists.howWeWork.max}
-      controls={
-        <div className="flex items-center gap-3">
-          {toggle(AboutSectionKey.HOW_WE_WORK)}
-          <AddButton
-            label="Add Step"
-            disabled={howWeWork.steps.length >= rules.lists.howWeWork.max}
-            onClick={() =>
-              patchSection("howWeWork", {
-                steps: [...howWeWork.steps, { ...EMPTY_STEP }],
-              })
-            }
-          />
-        </div>
-      }
+      controls={toggle(AboutSectionKey.HOW_WE_WORK)}
     >
       <HeadFields
         section={howWeWork}
@@ -122,6 +109,15 @@ const HowWeWorkSection = ({
           </ListRow>
         ))}
       </div>
+      <AddButton
+        label="Add Step"
+        disabled={howWeWork.steps.length >= rules.lists.howWeWork.max}
+        onClick={() =>
+          patchSection("howWeWork", {
+            steps: [...howWeWork.steps, { ...EMPTY_STEP }],
+          })
+        }
+      />
       {elementToggles(AboutSectionKey.HOW_WE_WORK)}
     </SectionCard>
   );

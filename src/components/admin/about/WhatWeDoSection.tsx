@@ -31,20 +31,7 @@ const WhatWeDoSection = ({
       description="The services list. Shown in the order below."
       count={whatWeDo.items.length}
       max={rules.lists.whatWeDo.max}
-      controls={
-        <div className="flex items-center gap-3">
-          {toggle(AboutSectionKey.WHAT_WE_DO)}
-          <AddButton
-            label="Add Service"
-            disabled={whatWeDo.items.length >= rules.lists.whatWeDo.max}
-            onClick={() =>
-              patchSection("whatWeDo", {
-                items: [...whatWeDo.items, { ...EMPTY_CAPABILITY }],
-              })
-            }
-          />
-        </div>
-      }
+      controls={toggle(AboutSectionKey.WHAT_WE_DO)}
     >
       <HeadFields
         section={whatWeDo}
@@ -93,6 +80,15 @@ const WhatWeDoSection = ({
           )}
         />
       </div>
+      <AddButton
+        label="Add Service"
+        disabled={whatWeDo.items.length >= rules.lists.whatWeDo.max}
+        onClick={() =>
+          patchSection("whatWeDo", {
+            items: [...whatWeDo.items, { ...EMPTY_CAPABILITY }],
+          })
+        }
+      />
       {elementToggles(AboutSectionKey.WHAT_WE_DO)}
     </SectionCard>
   );

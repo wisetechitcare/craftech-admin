@@ -1,24 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Edit2,
-  Trash2,
-  Palette,
-  Loader2,
-  RotateCcw,
-  Save,
-  Plus,
-} from "lucide-react";
+import { Edit2, Trash2, Loader2, RotateCcw, Save, Plus } from "lucide-react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 
-import {
-  AdminInfoCallout,
-  CommonTable,
-  PageHeader,
-  type Column,
-} from "@/components/common";
+import { CommonTable, PageHeader, type Column } from "@/components/common";
 import {
   DragHandle,
   dragStateClasses,
@@ -204,7 +191,7 @@ const FAQManager = () => {
         <div className="flex justify-end gap-2">
           <Button
             variant="none"
-            onClick={() => navigate(`/admin/faq/${faq._id}`)}
+            onClick={() => navigate(`/admin/home/faq/${faq._id}`)}
             className="p-2 rounded-lg bg-info/10 text-info hover:bg-info/15 transition-colors"
             title="Edit"
           >
@@ -274,19 +261,6 @@ const FAQManager = () => {
         }
       />
 
-      <AdminInfoCallout
-        icon={Palette}
-        description="Every FAQ style renders the same questions and answers below. Which style is shown is set under Appearance → FAQ."
-        action={
-          <Link
-            to="/admin/appearance/faq"
-            className="text-xs font-bold text-info underline underline-offset-2"
-          >
-            Change in Appearance
-          </Link>
-        }
-      />
-
       <PreviewPanel
         section={PreviewSection.FAQ}
         placement="above"
@@ -318,7 +292,7 @@ const FAQManager = () => {
               disabled={isFull}
               size="sm"
               startIcon={<Plus size={20} />}
-              onClick={() => navigate("/admin/faq/new")}
+              onClick={() => navigate("/admin/home/faq/new")}
               className="text-sm font-bold"
             >
               Add FAQ

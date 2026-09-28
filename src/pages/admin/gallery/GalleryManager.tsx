@@ -74,6 +74,7 @@ const GalleryTile = ({
       <img
         src={image.url}
         alt={image.name}
+        draggable={false}
         className="h-full w-full object-cover"
       />
       <span className="absolute bottom-2 left-2 rounded-md bg-paper px-2 py-0.5 text-xs font-bold text-ink">

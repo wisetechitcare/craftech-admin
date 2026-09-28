@@ -52,6 +52,7 @@ export interface AppearanceResponse {
   aboutVariant: LayoutVariant;
   faqVariant: LayoutVariant;
   contactVariant: LayoutVariant;
+  galleryVariant: LayoutVariant;
   customCursorVariant: CustomCursorVariant;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
@@ -74,6 +75,7 @@ export interface AppearanceUpdatePayload {
   aboutVariant?: LayoutVariant;
   faqVariant?: LayoutVariant;
   contactVariant?: LayoutVariant;
+  galleryVariant?: LayoutVariant;
   customCursorVariant?: CustomCursorVariant;
   navbar?: NavbarContent;
   visibility?: VisibilityMap;

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, type ComponentType } from "react";
-import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Save, Loader2, Palette, Eye } from "lucide-react";
 
@@ -322,16 +321,9 @@ export default function AboutCMS() {
         description={
           <>
             About style: <strong>{ABOUT_VARIANT_LABELS[variant]}</strong> —
-            layout only; this content is shown by all three.
+            layout only; this content is shown by all three. Change it on the
+            Appearance tab.
           </>
-        }
-        action={
-          <Link
-            to="/admin/appearance/about"
-            className="text-xs font-bold text-info underline underline-offset-2"
-          >
-            Change in Appearance
-          </Link>
         }
       />
 

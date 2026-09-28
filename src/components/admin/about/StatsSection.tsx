@@ -27,16 +27,7 @@ const StatsSection = ({
       }
       count={stats.length}
       max={rules.lists.stats.max}
-      controls={
-        <div className="flex items-center gap-3">
-          {toggle(AboutSectionKey.STATS)}
-          <AddButton
-            label="Add Stat"
-            disabled={stats.length >= rules.lists.stats.max}
-            onClick={() => patch({ stats: [...stats, { ...EMPTY_STAT }] })}
-          />
-        </div>
-      }
+      controls={toggle(AboutSectionKey.STATS)}
     >
       {errors.stats && (
         <p className="text-[11px] text-danger">{errors.stats}</p>
@@ -77,6 +68,11 @@ const StatsSection = ({
           </ListRow>
         ))}
       </div>
+      <AddButton
+        label="Add Stat"
+        disabled={stats.length >= rules.lists.stats.max}
+        onClick={() => patch({ stats: [...stats, { ...EMPTY_STAT }] })}
+      />
       {elementToggles(AboutSectionKey.STATS)}
     </SectionCard>
   );

@@ -6,6 +6,7 @@ import type { ContactSectionContent } from "@/types/contact";
 import type { FaqItem, FaqSectionContent } from "@/types/faq";
 import type { GalleryImage, GallerySectionContent } from "@/types/gallery";
 import type { HeroContent } from "@/types/hero";
+import type { SiteSettings } from "@/types/settings";
 import { SITE_URL } from "@/lib/utils/common";
 
 /** The sections the website exposes at /preview/<section> for this panel. */
@@ -26,6 +27,8 @@ export interface PreviewDraft {
   faqContent?: { faqs: FaqItem[]; section: FaqSectionContent };
   galleryContent?: { images: GalleryImage[]; section: GallerySectionContent };
   contactContent?: { section: ContactSectionContent };
+  /** The whole row, not a patch: the site replaces its settings with it. */
+  settings?: SiteSettings;
   appearance?: AppearanceUpdatePayload;
 }
 

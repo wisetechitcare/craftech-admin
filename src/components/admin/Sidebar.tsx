@@ -1,149 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import {
-  LayoutDashboard,
-  FolderOpen,
-  Settings,
-  LogOut,
-  Building2,
-  X,
-  Users,
-  MessageSquare,
-  Image as ImageIcon,
-  Home,
-  Layers,
-  Star,
-  ChevronDown,
-  ChevronRight,
-  Cpu,
-  FileText,
-  Briefcase,
-  BookOpen,
-  BarChart3,
-  HelpCircle,
-  Mail,
-  Palette,
-  Info,
-  Menu,
-  Sparkles,
-  Paintbrush,
-  MousePointer2,
-  Gauge,
-  PanelTop,
-} from "lucide-react";
+import { LogOut, X } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
+import { NAV_GROUPS } from "@/lib/constants/sidebar";
 import { cn } from "@/utils/utils";
-import type { NavGroup, NavItem } from "@/types/navigation";
-
-const navGroups: NavGroup[] = [
-  {
-    label: "Main",
-    items: [
-      {
-        name: "Dashboard",
-        icon: LayoutDashboard,
-        path: "/admin",
-        end: true,
-      },
-    ],
-  },
-  {
-    label: "Content",
-    items: [
-      { name: "Navbar", icon: Menu, path: "/admin/navbar" },
-      {
-        name: "Home",
-        icon: Home,
-        subItems: [
-          { name: "Hero Section", path: "/admin/hero", icon: PanelTop },
-          { name: "FAQ Section", path: "/admin/faq", icon: HelpCircle },
-          { name: "Gallery Section", path: "/admin/gallery", icon: ImageIcon },
-          { name: "Contact Section", path: "/admin/contact", icon: Mail },
-        ],
-      },
-      { name: "About", icon: Info, path: "/admin/about" },
-      { name: "Statistics", icon: BarChart3, path: "/admin/stats" },
-      { name: "Process Blueprint", icon: Layers, path: "/admin/process" },
-      { name: "Why Features", icon: Star, path: "/admin/features" },
-      { name: "Core Pillars", icon: Cpu, path: "/admin/pillars" },
-      {
-        name: "Domain Specialization",
-        icon: Briefcase,
-        path: "/admin/services",
-      },
-    ],
-  },
-  {
-    label: "Projects & Media",
-    items: [
-      { name: "Projects", icon: FolderOpen, path: "/admin/projects" },
-      { name: "Media Library", icon: ImageIcon, path: "/admin/media-library" },
-    ],
-  },
-  {
-    label: "Community",
-    items: [
-      { name: "Testimonials", icon: FileText, path: "/admin/testimonials" },
-      { name: "Clients", icon: Building2, path: "/admin/clients" },
-      { name: "Leads", icon: MessageSquare, path: "/admin/leads" },
-    ],
-  },
-  {
-    label: "Growth & Analytics",
-    items: [
-      { name: "Blog", icon: BookOpen, path: "/admin/blog" },
-      { name: "Team", icon: Users, path: "/admin/team" },
-      { name: "Analytics", icon: BarChart3, path: "/admin/analytics" },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      {
-        name: "Site Identity",
-        icon: Sparkles,
-        subItems: [
-          {
-            name: "Branding",
-            path: "/admin/site-identity/branding",
-            icon: Paintbrush,
-          },
-          {
-            name: "Navbar Style",
-            path: "/admin/site-identity/navigation",
-            icon: Menu,
-          },
-          {
-            name: "Cursor Animation",
-            path: "/admin/site-identity/cursor",
-            icon: MousePointer2,
-          },
-          {
-            name: "Scroll Progress",
-            path: "/admin/site-identity/scroll-progress",
-            icon: Gauge,
-          },
-        ],
-      },
-      {
-        name: "Appearance",
-        icon: Palette,
-        subItems: [
-          { name: "Hero", path: "/admin/appearance/hero", icon: PanelTop },
-          { name: "About", path: "/admin/appearance/about", icon: Info },
-          { name: "FAQ", path: "/admin/appearance/faq", icon: HelpCircle },
-          {
-            name: "Contact",
-            path: "/admin/appearance/contact",
-            icon: Mail,
-          },
-        ],
-      },
-      { name: "Settings", icon: Settings, path: "/admin/settings" },
-    ],
-  },
-];
+import type { NavItem } from "@/types/navigation";
 
 interface SidebarProps {
   open: boolean;
@@ -154,56 +15,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [openSubmenuKey, setOpenSubmenuKey] = useState<string | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {},
-  );
-  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleLogout = () => {
     logout();
     navigate("/admin/login");
   };
 
-  const isActive = useCallback(
-    (path: string) => pathname === path || pathname.startsWith(`${path}/`),
-    [pathname],
-  );
-
-  useEffect(() => {
-    let matched = false;
-
-    navGroups.forEach((group) => {
-      group.items.forEach((item, index) => {
-        if (!item.subItems) return;
-
-        const hasActiveChild = item.subItems.some((subItem) =>
-          isActive(subItem.path),
-        );
-
-        if (hasActiveChild) {
-          setOpenSubmenuKey(`${group.label}-${index}`);
-          matched = true;
-        }
-      });
-    });
-
-    if (!matched) {
-      setOpenSubmenuKey(null);
-    }
-  }, [pathname, isActive]);
-
-  useEffect(() => {
-    if (!openSubmenuKey) return;
-
-    const element = subMenuRefs.current[openSubmenuKey];
-    if (!element) return;
-
-    setSubMenuHeight((prev) => ({
-      ...prev,
-      [openSubmenuKey]: element.scrollHeight,
-    }));
-  }, [openSubmenuKey, pathname]);
+  const isActive = (path: string) =>
+    pathname === path || pathname.startsWith(`${path}/`);
 
   const initials = admin?.name
     ? admin.name
@@ -214,95 +33,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         .slice(0, 2)
     : "A";
 
-  const renderSubmenu = (item: NavItem, groupLabel: string, index: number) => {
-    const submenuKey = `${groupLabel}-${index}`;
-    const isOpen = openSubmenuKey === submenuKey;
-    const isSectionActive = item.subItems?.some((subItem) =>
-      isActive(subItem.path),
-    );
-
-    return (
-      <li key={item.name}>
-        <button
-          type="button"
-          onClick={() =>
-            setOpenSubmenuKey((prev) =>
-              prev === submenuKey ? null : submenuKey,
-            )
-          }
-          className={cn(
-            "group flex w-full items-center gap-3 pl-3 pr-2 py-2 rounded-[10px] text-[0.83rem] transition-colors duration-150 relative",
-            isSectionActive
-              ? "bg-accent/[0.07] text-ink font-semibold"
-              : "text-ink-soft font-medium hover:bg-raise hover:text-ink",
-          )}
-        >
-          {isSectionActive && (
-            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-0.75 h-6 rounded-r bg-accent" />
-          )}
-          <item.icon
-            className={cn(
-              "w-4.5 h-4.5 shrink-0",
-              isSectionActive
-                ? "text-accent"
-                : "text-ink-faint group-hover:text-ink-mute",
-            )}
-          />
-          <span className="flex-1 truncate text-left">{item.name}</span>
-          <ChevronDown
-            className={cn(
-              "w-4 h-4 shrink-0 transition-transform duration-200",
-              isOpen ? "rotate-180 text-accent" : "text-ink-faint",
-            )}
-          />
-        </button>
-
-        <div
-          ref={(element) => {
-            subMenuRefs.current[submenuKey] = element;
-          }}
-          className="overflow-hidden transition-all duration-300"
-          style={{ height: isOpen ? `${subMenuHeight[submenuKey] ?? 0}px` : 0 }}
-        >
-          <ul className="mt-1 ml-4 pl-3 border-l border-line-2 space-y-0.5">
-            {item.subItems?.map((subItem) => {
-              const active = isActive(subItem.path);
-              const SubIcon = subItem.icon;
-
-              return (
-                <li key={subItem.path}>
-                  <Link
-                    to={subItem.path}
-                    onClick={onClose}
-                    className={cn(
-                      "group flex items-center gap-2.5 py-2 pr-2 rounded-[10px] text-xs transition-colors duration-150",
-                      active
-                        ? "text-ink font-semibold"
-                        : "text-ink-soft font-medium hover:text-ink",
-                    )}
-                  >
-                    {SubIcon && (
-                      <SubIcon
-                        className={cn(
-                          "w-4 h-4 shrink-0",
-                          active ? "text-accent" : "text-ink-faint",
-                        )}
-                      />
-                    )}
-                    <span className="truncate">{subItem.name}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </li>
-    );
-  };
-
-  const renderNavLink = (item: NavItem) => {
-    if (!item.path) return null;
-
+  const renderNavItem = (item: NavItem) => {
     const active = item.end ? pathname === item.path : isActive(item.path);
 
     return (
@@ -310,8 +41,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <Link
           to={item.path}
           onClick={onClose}
+          aria-current={active ? "page" : undefined}
           className={cn(
-            "group flex items-center gap-3 pl-3 pr-2 py-2 rounded-[10px] text-[0.83rem] transition-colors duration-150 relative",
+            "group flex items-center gap-3 pl-3 pr-2 py-2 rounded-[10px] text-sm transition-colors duration-150 relative",
             active
               ? "bg-accent/[0.07] text-ink font-semibold"
               : "text-ink-soft font-medium hover:bg-raise hover:text-ink",
@@ -328,8 +60,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 : "text-ink-faint group-hover:text-ink-mute",
             )}
           />
-          <span className="flex-1 truncate">{item.name}</span>
-          {active && <ChevronRight className="w-3 h-3 text-accent/70" />}
+          <span className="flex-1 min-w-0">
+            <span className="block truncate">{item.name}</span>
+            {item.modules && (
+              <span className="block text-xs font-normal text-ink-faint">
+                {item.modules.length} modules
+              </span>
+            )}
+          </span>
         </Link>
       </li>
     );
@@ -374,18 +112,12 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-5 scrollbar-thin">
-          {navGroups.map((group) => (
+          {NAV_GROUPS.map((group) => (
             <div key={group.label}>
-              <p className="px-3 mb-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-ink-faint">
+              <p className="px-3 mb-1.5 text-sm font-semibold uppercase  text-ink">
                 {group.label}
               </p>
-              <ul className="space-y-0.5">
-                {group.items.map((item, index) =>
-                  item.subItems
-                    ? renderSubmenu(item, group.label, index)
-                    : renderNavLink(item),
-                )}
-              </ul>
+              <ul className="space-y-0.5">{group.items.map(renderNavItem)}</ul>
             </div>
           ))}
         </nav>

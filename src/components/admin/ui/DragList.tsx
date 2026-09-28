@@ -6,10 +6,16 @@ import {
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
+import { Tooltip } from "./Tooltip";
+
 import { cn } from "@/utils/utils";
 
 /** A symbol, so files dragged in from the desktop can never look like a row. */
 const DRAG_ITEM = Symbol("dragItem");
+
+/** Pressing one of these never picks the card up — it types, selects text or
+ *  clicks instead. Kept in step with the grab-cursor rule in index.css. */
+const CONTROLS = "input, textarea, select, button, a, [contenteditable='true']";
 
 type DragItemData = { listId: string; index: number };
 
@@ -45,15 +51,31 @@ export function useDragItem<T extends HTMLElement = HTMLDivElement>({
 
   useEffect(() => {
     const element = ref.current;
-    const handle = handleRef.current;
-    if (!element || !handle || disabled) return;
+    if (!element || disabled) return;
 
     const payload = () => ({ [DRAG_ITEM]: true, listId, index });
 
+    // The whole card is the drag source. Toggling `draggable` rather than
+    // refusing in canDrag is what keeps text selectable inside its fields:
+    // Firefox never starts a selection inside a draggable element.
+    const allowDragFrom = (event: PointerEvent) => {
+      const target = event.target as Element;
+      element.draggable =
+        !!handleRef.current?.contains(target) || !target.closest(CONTROLS);
+    };
+    const restoreDrag = () => {
+      element.draggable = true;
+    };
+    element.addEventListener("pointerdown", allowDragFrom, true);
+    document.addEventListener("pointerup", restoreDrag);
+
     return combine(
+      () => {
+        element.removeEventListener("pointerdown", allowDragFrom, true);
+        document.removeEventListener("pointerup", restoreDrag);
+      },
       draggable({
         element,
-        dragHandle: handle,
         getInitialData: payload,
         onDragStart: () => setIsDragging(true),
         onDrop: () => setIsDragging(false),
@@ -106,19 +128,21 @@ interface DragHandleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 
 export const DragHandle = forwardRef<HTMLButtonElement, DragHandleProps>(
   ({ label, className, ...props }, ref) => (
-    <button
-      ref={ref}
-      type="button"
-      aria-label={`Reorder ${label}. Use the arrow keys, or drag.`}
-      className={cn(
-        "p-1.5 text-ink-faint hover:text-ink cursor-grab active:cursor-grabbing",
-        "disabled:opacity-30 disabled:cursor-not-allowed",
-        className,
-      )}
-      {...props}
-    >
-      <GripVertical className="w-4 h-4" />
-    </button>
+    <Tooltip content="Drag anywhere on this item to reorder it.">
+      <button
+        ref={ref}
+        type="button"
+        aria-label={`Reorder ${label}. Use the arrow keys, or drag.`}
+        className={cn(
+          "p-1.5 text-ink-faint hover:text-ink cursor-grab active:cursor-grabbing",
+          "disabled:opacity-30 disabled:cursor-not-allowed",
+          className,
+        )}
+        {...props}
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+    </Tooltip>
   ),
 );
 

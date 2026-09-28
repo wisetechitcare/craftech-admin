@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { Loader2, Save } from "lucide-react";
@@ -168,17 +167,7 @@ export default function NavbarCMS() {
 
   return (
     <div className="space-y-6">
-      <AdminInfoCallout
-        description="Rename navigation items, choose which appear in the header, and set where the call-to-action goes. Paths are managed by the site — you pick destinations from a list. Which header STYLE renders them is set on the Appearance page."
-        action={
-          <Link
-            to="/admin/site-identity/navigation"
-            className="text-xs font-bold text-info underline underline-offset-2"
-          >
-            Change in Appearance
-          </Link>
-        }
-      />
+      <AdminInfoCallout description="Rename navigation items, choose which appear in the header, and set where the call-to-action goes. Paths are managed by the site — you pick destinations from a list. Which header style renders them is set on the Appearance tab." />
 
       <div>
         <h2 className="text-2xl font-bold text-ink">Navbar</h2>

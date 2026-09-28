@@ -2,121 +2,38 @@ import React, { useState, useEffect } from "react";
 import { Menu, Bell, ChevronRight, Home } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { DASHBOARD_PATH, NAV_GROUPS } from "@/lib/constants/sidebar";
 
 interface Crumb {
   label: string;
   href?: string;
 }
 
-const breadcrumbMap: Record<string, Crumb[]> = {
-  "/admin": [{ label: "Dashboard", href: "/admin" }],
-  "/admin/home": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Hero & Stats" },
-  ],
-  "/admin/hero": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Home", href: "/admin/hero" },
-    { label: "Hero Section" },
-  ],
-  "/admin/faq": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Home", href: "/admin/hero" },
-    { label: "FAQ Section" },
-  ],
-  "/admin/gallery": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Home", href: "/admin/hero" },
-    { label: "Gallery Section" },
-  ],
-  "/admin/contact": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Home", href: "/admin/hero" },
-    { label: "Contact Section" },
-  ],
-  "/admin/process": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Process Blueprint" },
-  ],
-  "/admin/features": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Why Features" },
-  ],
-  "/admin/pillars": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Core Pillars" },
-  ],
-  "/admin/services": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Domain Specialization" },
-  ],
-  "/admin/projects": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Projects" },
-  ],
-  "/admin/projects/new": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Projects", href: "/admin/projects" },
-    { label: "New Project" },
-  ],
-  "/admin/media": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Media Library" },
-  ],
-  "/admin/testimonials": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Testimonials" },
-  ],
-  "/admin/clients": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Clients" },
-  ],
-  "/admin/leads": [{ label: "Dashboard", href: "/admin" }, { label: "Leads" }],
-  "/admin/settings": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Settings" },
-  ],
-  "/admin/appearance/hero": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Appearance", href: "/admin/appearance/hero" },
-    { label: "Hero" },
-  ],
-  "/admin/appearance/about": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Appearance", href: "/admin/appearance/hero" },
-    { label: "About" },
-  ],
-  "/admin/appearance/faq": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Appearance", href: "/admin/appearance/hero" },
-    { label: "FAQ" },
-  ],
-  "/admin/appearance/contact": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Appearance", href: "/admin/appearance/hero" },
-    { label: "Contact" },
-  ],
-  "/admin/site-identity/branding": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Site Identity", href: "/admin/site-identity/branding" },
-    { label: "Branding" },
-  ],
-  "/admin/site-identity/navigation": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Site Identity", href: "/admin/site-identity/branding" },
-    { label: "Navbar Style" },
-  ],
-  "/admin/site-identity/cursor": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Site Identity", href: "/admin/site-identity/branding" },
-    { label: "Cursor Animation" },
-  ],
-  "/admin/site-identity/scroll-progress": [
-    { label: "Dashboard", href: "/admin" },
-    { label: "Site Identity", href: "/admin/site-identity/branding" },
-    { label: "Scroll Progress" },
-  ],
+const TRAILING_CRUMBS: Record<string, string> = {
+  appearance: "Appearance",
+  new: "New",
 };
+
+/** Dashboard › page › module › tab, read off the sidebar so the two never disagree. */
+function buildCrumbs(pathname: string): Crumb[] {
+  const crumbs: Crumb[] = [{ label: "Dashboard", href: DASHBOARD_PATH }];
+  if (pathname === DASHBOARD_PATH) return crumbs;
+
+  const matches = (path: string) =>
+    pathname === path || pathname.startsWith(`${path}/`);
+  const item = NAV_GROUPS.flatMap((group) => group.items).find(
+    (navItem) => !navItem.end && matches(navItem.path),
+  );
+  if (!item) return [...crumbs, { label: "Admin" }];
+
+  crumbs.push({ label: item.name, href: item.path });
+  const module = item.modules?.find((mod) => matches(mod.path));
+  if (module) crumbs.push({ label: module.name, href: module.path });
+
+  const rest = pathname.slice((module ?? item).path.length + 1);
+  if (rest) crumbs.push({ label: TRAILING_CRUMBS[rest] ?? "Edit" });
+  return crumbs;
+}
 
 function formatDate() {
   return new Date().toLocaleDateString("en-US", {
@@ -141,18 +58,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
     return () => clearInterval(t);
   }, []);
 
-  const crumbs =
-    pathname.startsWith("/admin/projects/") &&
-    pathname !== "/admin/projects/new"
-      ? [
-          { label: "Dashboard", href: "/admin" },
-          { label: "Projects", href: "/admin/projects" },
-          { label: "Edit Project" },
-        ]
-      : breadcrumbMap[pathname] || [
-          { label: "Dashboard", href: "/admin" },
-          { label: "Admin" },
-        ];
+  const crumbs = buildCrumbs(pathname);
 
   const pageTitle = crumbs[crumbs.length - 1]?.label || "Admin";
   const initials = admin?.name

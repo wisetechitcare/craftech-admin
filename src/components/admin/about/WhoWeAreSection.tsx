@@ -73,17 +73,6 @@ const WhoWeAreSection = ({
           description="Listed in order. The first is also the badge on the story image; Floating shows the second as its accent figure."
           count={whoWeAre.details.length}
           max={rules.lists.details.max}
-          controls={
-            <AddButton
-              label="Add Detail"
-              disabled={whoWeAre.details.length >= rules.lists.details.max}
-              onClick={() =>
-                patchSection("whoWeAre", {
-                  details: [...whoWeAre.details, { ...EMPTY_DETAIL }],
-                })
-              }
-            />
-          }
         />
         {whoWeAre.details.map((detail, i) => (
           <ListRow
@@ -135,6 +124,15 @@ const WhoWeAreSection = ({
             </div>
           </ListRow>
         ))}
+        <AddButton
+          label="Add Detail"
+          disabled={whoWeAre.details.length >= rules.lists.details.max}
+          onClick={() =>
+            patchSection("whoWeAre", {
+              details: [...whoWeAre.details, { ...EMPTY_DETAIL }],
+            })
+          }
+        />
       </div>
 
       <div className="pt-1 space-y-4">
@@ -144,17 +142,6 @@ const WhoWeAreSection = ({
           description="Shown beside the statement, or as their own band in Floating."
           count={values.items.length}
           max={rules.lists.values.max}
-          controls={
-            <AddButton
-              label="Add Value"
-              disabled={values.items.length >= rules.lists.values.max}
-              onClick={() =>
-                patchSection("values", {
-                  items: [...values.items, { ...EMPTY_ITEM }],
-                })
-              }
-            />
-          }
         />
         <HeadFields
           section={values}
@@ -172,6 +159,15 @@ const WhoWeAreSection = ({
           title="Value"
           iconTooltip="Font Awesome name, e.g. shield-halved. Leave empty for the default."
           onChange={(items) => patchSection("values", { items })}
+        />
+        <AddButton
+          label="Add Value"
+          disabled={values.items.length >= rules.lists.values.max}
+          onClick={() =>
+            patchSection("values", {
+              items: [...values.items, { ...EMPTY_ITEM }],
+            })
+          }
         />
       </div>
       {elementToggles(AboutSectionKey.WHO_WE_ARE)}
