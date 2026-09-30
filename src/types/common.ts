@@ -14,6 +14,30 @@ export enum CustomCursorVariant {
   VARIANT2 = "variant2",
 }
 
+/** Sections whose image treatment Appearance controls (mirrors craftech-frontend-next). */
+export enum ImageStyleSection {
+  GALLERY = "gallery",
+}
+
+/** One section's image treatment; every layout of that section honours it. */
+export interface ImageStyle {
+  border: boolean;
+  rounded: boolean;
+  grayscale: boolean;
+  hoverCaption: boolean;
+  masonry: boolean;
+}
+
+/** Always complete — the server fills in the defaults, so the Admin holds none. */
+export type ImageStyleMap = Record<ImageStyleSection, ImageStyle>;
+
+/** One switch on the image style card. */
+export interface ImageStyleOption {
+  key: keyof ImageStyle;
+  label: string;
+  helper: string;
+}
+
 export type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 export type ButtonVariant = "primary" | "outline" | "none";

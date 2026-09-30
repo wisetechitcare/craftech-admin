@@ -12,7 +12,9 @@ import type {
   FaqSectionContent,
 } from "../types/faq";
 import type {
+  GalleryImage,
   GalleryImagePayload,
+  GalleryImageUpdatePayload,
   GalleryListResponse,
   GallerySectionContent,
 } from "../types/gallery";
@@ -258,6 +260,11 @@ export const faqApi = {
 export const galleryApi = {
   list: () => api.get<GalleryListResponse>("/cms/gallery"),
   create: (data: GalleryImagePayload) => api.post("/cms/gallery", data),
+  update: (id: string, data: GalleryImageUpdatePayload) =>
+    api.put<{ success: boolean; message?: string; data: GalleryImage }>(
+      `/cms/gallery/${id}`,
+      data,
+    ),
   /** The whole list in its new order, sent once when the admin saves. */
   reorder: (ids: string[]) =>
     api.put<GalleryListResponse>("/cms/gallery/reorder", { ids }),

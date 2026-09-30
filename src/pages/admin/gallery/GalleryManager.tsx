@@ -5,12 +5,8 @@ import toast from "react-hot-toast";
 
 import { PageHeader } from "@/components/common";
 import ConfirmModal from "@/components/admin/ui/ConfirmModal";
-import {
-  DragHandle,
-  dragStateClasses,
-  useDragItem,
-} from "@/components/admin/ui/DragList";
 import FileUpload from "@/components/admin/ui/FileUpload";
+import ImageStyleCard from "@/components/admin/ui/ImageStyleCard";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import SectionContentCard from "@/components/admin/ui/SectionContentCard";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
@@ -21,88 +17,26 @@ import {
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
 import { Button } from "@/components/ui/button";
+import GalleryCaptionModal from "./GalleryCaptionModal";
+import GalleryTile from "./GalleryTile";
 
 import {
   IMAGE_UPLOAD_ACCEPT,
   IMAGE_UPLOAD_MAX_SIZE_MB,
 } from "@/lib/constants/common";
-import { DragList } from "@/lib/constants/drag-lists";
 import {
   GALLERY_SECTION_FIELDS,
   GALLERY_UPLOAD_FOLDER,
   GALLERY_VISIBILITY_KEY,
 } from "@/lib/constants/gallery";
 import { appearanceApi, galleryApi, uploadApi } from "@/services/api";
-import type { GalleryImage, GallerySectionContent } from "@/types/gallery";
-import { cn, move } from "@/utils/utils";
-
-interface GalleryTileProps {
-  image: GalleryImage;
-  index: number;
-  count: number;
-  onMove: (from: number, to: number) => void;
-  onDelete: (id: string) => void;
-  selected: boolean;
-  onSelect: (id: string, selected: boolean) => void;
-}
-
-const GalleryTile = ({
-  image,
-  index,
-  count,
-  onMove,
-  onDelete,
-  selected,
-  onSelect,
-}: GalleryTileProps) => {
-  const { ref, handleProps, isDragging, isTarget } = useDragItem({
-    listId: DragList.GALLERY_IMAGES,
-    index,
-    onMove,
-    disabled: count < 2,
-  });
-
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "relative aspect-square overflow-hidden rounded-xl border border-line bg-raise",
-        selected && "ring-2 ring-danger",
-        dragStateClasses(isDragging, isTarget),
-      )}
-    >
-      <img
-        src={image.url}
-        alt={image.name}
-        draggable={false}
-        className="h-full w-full object-cover"
-      />
-      <span className="absolute bottom-2 left-2 rounded-md bg-paper px-2 py-0.5 text-xs font-bold text-ink">
-        {index + 1}
-      </span>
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={(e) => onSelect(image._id, e.target.checked)}
-        aria-label={`Select ${image.name}`}
-        className="absolute bottom-2 right-2 size-4 rounded border-line"
-      />
-      <DragHandle
-        {...handleProps}
-        label={image.name}
-        className="absolute left-2 top-2 rounded-md bg-paper"
-      />
-      <Button
-        variant="none"
-        onClick={() => onDelete(image._id)}
-        className="absolute right-2 top-2 rounded-lg bg-danger/10 p-2 text-danger transition-colors hover:bg-danger/15"
-        title="Delete"
-      >
-        <Trash2 size={16} />
-      </Button>
-    </div>
-  );
-};
+import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
+import type {
+  GalleryImage,
+  GalleryImageUpdatePayload,
+  GallerySectionContent,
+} from "@/types/gallery";
+import { move } from "@/utils/utils";
 
 const ids = (images: GalleryImage[]) => images.map((image) => image._id);
 
@@ -113,10 +47,13 @@ const GalleryManager = () => {
   const [saved, setSaved] = useState<GalleryImage[]>([]);
   // Lifted out of the section card so the preview draws the unsaved copy.
   const [section, setSection] = useState<GallerySectionContent>({
+    eyebrow: "",
     title: "",
     description: "",
   });
   const [visibility, setVisibility] = useState<VisibilityMap>({});
+  // Null until Appearance answers: the server owns the defaults.
+  const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [uploading, setUploading] = useState<boolean>(false);
   // Bumped after every upload so FileUpload remounts empty, as in SlideMedia.
@@ -126,6 +63,8 @@ const GalleryManager = () => {
   // The ids the open confirm dialog will delete: one tile, the selection, or all.
   const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
   const [deleting, setDeleting] = useState<boolean>(false);
+  // The image whose caption dialog is open.
+  const [captionId, setCaptionId] = useState<string | null>(null);
 
   const sectionVisible = isVisible(visibility, GALLERY_VISIBILITY_KEY);
   const isReordered = ids(images).join() !== ids(saved).join();
@@ -164,8 +103,8 @@ const GalleryManager = () => {
     }
   };
 
-  const fetchVisibility = async () => {
-    let message = "Failed to load section visibility";
+  const fetchAppearance = async () => {
+    let message = "Failed to load section visibility and image style";
     let isError = true;
 
     try {
@@ -176,6 +115,7 @@ const GalleryManager = () => {
       if (response.data?.success) {
         isError = false;
         setVisibility(response.data.data.visibility ?? {});
+        setImageStyles(response.data.data.imageStyles);
       }
     } catch (error) {
       if (isAxiosError(error)) {
@@ -215,7 +155,7 @@ const GalleryManager = () => {
   useEffect(() => {
     fetchImages();
     fetchSection();
-    fetchVisibility();
+    fetchAppearance();
   }, []);
 
   // One file at a time, so a failure names the file it stopped at and the
@@ -339,6 +279,22 @@ const GalleryManager = () => {
   const moveImage = (from: number, to: number) =>
     setImages((prev) => move(prev, from, to));
 
+  // Both lists, so a saved caption survives "Reset" of an unsaved drag.
+  const applyCaption = (id: string, caption: GalleryImageUpdatePayload) => {
+    const withCaption = (list: GalleryImage[]) =>
+      list.map((image) =>
+        image._id === id ? { ...image, ...caption } : image,
+      );
+    setImages(withCaption);
+    setSaved(withCaption);
+  };
+
+  const captionIndex = images.findIndex((image) => image._id === captionId);
+  // Captions are edited only while the site would show them.
+  const captionsOn = Boolean(
+    imageStyles?.[ImageStyleSection.GALLERY].hoverCaption,
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -363,7 +319,7 @@ const GalleryManager = () => {
         placement="above"
         draft={{
           galleryContent: { images, section },
-          appearance: { visibility },
+          appearance: { visibility, ...(imageStyles && { imageStyles }) },
         }}
         caption="The live homepage Gallery section, rendered by the website itself. Unsaved copy, order and visibility show here before you save them."
         sectionHidden={!sectionVisible}
@@ -383,9 +339,18 @@ const GalleryManager = () => {
           onVisibilityChange={setVisibility}
         />
 
+        {imageStyles && (
+          <ImageStyleCard
+            section={ImageStyleSection.GALLERY}
+            description="How every Gallery layout draws its images, on the homepage and the Gallery page. The preview shows a change before you save it."
+            styles={imageStyles}
+            onChange={setImageStyles}
+          />
+        )}
+
         <SectionCard
           title="Images"
-          description="Drag an image by its handle to reorder. The homepage shows the first few; the Gallery page shows them all."
+          description="Drag an image by its handle to reorder. The homepage shows the first few; the Gallery page shows them all. With Caption on hover switched on, the button under each image edits its caption."
           controls={
             images.length ? (
               <div className="flex flex-wrap items-center gap-3">
@@ -477,6 +442,8 @@ const GalleryManager = () => {
                   onDelete={(id) => setDeleteIds([id])}
                   selected={selectedIds.includes(image._id)}
                   onSelect={selectImage}
+                  showCaption={captionsOn}
+                  onEditCaption={setCaptionId}
                 />
               ))}
             </div>
@@ -487,6 +454,18 @@ const GalleryManager = () => {
           )}
         </SectionCard>
       </PreviewPanel>
+
+      {imageStyles && captionsOn && captionIndex >= 0 && (
+        <GalleryCaptionModal
+          key={images[captionIndex]._id}
+          image={images[captionIndex]}
+          position={captionIndex + 1}
+          count={images.length}
+          imageStyles={imageStyles}
+          onClose={() => setCaptionId(null)}
+          onSaved={applyCaption}
+        />
+      )}
 
       <ConfirmModal
         open={deleteIds !== null}

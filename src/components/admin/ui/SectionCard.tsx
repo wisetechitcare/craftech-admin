@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export const CARD = "bg-paper border border-line rounded-xl p-6 space-y-5";
 export const HEADING =
-  "text-sm font-semibold text-ink uppercase tracking-wider";
+  "text-base font-semibold text-ink uppercase tracking-wider";
 
 interface ListHeaderProps {
   title: string;
@@ -51,9 +51,7 @@ export const ListHeader = ({
         ) : (
           <h3 className={HEADING}>{heading}</h3>
         )}
-        {description && (
-          <p className="mt-1 text-xs text-ink-faint">{description}</p>
-        )}
+        {description && <p className="mt-1 text-sm text-ink">{description}</p>}
       </div>
       {controls}
     </div>

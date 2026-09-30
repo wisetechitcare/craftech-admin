@@ -195,6 +195,18 @@ function App() {
             <Route index element={<ModuleHub />} />
             <Route element={<SiteIdentityLayout />}>
               <Route path="branding" element={<SiteIdentityBranding />} />
+              <Route
+                path="theme"
+                element={
+                  <AppearanceStyle
+                    key="site"
+                    field="heroVariant"
+                    label="Site Theme"
+                    section={PreviewSection.SITE}
+                    viewportHeight={5600}
+                  />
+                }
+              />
               <Route path="cursor" element={<SiteIdentityCursor />} />
               <Route
                 path="scroll-progress"

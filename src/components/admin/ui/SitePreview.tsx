@@ -16,7 +16,10 @@ export enum PreviewSection {
   ABOUT = "about",
   FAQ = "faq",
   GALLERY = "gallery",
+  /** The first posted gallery image alone, its caption held open. */
+  GALLERY_CAPTION = "gallery-caption",
   CONTACT = "contact",
+  SITE = "site",
 }
 
 /** The slice of the website's CMS context an editing screen overrides. Keys are
@@ -42,6 +45,8 @@ interface SitePreviewProps {
   draft: PreviewDraft;
   /** How much of the section to show, in site pixels before scaling. */
   viewportHeight?: number;
+  /** Site pixels wide; a single tile renders at its real size, not desktop's. */
+  viewportWidth?: number;
 }
 
 /**
@@ -57,6 +62,7 @@ export default function SitePreview({
   section,
   draft,
   viewportHeight = 900,
+  viewportWidth = VIEWPORT_WIDTH,
 }: SitePreviewProps) {
   const frame = useRef<HTMLIFrameElement>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -90,12 +96,12 @@ export default function SitePreview({
     if (!element) return;
 
     const observer = new ResizeObserver(([entry]) =>
-      setScale(entry.contentRect.width / VIEWPORT_WIDTH),
+      setScale(entry.contentRect.width / viewportWidth),
     );
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [viewportWidth]);
 
   if (!SITE_URL)
     return (
@@ -117,7 +123,7 @@ export default function SitePreview({
         title={`${section} preview`}
         sandbox="allow-scripts allow-same-origin"
         style={{
-          width: VIEWPORT_WIDTH,
+          width: viewportWidth,
           height: viewportHeight,
           transform: `scale(${scale})`,
           transformOrigin: "top left",

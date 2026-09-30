@@ -1,15 +1,11 @@
-import { LayoutVariant } from "@/types/common";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
+import type { LayoutVariant } from "@/types/common";
 import { cn } from "@/utils/utils";
-
-const LAYOUT_VARIANT_OPTIONS: { value: LayoutVariant; label: string }[] = [
-  { value: LayoutVariant.PREMIUM_GLASS, label: "Premium Glass" },
-  { value: LayoutVariant.CLEAN_MODERN, label: "Clean Modern" },
-  { value: LayoutVariant.FLOATING, label: "Floating" },
-];
 
 interface LayoutVariantPickerProps {
   label: string;
-  value: LayoutVariant;
+  /** Null selects nothing, e.g. while sections still use different layouts. */
+  value: LayoutVariant | null;
   onChange: (value: LayoutVariant) => void;
 }
 
@@ -23,19 +19,19 @@ const LayoutVariantPicker = ({
       {label}
     </label>
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      {LAYOUT_VARIANT_OPTIONS.map((option) => (
+      {(Object.keys(LAYOUT_VARIANT_LABELS) as LayoutVariant[]).map((option) => (
         <button
-          key={option.value}
+          key={option}
           type="button"
-          onClick={() => onChange(option.value)}
+          onClick={() => onChange(option)}
           className={cn(
             "p-3 rounded-lg border-2 text-sm font-semibold text-ink transition-colors",
-            value === option.value
+            value === option
               ? "border-info bg-info/10"
               : "border-line bg-raise hover:border-info/50",
           )}
         >
-          {option.label}
+          {LAYOUT_VARIANT_LABELS[option]}
         </button>
       ))}
     </div>

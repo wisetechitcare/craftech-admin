@@ -25,8 +25,8 @@ import { Button } from "@/components/ui/button";
 import { HOME_VISIBILITY_GROUP, HeroVisibilityKey } from "@/lib/constants/hero";
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import { appearanceApi, heroApi } from "@/services/api";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import {
-  HERO_VARIANT_LABELS,
   type FieldErrors,
   type HeroContent,
   type HeroResponse,
@@ -280,7 +280,7 @@ export default function HeroCMS() {
         icon={Palette}
         description={
           <>
-            Hero style: <strong>{HERO_VARIANT_LABELS[variant]}</strong> —
+            Hero style: <strong>{LAYOUT_VARIANT_LABELS[variant]}</strong> —
             character limits below are set by this layout. Change it on the
             Appearance tab.
           </>

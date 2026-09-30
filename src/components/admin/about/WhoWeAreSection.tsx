@@ -12,8 +12,10 @@ import {
 } from "./shared";
 
 import { AboutSectionKey } from "@/lib/constants/about";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import { DragList } from "@/lib/constants/drag-lists";
 import { EMPTY_DETAIL, EMPTY_ITEM } from "@/types/about";
+import { LayoutVariant } from "@/types/common";
 import { move, patchAt, removeAt } from "@/utils/utils";
 
 /** Who We Are — the statement, the company details listed with it, and the
@@ -70,7 +72,7 @@ const WhoWeAreSection = ({
         <ListHeader
           nested
           title="Company details"
-          description="Listed in order. The first is also the badge on the story image; Floating shows the second as its accent figure."
+          description={`Listed in order. The first is also the badge on the story image; ${LAYOUT_VARIANT_LABELS[LayoutVariant.FLOATING]} shows the second as its accent figure.`}
           count={whoWeAre.details.length}
           max={rules.lists.details.max}
         />
@@ -139,7 +141,7 @@ const WhoWeAreSection = ({
         <ListHeader
           nested
           title="Values"
-          description="Shown beside the statement, or as their own band in Floating."
+          description={`Shown beside the statement, or as their own band in ${LAYOUT_VARIANT_LABELS[LayoutVariant.FLOATING]}.`}
           count={values.items.length}
           max={rules.lists.values.max}
         />

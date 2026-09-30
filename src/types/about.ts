@@ -5,7 +5,7 @@
 
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import type { FieldErrors } from "./hero";
-import { LayoutVariant } from "./common";
+import type { LayoutVariant } from "./common";
 
 export type { FieldErrors };
 
@@ -105,12 +105,6 @@ export interface AboutResponse extends AboutContent {
   rules: AboutRules;
   navigationDestinations: NavigationDestinationOption[];
 }
-
-export const ABOUT_VARIANT_LABELS: Record<AboutVariant, string> = {
-  [LayoutVariant.PREMIUM_GLASS]: "Premium Glass",
-  [LayoutVariant.CLEAN_MODERN]: "Clean Modern",
-  [LayoutVariant.FLOATING]: "Floating",
-};
 
 export const EMPTY_ITEM: AboutItem = { icon: "", title: "", description: "" };
 export const EMPTY_CAPABILITY: AboutCapability = { ...EMPTY_ITEM, tags: [] };

@@ -83,6 +83,11 @@ export const NAV_GROUPS: NavGroup[] = [
             path: "/admin/site-identity/branding",
           },
           {
+            name: "Site Theme",
+            icon: Palette,
+            path: "/admin/site-identity/theme",
+          },
+          {
             name: "Cursor Animation",
             icon: MousePointer2,
             path: "/admin/site-identity/cursor",
