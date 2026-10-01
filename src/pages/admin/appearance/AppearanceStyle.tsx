@@ -3,24 +3,20 @@ import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { Loader2, Save } from "lucide-react";
 
+import ConfirmModal from "@/components/admin/ui/ConfirmModal";
 import LayoutVariantPicker from "@/components/admin/ui/LayoutVariantPicker";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import type { PreviewSection } from "@/components/admin/ui/SitePreview";
 import { AdminInfoCallout } from "@/components/common";
 
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
+import { siteThemeOf, siteThemePayload } from "@/lib/utils/common";
 import { appearanceApi } from "@/services/api";
-import type { AppearanceUpdatePayload } from "@/types/appearance";
+import type { SectionVariantField } from "@/types/appearance";
 import type { LayoutVariant } from "@/types/common";
 
-type StyleField =
-  | "navbarVariant"
-  | "heroVariant"
-  | "aboutVariant"
-  | "faqVariant"
-  | "contactVariant";
-
 interface AppearanceStyleProps {
-  field: StyleField;
+  field: SectionVariantField;
   /** e.g. "Hero Style". */
   label: string;
   section: PreviewSection;
@@ -28,7 +24,18 @@ interface AppearanceStyleProps {
   note?: string;
 }
 
-/** One section's style: three layouts to pick from, drawn live by the site. */
+const themeChangeMessage = (
+  current: LayoutVariant | null,
+  next: LayoutVariant,
+) => {
+  const nextLabel = LAYOUT_VARIANT_LABELS[next];
+  const intro = current
+    ? `Your website theme is currently ${LAYOUT_VARIANT_LABELS[current]}.`
+    : "Your sections currently use different styles.";
+  return `${intro} Saving ${nextLabel} here switches the whole website to ${nextLabel} — the navbar, hero, about page, gallery, FAQ and contact sections all follow it.`;
+};
+
+/** One section's style picker. Styles are shared: a save sets the theme for every section. */
 export default function AppearanceStyle({
   field,
   label,
@@ -37,35 +44,43 @@ export default function AppearanceStyle({
   note,
 }: AppearanceStyleProps) {
   const [value, setValue] = useState<LayoutVariant | null>(null);
+  const [siteTheme, setSiteTheme] = useState<LayoutVariant | null>(null);
+  const [confirming, setConfirming] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
     appearanceApi
       .get()
-      .then(({ data }) => data?.success && setValue(data.data[field]))
+      .then(({ data }) => {
+        if (!data?.success) return;
+        setValue(data.data[field]);
+        setSiteTheme(siteThemeOf(data.data));
+      })
       .catch(() => toast.error(`Failed to load the ${label.toLowerCase()}`));
   }, [field, label]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const save = async () => {
     if (!value) return;
 
     let message = `Failed to save the ${label.toLowerCase()}`;
     let isError = true;
 
+    setConfirming(false);
     setSaving(true);
 
     try {
-      const payload: AppearanceUpdatePayload = { [field]: value };
-      const response = await appearanceApi.update(payload);
+      const response = await appearanceApi.update(siteThemePayload(value));
 
       message = response.data?.message || message;
 
       if (response.data?.success) {
         isError = false;
         // The Appearance PUT answers with the record and no message.
-        message = response.data.message || `${label} saved`;
+        message =
+          response.data.message ||
+          `${LAYOUT_VARIANT_LABELS[value]} is now the theme for the whole website`;
         setValue(response.data.data[field]);
+        setSiteTheme(siteThemeOf(response.data.data));
       }
     } catch (error) {
       if (isAxiosError(error)) {
@@ -82,6 +97,15 @@ export default function AppearanceStyle({
     }
   };
 
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (value !== siteTheme) {
+      setConfirming(true);
+      return;
+    }
+    save();
+  };
+
   if (!value) {
     return (
       <div className="flex justify-center p-8">
@@ -96,6 +120,7 @@ export default function AppearanceStyle({
       draft={{ appearance: { [field]: value } }}
       viewportHeight={viewportHeight}
     >
+      <AdminInfoCallout description="One theme is shared by the whole website. Changing it here also changes every other section, and the Site Theme under Global → Site Identity." />
       {note && <AdminInfoCallout description={note} />}
 
       <form
@@ -119,6 +144,16 @@ export default function AppearanceStyle({
           </button>
         </div>
       </form>
+
+      <ConfirmModal
+        open={confirming}
+        danger={false}
+        title="Change the theme of the whole website?"
+        message={themeChangeMessage(siteTheme, value)}
+        confirmLabel={`Apply ${LAYOUT_VARIANT_LABELS[value]} everywhere`}
+        onConfirm={save}
+        onCancel={() => setConfirming(false)}
+      />
     </PreviewPanel>
   );
 }

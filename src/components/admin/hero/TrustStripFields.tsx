@@ -10,7 +10,9 @@ import {
   trustStripToEditorPoints,
 } from "./trust-strip";
 
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import { DragList } from "@/lib/constants/drag-lists";
+import { LayoutVariant } from "@/types/common";
 import { cn, move, removeAt } from "@/utils/utils";
 
 interface TrustStripFieldsProps {
@@ -69,9 +71,12 @@ export default function TrustStripFields({
           <InfoTooltip
             content={
               <>
-                Up to {itemsMax} claims. Premium Glass scrolls them as a
-                marquee; Clean Modern and Floating show chips of up to{" "}
-                {segmentMax} characters each.
+                Up to {itemsMax} claims.{" "}
+                {LAYOUT_VARIANT_LABELS[LayoutVariant.PREMIUM_GLASS]} scrolls
+                them as a marquee;{" "}
+                {LAYOUT_VARIANT_LABELS[LayoutVariant.CLEAN_MODERN]} and{" "}
+                {LAYOUT_VARIANT_LABELS[LayoutVariant.FLOATING]} show chips of up
+                to {segmentMax} characters each.
               </>
             }
             label="Trust strip"
@@ -80,18 +85,11 @@ export default function TrustStripFields({
         {labelAction}
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-ink-mute">
-          Add a line for each badge — separators are filled in for you.
-        </p>
-        <AddButton
-          label="Add claim"
-          disabled={atItemCap || storedLength >= totalMax}
-          onClick={() => emit([...points, ""])}
-        />
-      </div>
+      <p className="text-xs text-ink-mute">
+        Add a line for each badge — separators are filled in for you.
+      </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
         {points.map((point, index) => (
           <div
             key={index}
@@ -126,6 +124,13 @@ export default function TrustStripFields({
             </ListRow>
           </div>
         ))}
+      </div>
+      <div className="mt-3">
+        <AddButton
+          label="Add claim"
+          disabled={atItemCap || storedLength >= totalMax}
+          onClick={() => emit([...points, ""])}
+        />
       </div>
       {hint && (
         <p

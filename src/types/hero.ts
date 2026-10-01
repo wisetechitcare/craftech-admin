@@ -4,7 +4,7 @@
 // server enforces and the two can never drift.
 
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
-import { LayoutVariant } from "./common";
+import type { LayoutVariant } from "./common";
 import type { RichTextDocument, RichTextFeature } from "./rich-text";
 
 export type HeroVariant = LayoutVariant;
@@ -76,9 +76,3 @@ export interface HeroResponse extends HeroContent {
 
 /** Field-level messages from the API, keyed by zod path ("slides.0.title"). */
 export type FieldErrors = Record<string, string>;
-
-export const HERO_VARIANT_LABELS: Record<HeroVariant, string> = {
-  [LayoutVariant.PREMIUM_GLASS]: "Premium Glass",
-  [LayoutVariant.CLEAN_MODERN]: "Clean Modern",
-  [LayoutVariant.FLOATING]: "Floating",
-};

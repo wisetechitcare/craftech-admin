@@ -9,11 +9,16 @@ import type {
   VisibilitySection,
 } from "../components/admin/ui/VisibilityToggle";
 
+import type { SECTION_VARIANT_FIELDS } from "@/lib/constants/appearance";
 import type {
   NavigationDestinationOption,
   NavigationTarget,
 } from "@/lib/constants/navigation";
-import type { CustomCursorVariant, LayoutVariant } from "./common";
+import type {
+  CustomCursorVariant,
+  ImageStyleMap,
+  LayoutVariant,
+} from "./common";
 
 export type { CustomCursorVariant, LayoutVariant };
 
@@ -45,6 +50,9 @@ export interface VisibilityGroup {
   sections: VisibilitySection[];
 }
 
+/** The Appearance fields that each hold one section's layout. */
+export type SectionVariantField = (typeof SECTION_VARIANT_FIELDS)[number];
+
 export interface AppearanceResponse {
   _id: string;
   navbarVariant: LayoutVariant;
@@ -52,6 +60,7 @@ export interface AppearanceResponse {
   aboutVariant: LayoutVariant;
   faqVariant: LayoutVariant;
   contactVariant: LayoutVariant;
+  galleryVariant: LayoutVariant;
   customCursorVariant: CustomCursorVariant;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
@@ -64,6 +73,7 @@ export interface AppearanceResponse {
   /** Which of those the live layout can be told to move. Read-only, like
    *  `visibilityOptions` — the write schema drops it. */
   sectionOrderOptions: string[];
+  imageStyles: ImageStyleMap;
 }
 
 /** Every field is optional: a form sends the slice it owns and nothing else,
@@ -74,8 +84,10 @@ export interface AppearanceUpdatePayload {
   aboutVariant?: LayoutVariant;
   faqVariant?: LayoutVariant;
   contactVariant?: LayoutVariant;
+  galleryVariant?: LayoutVariant;
   customCursorVariant?: CustomCursorVariant;
   navbar?: NavbarContent;
   visibility?: VisibilityMap;
   sectionOrder?: string[];
+  imageStyles?: ImageStyleMap;
 }

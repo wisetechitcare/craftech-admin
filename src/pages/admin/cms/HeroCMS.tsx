@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { Save, Loader2, Palette, Eye } from "lucide-react";
@@ -26,8 +25,8 @@ import { Button } from "@/components/ui/button";
 import { HOME_VISIBILITY_GROUP, HeroVisibilityKey } from "@/lib/constants/hero";
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import { appearanceApi, heroApi } from "@/services/api";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import {
-  HERO_VARIANT_LABELS,
   type FieldErrors,
   type HeroContent,
   type HeroResponse,
@@ -281,17 +280,10 @@ export default function HeroCMS() {
         icon={Palette}
         description={
           <>
-            Hero style: <strong>{HERO_VARIANT_LABELS[variant]}</strong> —
-            character limits below are set by this layout.
+            Hero style: <strong>{LAYOUT_VARIANT_LABELS[variant]}</strong> —
+            character limits below are set by this layout. Change it on the
+            Appearance tab.
           </>
-        }
-        action={
-          <Link
-            to="/admin/appearance/hero"
-            className="text-xs font-bold text-info underline underline-offset-2"
-          >
-            Change in Appearance
-          </Link>
         }
       />
 

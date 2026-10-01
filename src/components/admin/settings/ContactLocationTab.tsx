@@ -1,7 +1,6 @@
 import AddressListFields from "./AddressListFields";
 import ContactChannelColumn from "./ContactChannelColumn";
 
-import InputField from "@/components/admin/ui/InputField";
 import SelectField from "@/components/admin/ui/SelectField";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 import {
@@ -9,14 +8,15 @@ import {
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
+import { LocationPicker } from "@/components/common";
 
 import {
   CONTACT_SLOTS,
   ContactVisibilitySection,
   contactSlotVisibilityKey,
 } from "@/lib/constants/settings";
-import type { SettingsTabProps } from "@/types/settings";
-import { removeAt } from "@/utils/utils";
+import { EMPTY_ADDRESS, type SettingsTabProps } from "@/types/settings";
+import { patchAt, removeAt } from "@/utils/utils";
 
 type ContactChannel = "phone" | "email" | "address";
 
@@ -56,6 +56,9 @@ const ContactLocationTab = ({
   const phones = data.phones ?? [];
   const emails = data.emails ?? [];
   const addresses = data.addresses ?? [];
+  const { latitude, longitude } = addresses[0] ?? {};
+  const headOfficePin =
+    latitude != null && longitude != null ? { latitude, longitude } : null;
   const contactInfoVisible = isVisible(
     visibility,
     ContactVisibilitySection.CONTACT_INFO,
@@ -152,6 +155,24 @@ const ContactLocationTab = ({
         )}
       </SectionCard>
 
+      <SectionCard
+        title="Business location"
+        description="Where the head office is on the map. Search, click the map or drag the pin, and the head office address below fills itself in. You can still edit it."
+      >
+        <LocationPicker
+          value={headOfficePin}
+          onChange={({ coordinates, placeId, address }) =>
+            patch({
+              addresses: patchAt(
+                addresses.length > 0 ? addresses : [EMPTY_ADDRESS],
+                0,
+                { ...address, ...coordinates, placeId },
+              ),
+            })
+          }
+        />
+      </SectionCard>
+
       <AddressListFields
         errors={errors}
         values={addresses}
@@ -163,22 +184,6 @@ const ContactLocationTab = ({
         }}
         patchVisibility={patchVisibility}
       />
-
-      <SectionCard
-        title="Map embed"
-        description="Paste Google Maps Share → Embed a map (URL or iframe) for the head office. Branches are listed but never pinned."
-      >
-        <InputField
-          label="Google Maps embed"
-          value={data.mapEmbedUrl ?? ""}
-          onChange={(e) => patch({ mapEmbedUrl: e.target.value })}
-          error={!!errors.mapEmbedUrl}
-          hint={
-            errors.mapEmbedUrl ??
-            "Use https://www.google.com/maps/embed?... or paste the iframe HTML."
-          }
-        />
-      </SectionCard>
     </div>
   );
 };

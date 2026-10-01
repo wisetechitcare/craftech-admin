@@ -65,13 +65,6 @@ const AddressListFields = ({
       description="The first address is the head office. The map always pins that one; any others are listed as branches."
       count={rows.length}
       max={CONTACT_SLOTS}
-      titleControls={
-        <AddButton
-          label="Add address"
-          disabled={rows.length >= CONTACT_SLOTS}
-          onClick={() => onChange([...rows, EMPTY_ADDRESS])}
-        />
-      }
       controls={
         <SectionVisibilitySwitch
           visible={sectionVisible}
@@ -142,6 +135,11 @@ const AddressListFields = ({
           );
         })}
       </div>
+      <AddButton
+        label="Add address"
+        disabled={rows.length >= CONTACT_SLOTS}
+        onClick={() => onChange([...rows, EMPTY_ADDRESS])}
+      />
     </SectionCard>
   );
 };

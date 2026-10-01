@@ -14,6 +14,30 @@ export enum CustomCursorVariant {
   VARIANT2 = "variant2",
 }
 
+/** Sections whose image treatment Appearance controls (mirrors craftech-frontend-next). */
+export enum ImageStyleSection {
+  GALLERY = "gallery",
+}
+
+/** One section's image treatment; every layout of that section honours it. */
+export interface ImageStyle {
+  border: boolean;
+  rounded: boolean;
+  grayscale: boolean;
+  hoverCaption: boolean;
+  masonry: boolean;
+}
+
+/** Always complete — the server fills in the defaults, so the Admin holds none. */
+export type ImageStyleMap = Record<ImageStyleSection, ImageStyle>;
+
+/** One switch on the image style card. */
+export interface ImageStyleOption {
+  key: keyof ImageStyle;
+  label: string;
+  helper: string;
+}
+
 export type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 export type ButtonVariant = "primary" | "outline" | "none";
@@ -24,4 +48,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   startIcon?: ReactNode;
   endIcon?: ReactNode;
+}
+
+/** One copy field on a section content card. `key` is both the content field
+ *  and the element part of its visibility key (`<section>.<key>`). */
+export interface SectionCopyField<T> {
+  key: keyof T & string;
+  label: string;
+  placeholder: string;
+  multiline?: boolean;
+  type?: string;
+  tooltip?: string;
+  /** Rendered in a narrow column, as a short value like an email is. */
+  narrow?: boolean;
 }

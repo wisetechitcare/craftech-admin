@@ -17,36 +17,43 @@ interface FileUploadProps {
   onDeletedImagesChange?: (images: string[]) => void;
 }
 
+const NO_URLS: string[] = [];
+
+const sameUrls = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((url, i) => url === b[i]);
+
 const FileUpload: React.FC<FileUploadProps> = ({
   acceptTypes,
   maxFiles = 10,
   maxSizeMB = 5,
   hint,
   onFilesChange,
-  existingImages = [],
+  existingImages,
   onExistingImagesChange,
   error = "",
   deletedImages,
   onDeletedImagesChange,
 }) => {
+  const incomingExisting = existingImages ?? NO_URLS;
   const [files, setFiles] = useState<File[]>([]);
   const [existingImageUrls, setExistingImageUrls] =
-    useState<string[]>(existingImages);
+    useState<string[]>(incomingExisting);
   const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
   const [message, setMessage] = useState<string>("");
   const firstKey = Object.keys(acceptTypes)[0];
   const maxBytes = maxSizeMB * 1024 * 1024;
 
   useEffect(() => {
-    if (existingImages) {
-      setExistingImageUrls(existingImages);
-    }
-  }, [existingImages]);
+    setExistingImageUrls((prev) =>
+      sameUrls(prev, incomingExisting) ? prev : incomingExisting,
+    );
+  }, [incomingExisting]);
 
   useEffect(() => {
-    if (deletedImages) {
-      setDeletedImageUrls(deletedImages);
-    }
+    if (!deletedImages) return;
+    setDeletedImageUrls((prev) =>
+      sameUrls(prev, deletedImages) ? prev : deletedImages,
+    );
   }, [deletedImages]);
 
   const onDrop = (acceptedFiles: File[]) => {

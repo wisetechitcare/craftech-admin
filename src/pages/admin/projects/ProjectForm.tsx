@@ -2,7 +2,11 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
 import { projectsApi, uploadApi } from "../../../services/api";
-import ImageDropzone from "../../../components/admin/ui/ImageDropzone";
+import FileUpload from "@/components/admin/ui/FileUpload";
+import {
+  IMAGE_UPLOAD_ACCEPT,
+  IMAGE_UPLOAD_MAX_SIZE_MB,
+} from "@/lib/constants/common";
 import InputField from "../../../components/admin/ui/InputField";
 import SelectField from "../../../components/admin/ui/SelectField";
 import { toSelectOptions } from "../../../utils/utils";
@@ -189,6 +193,7 @@ export default function ProjectForm() {
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [uploadingThumb, setUploadingThumb] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [imageUploadSlot, setImageUploadSlot] = useState<number>(0);
   const [deletingImage, setDeletingImage] = useState<number | null>(null);
 
   const [videoLabel, setVideoLabel] = useState("");
@@ -267,7 +272,7 @@ export default function ProjectForm() {
   };
 
   const handleImagesUpload = async (files: File[]) => {
-    if (!project?.slug) return;
+    if (!project?.slug || uploadingImages || !files.length) return;
     setUploadingImages(true);
     try {
       const fd = new FormData();
@@ -284,6 +289,7 @@ export default function ProjectForm() {
     } catch {
       toast.error("Image upload failed");
     } finally {
+      setImageUploadSlot((slot) => slot + 1);
       setUploadingImages(false);
     }
   };
@@ -637,12 +643,15 @@ export default function ProjectForm() {
           }
         >
           <div className="space-y-5">
-            <ImageDropzone
-              onUpload={handleImagesUpload}
-              uploading={uploadingImages}
-              label="Drop project images here"
-              multiple
+            <FileUpload
+              key={imageUploadSlot}
+              acceptTypes={IMAGE_UPLOAD_ACCEPT}
+              maxSizeMB={IMAGE_UPLOAD_MAX_SIZE_MB}
+              onFilesChange={handleImagesUpload}
             />
+            {uploadingImages && (
+              <p className="text-xs text-ink-mute">Uploading…</p>
+            )}
 
             {project?.images?.length > 0 && (
               <div>

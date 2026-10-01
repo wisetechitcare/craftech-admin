@@ -9,8 +9,10 @@ import {
 } from "./shared";
 
 import { AboutSectionKey } from "@/lib/constants/about";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import { DragList } from "@/lib/constants/drag-lists";
 import { EMPTY_CAPABILITY } from "@/types/about";
+import { LayoutVariant } from "@/types/common";
 import { patchAt } from "@/utils/utils";
 
 /** What We Do — the services list, shown in the order below. The only list
@@ -31,20 +33,7 @@ const WhatWeDoSection = ({
       description="The services list. Shown in the order below."
       count={whatWeDo.items.length}
       max={rules.lists.whatWeDo.max}
-      controls={
-        <div className="flex items-center gap-3">
-          {toggle(AboutSectionKey.WHAT_WE_DO)}
-          <AddButton
-            label="Add Service"
-            disabled={whatWeDo.items.length >= rules.lists.whatWeDo.max}
-            onClick={() =>
-              patchSection("whatWeDo", {
-                items: [...whatWeDo.items, { ...EMPTY_CAPABILITY }],
-              })
-            }
-          />
-        </div>
-      }
+      controls={toggle(AboutSectionKey.WHAT_WE_DO)}
     >
       <HeadFields
         section={whatWeDo}
@@ -88,11 +77,20 @@ const WhatWeDoSection = ({
                 errors[`whatWeDo.items.${i}.tags`] ||
                 errors[`whatWeDo.items.${i}.tags.0`]
               }
-              tooltip={`Comma-separated, up to ${rules.lists.tags.max}. Clean Modern shows the first two.`}
+              tooltip={`Comma-separated, up to ${rules.lists.tags.max}. ${LAYOUT_VARIANT_LABELS[LayoutVariant.CLEAN_MODERN]} shows the first two.`}
             />
           )}
         />
       </div>
+      <AddButton
+        label="Add Service"
+        disabled={whatWeDo.items.length >= rules.lists.whatWeDo.max}
+        onClick={() =>
+          patchSection("whatWeDo", {
+            items: [...whatWeDo.items, { ...EMPTY_CAPABILITY }],
+          })
+        }
+      />
       {elementToggles(AboutSectionKey.WHAT_WE_DO)}
     </SectionCard>
   );

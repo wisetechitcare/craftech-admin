@@ -1,17 +1,27 @@
 import type { ComponentType } from "react";
 
-export interface NavSubItem {
+type NavIcon = ComponentType<{ className?: string }>;
+
+export interface NavModule {
   name: string;
   path: string;
-  icon?: ComponentType<{ className?: string }>;
+  icon: NavIcon;
 }
 
 export interface NavItem {
   name: string;
-  icon: ComponentType<{ className?: string }>;
-  path?: string;
+  icon: NavIcon;
+  path: string;
   end?: boolean;
-  subItems?: NavSubItem[];
+  /** Present on pages that open onto a hub of module cards. */
+  modules?: NavModule[];
+}
+
+export interface SectionTab {
+  label: string;
+  description: string;
+  path: string;
+  icon: NavIcon;
 }
 
 export interface NavGroup {

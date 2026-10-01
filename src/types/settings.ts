@@ -6,6 +6,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { VisibilityMap } from "@/components/admin/ui/VisibilityToggle";
 
 import type { SocialPlatform } from "@/lib/constants/settings";
+import type { PostalAddress } from "@/types/location";
 
 /** A profile URL per platform, in the order the website renders them. An entry
  *  with an empty url keeps its place in that order without being shown. */
@@ -15,13 +16,12 @@ export interface SocialLink {
 }
 
 /** One office. The first filled, visible address is the head office: the only
- *  one the map shows and the one search engines are given. */
-export interface AddressEntry {
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
+ *  one the map shows and the one search engines are given. The pin travels
+ *  with its address; both halves are null when none has been dropped. */
+export interface AddressEntry extends PostalAddress {
+  latitude?: number | null;
+  longitude?: number | null;
+  placeId?: string;
 }
 
 export const EMPTY_ADDRESS: AddressEntry = {
@@ -44,6 +44,8 @@ export interface SiteSettings {
   whatsappPhoneIndex?: number | null;
   /** Derived by the server from `phones`, never sent back. */
   whatsappNumber?: string | null;
+  /** Legacy pasted embed. Read-only now: the site falls back to it until a
+   *  pin is dropped on the head office. */
   mapEmbedUrl?: string | null;
   socialLinks?: SocialLink[] | null;
   website?: string | null;

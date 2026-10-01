@@ -10,7 +10,9 @@ import TextArea from "@/components/admin/ui/TextArea";
 import { SectionCard, type AboutSectionProps } from "./shared";
 
 import { AboutSectionKey } from "@/lib/constants/about";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import { uploadApi } from "@/services/api";
+import { LayoutVariant } from "@/types/common";
 
 const STORY_ACCEPT: Accept = {
   "image/*": [".jpg", ".jpeg", ".png", ".webp"],
@@ -139,7 +141,7 @@ const StorySection = ({
         maxChars={rules.caption.max}
         error={!!errors["story.caption"]}
         hint={errors["story.caption"]}
-        tooltip="Printed over the image. Kept short — Floating sets it in large display type inside a narrow card."
+        tooltip={`Printed over the image. Kept short — ${LAYOUT_VARIANT_LABELS[LayoutVariant.FLOATING]} sets it in large display type inside a narrow card.`}
       />
       {elementToggles(AboutSectionKey.STORY)}
     </SectionCard>

@@ -143,6 +143,13 @@
   .dark :focus-visible {
     @apply ring-offset-dark;
   }
+  /* Reorderable cards (DragList.tsx) grab from anywhere but their controls. */
+  [draggable="true"] {
+    cursor: grab;
+  }
+  [draggable="true"] :is(input, textarea, select, button, a, [contenteditable="true"]) {
+    cursor: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -27,20 +27,7 @@ const WhyChooseUsSection = ({
       description="The reasons list. Shown in the order below."
       count={whyChooseUs.items.length}
       max={rules.lists.whyChooseUs.max}
-      controls={
-        <div className="flex items-center gap-3">
-          {toggle(AboutSectionKey.WHY_CHOOSE_US)}
-          <AddButton
-            label="Add Reason"
-            disabled={whyChooseUs.items.length >= rules.lists.whyChooseUs.max}
-            onClick={() =>
-              patchSection("whyChooseUs", {
-                items: [...whyChooseUs.items, { ...EMPTY_ITEM }],
-              })
-            }
-          />
-        </div>
-      }
+      controls={toggle(AboutSectionKey.WHY_CHOOSE_US)}
     >
       <HeadFields
         section={whyChooseUs}
@@ -61,6 +48,15 @@ const WhyChooseUsSection = ({
           onChange={(items) => patchSection("whyChooseUs", { items })}
         />
       </div>
+      <AddButton
+        label="Add Reason"
+        disabled={whyChooseUs.items.length >= rules.lists.whyChooseUs.max}
+        onClick={() =>
+          patchSection("whyChooseUs", {
+            items: [...whyChooseUs.items, { ...EMPTY_ITEM }],
+          })
+        }
+      />
       {elementToggles(AboutSectionKey.WHY_CHOOSE_US)}
     </SectionCard>
   );

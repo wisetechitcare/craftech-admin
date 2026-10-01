@@ -27,7 +27,6 @@ export const SETTINGS_TAB_FIELDS: Record<SettingsTab, (keyof SiteSettings)[]> =
       "emails",
       "addresses",
       "whatsappPhoneIndex",
-      "mapEmbedUrl",
     ],
     [SettingsTab.SOCIAL]: ["socialLinks"],
     [SettingsTab.SEO]: [

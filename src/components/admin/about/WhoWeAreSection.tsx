@@ -12,8 +12,10 @@ import {
 } from "./shared";
 
 import { AboutSectionKey } from "@/lib/constants/about";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import { DragList } from "@/lib/constants/drag-lists";
 import { EMPTY_DETAIL, EMPTY_ITEM } from "@/types/about";
+import { LayoutVariant } from "@/types/common";
 import { move, patchAt, removeAt } from "@/utils/utils";
 
 /** Who We Are — the statement, the company details listed with it, and the
@@ -70,20 +72,9 @@ const WhoWeAreSection = ({
         <ListHeader
           nested
           title="Company details"
-          description="Listed in order. The first is also the badge on the story image; Floating shows the second as its accent figure."
+          description={`Listed in order. The first is also the badge on the story image; ${LAYOUT_VARIANT_LABELS[LayoutVariant.FLOATING]} shows the second as its accent figure.`}
           count={whoWeAre.details.length}
           max={rules.lists.details.max}
-          controls={
-            <AddButton
-              label="Add Detail"
-              disabled={whoWeAre.details.length >= rules.lists.details.max}
-              onClick={() =>
-                patchSection("whoWeAre", {
-                  details: [...whoWeAre.details, { ...EMPTY_DETAIL }],
-                })
-              }
-            />
-          }
         />
         {whoWeAre.details.map((detail, i) => (
           <ListRow
@@ -135,26 +126,24 @@ const WhoWeAreSection = ({
             </div>
           </ListRow>
         ))}
+        <AddButton
+          label="Add Detail"
+          disabled={whoWeAre.details.length >= rules.lists.details.max}
+          onClick={() =>
+            patchSection("whoWeAre", {
+              details: [...whoWeAre.details, { ...EMPTY_DETAIL }],
+            })
+          }
+        />
       </div>
 
       <div className="pt-1 space-y-4">
         <ListHeader
           nested
           title="Values"
-          description="Shown beside the statement, or as their own band in Floating."
+          description={`Shown beside the statement, or as their own band in ${LAYOUT_VARIANT_LABELS[LayoutVariant.FLOATING]}.`}
           count={values.items.length}
           max={rules.lists.values.max}
-          controls={
-            <AddButton
-              label="Add Value"
-              disabled={values.items.length >= rules.lists.values.max}
-              onClick={() =>
-                patchSection("values", {
-                  items: [...values.items, { ...EMPTY_ITEM }],
-                })
-              }
-            />
-          }
         />
         <HeadFields
           section={values}
@@ -172,6 +161,15 @@ const WhoWeAreSection = ({
           title="Value"
           iconTooltip="Font Awesome name, e.g. shield-halved. Leave empty for the default."
           onChange={(items) => patchSection("values", { items })}
+        />
+        <AddButton
+          label="Add Value"
+          disabled={values.items.length >= rules.lists.values.max}
+          onClick={() =>
+            patchSection("values", {
+              items: [...values.items, { ...EMPTY_ITEM }],
+            })
+          }
         />
       </div>
       {elementToggles(AboutSectionKey.WHO_WE_ARE)}

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, type ComponentType } from "react";
-import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Save, Loader2, Palette, Eye } from "lucide-react";
 
@@ -29,8 +28,8 @@ import { ABOUT_GROUP, AboutSectionKey } from "@/lib/constants/about";
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import { DragList } from "@/lib/constants/drag-lists";
 import { aboutApi, appearanceApi } from "@/services/api";
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import {
-  ABOUT_VARIANT_LABELS,
   type AboutContent,
   type AboutResponse,
   type AboutRules,
@@ -321,17 +320,10 @@ export default function AboutCMS() {
         icon={Palette}
         description={
           <>
-            About style: <strong>{ABOUT_VARIANT_LABELS[variant]}</strong> —
-            layout only; this content is shown by all three.
+            About style: <strong>{LAYOUT_VARIANT_LABELS[variant]}</strong> —
+            layout only; this content is shown by all three. Change it on the
+            Appearance tab.
           </>
-        }
-        action={
-          <Link
-            to="/admin/appearance/about"
-            className="text-xs font-bold text-info underline underline-offset-2"
-          >
-            Change in Appearance
-          </Link>
         }
       />
 
@@ -354,7 +346,7 @@ export default function AboutCMS() {
           <>
             Preview{" "}
             <span className="text-ink-faint normal-case font-normal">
-              — {ABOUT_VARIANT_LABELS[variant]}
+              — {LAYOUT_VARIANT_LABELS[variant]}
             </span>
           </>
         }

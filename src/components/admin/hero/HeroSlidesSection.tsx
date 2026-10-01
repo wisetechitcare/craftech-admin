@@ -48,19 +48,12 @@ export default function HeroSlidesSection({
 
   return (
     <div className="bg-paper border border-line rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">
-          Headline lines{" "}
-          <span className="text-ink-faint normal-case font-normal">
-            ({slideCount}/{rules.slides.max})
-          </span>
-        </h3>
-        <AddButton
-          label="Add line"
-          disabled={slideCount >= rules.slides.max}
-          onClick={onAddSlide}
-        />
-      </div>
+      <h3 className="mb-4 text-sm font-semibold text-ink uppercase tracking-wider">
+        Headline lines{" "}
+        <span className="text-ink-faint normal-case font-normal">
+          ({slideCount}/{rules.slides.max})
+        </span>
+      </h3>
 
       <div className="mb-4 rounded-lg border border-line bg-raise p-3 text-xs leading-relaxed text-ink-mute">
         {slideCount === 1 ? (
@@ -163,6 +156,13 @@ export default function HeroSlidesSection({
             />
           </ListRow>
         ))}
+      </div>
+      <div className="mt-4">
+        <AddButton
+          label="Add line"
+          disabled={slideCount >= rules.slides.max}
+          onClick={onAddSlide}
+        />
       </div>
     </div>
   );

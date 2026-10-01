@@ -64,13 +64,6 @@ const ContactChannelColumn = ({
         title={title}
         count={rows.length}
         max={CONTACT_SLOTS}
-        titleControls={
-          <AddButton
-            label={addLabel}
-            disabled={rows.length >= CONTACT_SLOTS}
-            onClick={() => onChange([...rows, ""])}
-          />
-        }
       />
 
       {rows.map((value, index) => {
@@ -115,6 +108,12 @@ const ContactChannelColumn = ({
           <InputField key={key} type="email" {...fieldProps} />
         );
       })}
+
+      <AddButton
+        label={addLabel}
+        disabled={rows.length >= CONTACT_SLOTS}
+        onClick={() => onChange([...rows, ""])}
+      />
     </div>
   );
 };

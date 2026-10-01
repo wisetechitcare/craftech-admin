@@ -2,9 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { Loader2, Palette } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import ContactSectionContentCard from "@/components/admin/contact/ContactSectionContentCard";
+import {
+  ContactLocationTab,
+  SocialLinksTab,
+} from "@/components/admin/settings";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import {
@@ -14,22 +18,43 @@ import {
   type VisibilitySection,
 } from "@/components/admin/ui/VisibilityToggle";
 import { AdminInfoCallout, PageHeader } from "@/components/common";
+import { Button } from "@/components/ui/button";
 
+import { useSettingsDraft } from "@/hooks";
 import { HOME_VISIBILITY_GROUP } from "@/lib/constants/hero";
 import { CONTACT_VISIBILITY_KEY } from "@/lib/constants/contact";
-import { appearanceApi, contactApi } from "@/services/api";
+import { SETTINGS_TAB_FIELDS, SettingsTab } from "@/lib/constants/settings";
+import { appearanceApi, cmsApi, contactApi } from "@/services/api";
 import {
   EMPTY_CONTACT_SECTION,
   type ContactSectionContent,
 } from "@/types/contact";
+import type { SiteSettings } from "@/types/settings";
+
+/** The Global Settings fields this page edits — the same row, not a copy. */
+const CONTACT_SETTINGS_FIELDS = [
+  ...SETTINGS_TAB_FIELDS[SettingsTab.CONTACT],
+  ...SETTINGS_TAB_FIELDS[SettingsTab.SOCIAL],
+];
 
 export default function ContactCMS() {
   const [content, setContent] = useState<ContactSectionContent>(
     EMPTY_CONTACT_SECTION,
   );
   const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   const [sections, setSections] = useState<VisibilitySection[]>([]);
+  const {
+    data: settings,
+    changes,
+    changedFields,
+    fieldErrors,
+    setFieldErrors,
+    loading: settingsLoading,
+    adopt,
+    patch,
+  } = useSettingsDraft(CONTACT_SETTINGS_FIELDS);
 
   useEffect(() => {
     const loadContent = async () => {
@@ -97,7 +122,63 @@ export default function ContactCMS() {
   const patchVisibility = (key: string, visible: boolean) =>
     setVisibility((prev) => ({ ...prev, [key]: visible }));
 
-  if (loading) {
+  // Section copy, then the shared contact details, then visibility. Each step
+  // names what already saved, so a failure part-way never reads as success.
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    let message = "Failed to save the Contact section content";
+    let isError = true;
+    let sectionSaved = false;
+
+    setSaving(true);
+    setFieldErrors({});
+
+    try {
+      const response = await contactApi.updateSection(content);
+      message = response.data?.message || message;
+
+      if (response.data?.success) {
+        sectionSaved = true;
+        setContent(response.data.data);
+        const saved = message;
+
+        if (changedFields.length) {
+          message =
+            "Contact section saved, but the contact details and social links did not. Fix them and save again.";
+          const settingsResponse = await cmsApi.updateSettings(changes);
+          if (!settingsResponse.data?.success) return;
+          adopt(settingsResponse.data.data as SiteSettings);
+        }
+
+        message =
+          "Contact content saved, but what is shown and hidden did not. Try again.";
+        const { data: appearance } = await appearanceApi.update({ visibility });
+        setVisibility(appearance.data.visibility ?? {});
+
+        isError = false;
+        message = saved;
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        if (sectionSaved) {
+          setFieldErrors(error.response?.data?.fields || {});
+        } else {
+          message = error.response?.data?.message || message;
+        }
+      }
+    } finally {
+      if (isError) {
+        toast.error(message);
+      } else {
+        toast.success(message);
+      }
+
+      setSaving(false);
+    }
+  };
+
+  if (loading || settingsLoading) {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="size-8 animate-spin text-ink-faint" />
@@ -105,11 +186,20 @@ export default function ContactCMS() {
     );
   }
 
+  const tabProps = settings && {
+    data: settings,
+    errors: fieldErrors,
+    patch,
+    visibility,
+    patchVisibility,
+    setVisibility,
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Contact CMS"
-        description="Section heading, form labels and how submissions are sent. Channel details (email, phone, map, social) are edited under Global Settings."
+        description="Everything the Contact section shows: heading, form, contact details and social links."
         action={
           contactSection ? (
             <SectionVisibilitySwitch
@@ -123,27 +213,15 @@ export default function ContactCMS() {
       />
 
       <AdminInfoCallout
-        icon={Palette}
-        description="Which Contact layout is shown is set under Appearance → Contact."
-        action={
-          <Link
-            to="/admin/appearance/contact"
-            className="text-xs font-bold text-info underline underline-offset-2"
-          >
-            Change in Appearance
-          </Link>
-        }
-      />
-
-      <AdminInfoCallout
         description={
           <>
-            Phone, email, address, map embed and social URLs are not duplicated
-            here — they come from{" "}
+            Contact information, addresses, the map and social links are shared
+            with{" "}
             <Link to="/admin/settings" className="font-semibold underline">
               Global Settings → Contact &amp; Location
             </Link>
-            .
+            . A change here changes them there, and everywhere they appear on
+            the website.
           </>
         }
       />
@@ -153,18 +231,46 @@ export default function ContactCMS() {
         placement="above"
         draft={{
           contactContent: { section: content },
+          settings: settings ?? undefined,
           appearance: { visibility },
         }}
         caption="The live Contact section from what is on this page. Nothing is saved until you press Save."
         sectionHidden={!sectionVisible}
         onShowSection={() => patchVisibility(CONTACT_VISIBILITY_KEY, true)}
       >
-        <ContactSectionContentCard
-          content={content}
-          onChange={setContent}
-          visibility={visibility}
-          onVisibilityChange={setVisibility}
-        />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <ContactSectionContentCard
+            content={content}
+            onChange={setContent}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+          />
+
+          {tabProps && (
+            <>
+              <ContactLocationTab {...tabProps} />
+              <SocialLinksTab {...tabProps} />
+            </>
+          )}
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={saving}
+              className="text-sm font-bold"
+              size="sm"
+              startIcon={
+                saving ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <Save className="size-5" />
+                )
+              }
+            >
+              Save Changes
+            </Button>
+          </div>
+        </form>
       </PreviewPanel>
     </div>
   );

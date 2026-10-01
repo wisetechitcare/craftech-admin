@@ -83,7 +83,7 @@ const FAQForm = () => {
 
       if (response.data?.success) {
         isError = false;
-        navigate("/admin/faq");
+        navigate("/admin/home/faq");
       }
     } catch (error) {
       if (isAxiosError(error)) {
@@ -113,7 +113,7 @@ const FAQForm = () => {
       <div className="flex items-center gap-4">
         <button
           type="button"
-          onClick={() => navigate("/admin/faq")}
+          onClick={() => navigate("/admin/home/faq")}
           aria-label="Back to FAQs"
           className="p-2 rounded-lg bg-raise hover:bg-line transition-colors"
         >

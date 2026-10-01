@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { AlertCircle, Loader2, Save } from "lucide-react";
@@ -13,6 +13,7 @@ import {
 import type { VisibilityMap } from "@/components/admin/ui/VisibilityToggle";
 import { AdminInfoCallout } from "@/components/common";
 
+import { useSettingsDraft } from "@/hooks";
 import { cn } from "@/utils/utils";
 import {
   SETTINGS_TABS,
@@ -49,34 +50,28 @@ const humanize = (field: string) =>
     )
     .join(" → ");
 
+const ALL_TAB_FIELDS = Object.values(SETTINGS_TAB_FIELDS).flat();
+
 export default function Settings() {
-  const [data, setData] = useState<SiteSettings | null>(null);
-  const [saved, setSaved] = useState<SiteSettings | null>(null);
+  const {
+    data,
+    changes,
+    changedFields,
+    fieldErrors,
+    setFieldErrors,
+    loading,
+    adopt,
+    patch,
+    discard,
+  } = useSettingsDraft(ALL_TAB_FIELDS);
   // Which contact details the website draws lives on Appearance, not on the
   // settings row: hiding a number is a presentation decision and the number
   // behind it has to survive it.
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   const [savedVisibility, setSavedVisibility] = useState<VisibilityMap>({});
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>(SettingsTab.GENERAL);
 
-  // Only what the admin actually changed, and only fields this page owns.
-  // PUTting the whole record re-validated every field, so one bad legacy value
-  // blocked saving any tab.
-  const changes = useMemo<Partial<SiteSettings>>(() => {
-    if (!data || !saved) return {};
-    return Object.fromEntries(
-      Object.values(SETTINGS_TAB_FIELDS)
-        .flat()
-        .filter(
-          (key) => JSON.stringify(data[key]) !== JSON.stringify(saved[key]),
-        )
-        .map((key) => [key, data[key]]),
-    );
-  }, [data, saved]);
-  const changedFields = Object.keys(changes);
   const visibilityChanged =
     JSON.stringify(visibility) !== JSON.stringify(savedVisibility);
   const changeCount = changedFields.length + (visibilityChanged ? 1 : 0);
@@ -91,40 +86,9 @@ export default function Settings() {
     return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
   }, [changeCount]);
 
-  const adopt = (settings: SiteSettings) => {
-    setData(settings);
-    setSaved(settings);
-    setFieldErrors({});
-  };
-
   const adoptVisibility = (map: VisibilityMap) => {
     setVisibility(map);
     setSavedVisibility(map);
-  };
-
-  const fetchSettings = async () => {
-    let message = "Failed to load settings";
-    let isError = true;
-
-    try {
-      const response = await cmsApi.getSettings();
-      message = response.data?.message || message;
-
-      if (response.data?.success) {
-        isError = false;
-        adopt(response.data.data as SiteSettings);
-      }
-    } catch (error) {
-      if (isAxiosError(error)) {
-        message = error.response?.data?.message || message;
-      }
-    } finally {
-      if (isError) {
-        toast.error(message);
-      }
-
-      setLoading(false);
-    }
   };
 
   const fetchVisibility = async () => {
@@ -151,7 +115,6 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    fetchSettings();
     fetchVisibility();
   }, []);
 
@@ -216,7 +179,6 @@ export default function Settings() {
   // The failed load already raised a toast.
   if (!data) return null;
 
-  const patch = (next: Partial<SiteSettings>) => setData({ ...data, ...next });
   const patchVisibility = (key: string, visible: boolean) =>
     setVisibility((prev) => ({ ...prev, [key]: visible }));
   const TabContent = TAB_CONTENT[activeTab];
@@ -292,7 +254,7 @@ export default function Settings() {
           <button
             type="button"
             onClick={() => {
-              if (saved) adopt(saved);
+              discard();
               setVisibility(savedVisibility);
             }}
             disabled={!changeCount}

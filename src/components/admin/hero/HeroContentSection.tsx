@@ -5,8 +5,10 @@ import TrustStripFields from "./TrustStripFields";
 import RichTextField from "@/components/admin/ui/RichTextField";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 
+import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import { HeroVisibilityKey } from "@/lib/constants/hero";
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
+import { LayoutVariant } from "@/types/common";
 import type { FieldErrors, HeroContent, HeroRules } from "@/types/hero";
 
 interface HeroContentFieldsProps {
@@ -44,7 +46,7 @@ export function HeroEyebrowSection({
         maxChars={rules.eyebrow.max}
         error={!!errors.eyebrow}
         hint={errors.eyebrow}
-        tooltip="The small kicker above the headline. Floating renders it inside a pill, so it must stay on one line."
+        tooltip={`The small kicker above the headline. ${LAYOUT_VARIANT_LABELS[LayoutVariant.FLOATING]} renders it inside a pill, so it must stay on one line.`}
         labelAction={elementToggle(HeroVisibilityKey.EYEBROW)}
       />
     </SectionCard>
