@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 
 import { HOME_VISIBILITY_GROUP, HeroVisibilityKey } from "@/lib/constants/hero";
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
+import { updateAppearance } from "@/lib/utils/appearance";
 import { appearanceApi, heroApi } from "@/services/api";
 import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import {
@@ -49,7 +50,6 @@ export default function HeroCMS() {
   const [navigationDestinations, setNavigationDestinations] = useState<
     NavigationDestinationOption[]
   >([]);
-
   const apply = (data: HeroResponse) => {
     const {
       variant: v,
@@ -136,7 +136,6 @@ export default function HeroCMS() {
   const heroSection = sections.find(
     (section) => section.key === HeroVisibilityKey.SECTION,
   );
-
   const previewShows = (key: string) =>
     !(
       heroSection?.key === key ||
@@ -208,7 +207,7 @@ export default function HeroCMS() {
         apply(response.data.data);
 
         try {
-          const appearanceResponse = await appearanceApi.update({ visibility });
+          const appearanceResponse = await updateAppearance({ visibility });
           message =
             appearanceResponse.data?.message ||
             "Hero saved, but section visibility did not. Try again.";

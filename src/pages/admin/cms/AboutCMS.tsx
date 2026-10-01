@@ -2,6 +2,7 @@ import React, { useEffect, useState, type ComponentType } from "react";
 import toast from "react-hot-toast";
 import { Save, Loader2, Palette, Eye } from "lucide-react";
 
+import ClientsAboutSection from "@/components/admin/about/ClientsSection";
 import CtaSection from "@/components/admin/about/CtaSection";
 import HowWeWorkSection from "@/components/admin/about/HowWeWorkSection";
 import StatsSection from "@/components/admin/about/StatsSection";
@@ -27,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { ABOUT_GROUP, AboutSectionKey } from "@/lib/constants/about";
 import type { NavigationDestinationOption } from "@/lib/constants/navigation";
 import { DragList } from "@/lib/constants/drag-lists";
+import { updateAppearance } from "@/lib/utils/appearance";
 import { aboutApi, appearanceApi } from "@/services/api";
 import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import {
@@ -64,6 +66,10 @@ const SECTIONS: Record<
   [AboutSectionKey.HOW_WE_WORK]: {
     label: "How We Work",
     Component: HowWeWorkSection,
+  },
+  [AboutSectionKey.CLIENTS]: {
+    label: "Clients & partners",
+    Component: ClientsAboutSection,
   },
   [AboutSectionKey.CTA]: { label: "Call to Action", Component: CtaSection },
 };
@@ -240,12 +246,11 @@ export default function AboutCMS() {
       // skipped the write while still reporting success — a save that silently
       // does nothing is far more expensive than the request it avoided.
       try {
-        const { data: appearance } = await appearanceApi.update({
+        const appearanceResponse = await updateAppearance({
           visibility,
           sectionOrder: order,
         });
-        // Trust the server's copy over local state, so what the toggles and the
-        // card order show after a save is what was actually stored.
+        const appearance = appearanceResponse.data;
         setVisibility(appearance.data.visibility ?? {});
         setOrder(appearance.data.sectionOrder ?? order);
       } catch {

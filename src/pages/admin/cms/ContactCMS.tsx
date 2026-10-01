@@ -24,6 +24,7 @@ import { useSettingsDraft } from "@/hooks";
 import { HOME_VISIBILITY_GROUP } from "@/lib/constants/hero";
 import { CONTACT_VISIBILITY_KEY } from "@/lib/constants/contact";
 import { SETTINGS_TAB_FIELDS, SettingsTab } from "@/lib/constants/settings";
+import { updateAppearanceVisibility } from "@/lib/utils/appearance";
 import { appearanceApi, cmsApi, contactApi } from "@/services/api";
 import {
   EMPTY_CONTACT_SECTION,
@@ -153,8 +154,8 @@ export default function ContactCMS() {
 
         message =
           "Contact content saved, but what is shown and hidden did not. Try again.";
-        const { data: appearance } = await appearanceApi.update({ visibility });
-        setVisibility(appearance.data.visibility ?? {});
+        const nextVisibility = await updateAppearanceVisibility(visibility);
+        setVisibility(nextVisibility);
 
         isError = false;
         message = saved;

@@ -3,9 +3,8 @@ import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { Loader2, Save } from "lucide-react";
 
-import { SectionCard } from "@/components/admin/ui/SectionCard";
+import SwitchOptionsCard from "@/components/admin/ui/SwitchOptionsCard";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 
 import { IMAGE_STYLE_OPTIONS } from "@/lib/constants/common";
 import { appearanceApi } from "@/services/api";
@@ -14,14 +13,10 @@ import type { ImageStyleMap, ImageStyleSection } from "@/types/common";
 interface ImageStyleCardProps {
   section: ImageStyleSection;
   description: string;
-  /** The whole stored map — Appearance writes it whole, so the other sections'
-   *  styles have to travel with this one. */
   styles: ImageStyleMap;
   onChange: (styles: ImageStyleMap) => void;
 }
 
-/** Border, corners, black & white and hover caption for one image-led section,
- *  honoured by every layout of it. Saved to Appearance on its own. */
 const ImageStyleCard = ({
   section,
   description,
@@ -44,7 +39,6 @@ const ImageStyleCard = ({
 
       if (response.data?.success) {
         isError = false;
-        // Appearance answers without a message of its own.
         message = response.data.message || "Image style saved";
         onChange(response.data.data.imageStyles);
       }
@@ -64,27 +58,18 @@ const ImageStyleCard = ({
   };
 
   return (
-    <SectionCard title="Image Style" description={description}>
-      <div className="divide-y divide-line rounded-lg border border-line px-4">
-        {IMAGE_STYLE_OPTIONS.map(({ key, label, helper }) => (
-          <label
-            key={key}
-            className="flex items-center justify-between gap-4 py-3"
-          >
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-ink">{label}</div>
-              <p className="mt-0.5 text-xs text-ink">{helper}</p>
-            </div>
-            <Switch
-              checked={style[key]}
-              onCheckedChange={(checked) =>
-                onChange({ ...styles, [section]: { ...style, [key]: checked } })
-              }
-            />
-          </label>
-        ))}
-      </div>
-      <div className="flex justify-end">
+    <SwitchOptionsCard
+      title="Image Style"
+      description={description}
+      rows={IMAGE_STYLE_OPTIONS.map(({ key, label, helper }) => ({
+        key,
+        label,
+        helper,
+        checked: style[key],
+        onCheckedChange: (checked) =>
+          onChange({ ...styles, [section]: { ...style, [key]: checked } }),
+      }))}
+      actions={
         <Button
           onClick={handleSave}
           disabled={saving}
@@ -100,8 +85,8 @@ const ImageStyleCard = ({
         >
           Save Changes
         </Button>
-      </div>
-    </SectionCard>
+      }
+    />
   );
 };
 

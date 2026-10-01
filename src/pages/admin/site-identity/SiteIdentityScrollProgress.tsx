@@ -11,6 +11,7 @@ import {
 } from "@/components/admin/ui/VisibilityToggle";
 import { AdminInfoCallout } from "@/components/common";
 
+import { updateAppearance } from "@/lib/utils/appearance";
 import { appearanceApi } from "@/services/api";
 
 const SCROLL_PROGRESS_KEY = "site.scrollProgress";
@@ -58,7 +59,7 @@ export default function SiteIdentityScrollProgress() {
     setSaving(true);
 
     try {
-      const response = await appearanceApi.update({ visibility });
+      const response = await updateAppearance({ visibility });
       message = response.data?.message || message;
 
       if (response.data?.success) {

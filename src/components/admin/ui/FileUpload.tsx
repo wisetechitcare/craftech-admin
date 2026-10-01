@@ -57,7 +57,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
   }, [deletedImages]);
 
   const onDrop = (acceptedFiles: File[]) => {
-    const totalFiles = files.length + existingImageUrls.length;
+    const replacingSingle =
+      maxFiles === 1 &&
+      acceptedFiles.length === 1 &&
+      existingImageUrls.length >= 1;
+
+    if (replacingSingle) {
+      setExistingImageUrls([]);
+      onExistingImagesChange?.([]);
+      setFiles([]);
+      setMessage("");
+    }
+
+    const existingCount = replacingSingle ? 0 : existingImageUrls.length;
+    const totalFiles = files.length + existingCount;
     if (acceptedFiles.length + totalFiles > maxFiles) {
       setMessage(`You can only upload up to ${maxFiles} files.`);
       return;

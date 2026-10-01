@@ -52,7 +52,6 @@ export const NAV_GROUPS: NavGroup[] = [
         modules: [
           { name: "Hero Section", icon: PanelTop, path: "/admin/home/hero" },
           { name: "Services", icon: Briefcase, path: "/admin/home/services" },
-          { name: "Clients", icon: Building2, path: "/admin/home/clients" },
           {
             name: "Gallery Section",
             icon: ImageIcon,
@@ -71,6 +70,11 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Global",
     items: [
+      {
+        name: "Clients & partners",
+        icon: Building2,
+        path: "/admin/clients",
+      },
       { name: "Navbar", icon: Menu, path: "/admin/navbar" },
       {
         name: "Site Identity",
@@ -136,7 +140,7 @@ export const LEGACY_ADMIN_REDIRECTS: Record<string, string> = {
   pillars: "/admin/home/pillars",
   services: "/admin/home/services",
   process: "/admin/home/process",
-  clients: "/admin/home/clients",
+  clients: "/admin/clients",
   gallery: "/admin/home/gallery",
   faq: "/admin/home/faq",
   contact: "/admin/home/contact",

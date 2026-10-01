@@ -6,6 +6,7 @@ import type { ContactSectionContent } from "@/types/contact";
 import type { FaqItem, FaqSectionContent } from "@/types/faq";
 import type { GalleryImage, GallerySectionContent } from "@/types/gallery";
 import type { HeroContent } from "@/types/hero";
+import type { ClientRecord, ClientsSectionContent } from "@/types/clients";
 import type { SiteSettings } from "@/types/settings";
 import { SITE_URL } from "@/lib/utils/common";
 
@@ -19,6 +20,7 @@ export enum PreviewSection {
   /** The first posted gallery image alone, its caption held open. */
   GALLERY_CAPTION = "gallery-caption",
   CONTACT = "contact",
+  CLIENTS = "clients",
   SITE = "site",
 }
 
@@ -30,6 +32,8 @@ export interface PreviewDraft {
   faqContent?: { faqs: FaqItem[]; section: FaqSectionContent };
   galleryContent?: { images: GalleryImage[]; section: GallerySectionContent };
   contactContent?: { section: ContactSectionContent };
+  clientsContent?: { section: ClientsSectionContent };
+  clientsList?: ClientRecord[];
   /** The whole row, not a patch: the site replaces its settings with it. */
   settings?: SiteSettings;
   appearance?: AppearanceUpdatePayload;

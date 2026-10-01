@@ -136,6 +136,9 @@ export const cmsApi = {
   deleteTestimonial: (id: string) => api.delete(`/cms/testimonials/${id}`),
 
   getClients: () => api.get("/cms/clients"),
+  getClientsSection: () => api.get("/cms/clients/section"),
+  updateClientsSection: (data: { title?: string; description?: string }) =>
+    api.put("/cms/clients/section", data),
   createClient: (data: any) => api.post("/cms/clients", data),
   updateClient: (id: string, data: any) => api.put(`/cms/clients/${id}`, data),
   deleteClient: (id: string) => api.delete(`/cms/clients/${id}`),
