@@ -8,13 +8,19 @@ import { Button } from "@/components/ui/button";
 
 import { IMAGE_STYLE_OPTIONS } from "@/lib/constants/common";
 import { appearanceApi } from "@/services/api";
-import type { ImageStyleMap, ImageStyleSection } from "@/types/common";
+import type {
+  ImageStyleMap,
+  ImageStyleOption,
+  ImageStyleSection,
+} from "@/types/common";
 
 interface ImageStyleCardProps {
   section: ImageStyleSection;
   description: string;
   styles: ImageStyleMap;
   onChange: (styles: ImageStyleMap) => void;
+  /** Defaults to all switches; Clients passes border / rounded / B&W only. */
+  options?: ImageStyleOption[];
 }
 
 const ImageStyleCard = ({
@@ -22,6 +28,7 @@ const ImageStyleCard = ({
   description,
   styles,
   onChange,
+  options = IMAGE_STYLE_OPTIONS,
 }: ImageStyleCardProps) => {
   const [saving, setSaving] = useState<boolean>(false);
   const style = styles[section];
@@ -61,7 +68,7 @@ const ImageStyleCard = ({
     <SwitchOptionsCard
       title="Image Style"
       description={description}
-      rows={IMAGE_STYLE_OPTIONS.map(({ key, label, helper }) => ({
+      rows={options.map(({ key, label, helper }) => ({
         key,
         label,
         helper,

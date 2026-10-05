@@ -17,6 +17,7 @@ import {
 
 import { isAnyClientsPlacementOn } from "@/lib/clients-visibility";
 import {
+  CLIENTS_IMAGE_STYLE_OPTIONS,
   CLIENTS_PLACEMENT_SWITCHES,
   CLIENTS_SECTION_DEFAULTS,
   CLIENTS_SECTION_VISIBILITY_KEY,
@@ -169,9 +170,10 @@ const ClientsManager = () => {
         {imageStyles ? (
           <ImageStyleCard
             section={ImageStyleSection.CLIENTS}
-            description="Logo grid styling for Variant 2 (border mesh, rounding, and hover colour). Other variants ignore these switches."
+            description="Logo grid styling for Variant 2. Other variants ignore these switches."
             styles={imageStyles}
             onChange={setImageStyles}
+            options={CLIENTS_IMAGE_STYLE_OPTIONS}
           />
         ) : null}
 
