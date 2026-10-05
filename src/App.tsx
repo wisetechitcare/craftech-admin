@@ -159,7 +159,22 @@ function App() {
             />
           </Route>
           <Route path="clients">
-            <Route index element={<ClientsManager />} />
+            <Route element={<SectionTabs />}>
+              <Route index element={<ClientsManager />} />
+              <Route
+                path="appearance"
+                element={
+                  <AppearanceStyle
+                    key="clients"
+                    field="clientsVariant"
+                    label="Clients Style"
+                    section={PreviewSection.CLIENTS}
+                    viewportHeight={420}
+                    note="Home and About clients sections follow the site theme. The global bottom strip always uses the scrolling logo band. Logo grid image options stay on the Content tab."
+                  />
+                }
+              />
+            </Route>
             <Route path="new" element={<ClientForm />} />
             <Route path=":id/edit" element={<ClientForm />} />
           </Route>

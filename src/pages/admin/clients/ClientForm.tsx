@@ -16,7 +16,11 @@ const ClientForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(Boolean(id));
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState<ClientFormValues>({ logo: "", website: "" });
+  const [form, setForm] = useState<ClientFormValues>({
+    logo: "",
+    website: "",
+    displayName: "",
+  });
   const [logoLink, setLogoLink] = useState("");
 
   useEffect(() => {
@@ -32,6 +36,7 @@ const ClientForm = () => {
           setForm({
             logo: client.logo ?? "",
             website: client.website ?? "",
+            displayName: client.displayName ?? "",
           });
         } else {
           toast.error("Client not found");
@@ -54,6 +59,7 @@ const ClientForm = () => {
     const payload = {
       logo,
       website: form.website.trim() || undefined,
+      displayName: form.displayName.trim() || undefined,
     };
 
     let message = "Failed to save client";

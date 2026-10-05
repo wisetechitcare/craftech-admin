@@ -5,7 +5,11 @@ import toast from "react-hot-toast";
 import FileUpload from "@/components/admin/ui/FileUpload";
 import InputField from "@/components/admin/ui/InputField";
 
-import { CLIENTS_UPLOAD_FOLDER } from "@/lib/constants/clients";
+import {
+  CLIENT_DISPLAY_NAME_HELPER,
+  CLIENT_DISPLAY_NAME_MAX,
+  CLIENTS_UPLOAD_FOLDER,
+} from "@/lib/constants/clients";
 import {
   IMAGE_UPLOAD_ACCEPT,
   IMAGE_UPLOAD_MAX_SIZE_MB,
@@ -106,6 +110,20 @@ const ClientLogoFields = ({
           if (logoLink.trim()) patch({ logo: logoLink.trim() });
         }}
         placeholder="https://… (paste if not uploading)"
+      />
+
+      <InputField
+        label="Client name (optional)"
+        value={form.displayName}
+        onChange={(e) =>
+          patch({
+            displayName: e.target.value.slice(0, CLIENT_DISPLAY_NAME_MAX),
+          })
+        }
+        maxLength={CLIENT_DISPLAY_NAME_MAX}
+        maxChars={CLIENT_DISPLAY_NAME_MAX}
+        hint={CLIENT_DISPLAY_NAME_HELPER}
+        placeholder="Short brand name for Variant 2 hover"
       />
 
       <InputField

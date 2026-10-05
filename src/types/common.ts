@@ -17,6 +17,7 @@ export enum CustomCursorVariant {
 /** Sections whose image treatment Appearance controls (mirrors craftech-frontend-next). */
 export enum ImageStyleSection {
   GALLERY = "gallery",
+  CLIENTS = "clients",
 }
 
 /** One section's image treatment; every layout of that section honours it. */
@@ -59,6 +60,7 @@ export interface SectionCopyField<T> {
   multiline?: boolean;
   type?: string;
   tooltip?: string;
+  maxChars?: number;
   /** Rendered in a narrow column, as a short value like an email is. */
   narrow?: boolean;
 }

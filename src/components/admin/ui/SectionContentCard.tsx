@@ -119,6 +119,7 @@ const SectionContentCard = <T extends { [K in keyof T]: string }>({
               onChange={(e) => patch(field.key, e.target.value)}
               placeholder={field.placeholder}
               tooltip={field.tooltip}
+              maxChars={field.maxChars}
               labelAction={fieldToggle(field.key)}
             />
           ) : (
@@ -128,6 +129,8 @@ const SectionContentCard = <T extends { [K in keyof T]: string }>({
               value={content[field.key]}
               onChange={(e) => patch(field.key, e.target.value)}
               placeholder={field.placeholder}
+              tooltip={field.tooltip}
+              maxChars={field.maxChars}
               labelAction={fieldToggle(field.key)}
             />
           );

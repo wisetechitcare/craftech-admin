@@ -8,28 +8,28 @@ import { PageHeader } from "@/components/common";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import SectionContentCard from "@/components/admin/ui/SectionContentCard";
+import ImageStyleCard from "@/components/admin/ui/ImageStyleCard";
 import SwitchOptionsCard from "@/components/admin/ui/SwitchOptionsCard";
 import {
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
 
-import {
-  isAnyClientsPlacementOn,
-  isClientsGlobalOn,
-  setClientsGlobalMode,
-} from "@/lib/clients-visibility";
+import { isAnyClientsPlacementOn } from "@/lib/clients-visibility";
 import {
   CLIENTS_PLACEMENT_SWITCHES,
   CLIENTS_SECTION_DEFAULTS,
-  CLIENTS_SECTION_FIELDS,
   CLIENTS_SECTION_VISIBILITY_KEY,
+  CLIENTS_VARIANT_DEFAULT,
+  clientsSectionFields,
   CLIENTS_VISIBILITY,
 } from "@/lib/constants/clients";
 import { updateAppearanceVisibility } from "@/lib/utils/appearance";
 import { useClientsList } from "@/hooks/use-clients-list";
 import { appearanceApi, cmsApi } from "@/services/api";
-import type { ClientsSectionContent } from "@/types/clients";
+import type { ClientsCopyRules, ClientsSectionContent } from "@/types/clients";
+import type { ImageStyleMap, LayoutVariant } from "@/types/common";
+import { ImageStyleSection } from "@/types/common";
 
 const ClientsManager = () => {
   const { items, loading: clientsLoading, reload } = useClientsList();
@@ -37,25 +37,46 @@ const ClientsManager = () => {
     CLIENTS_SECTION_DEFAULTS,
   );
   const [visibility, setVisibility] = useState<VisibilityMap>({});
+  const [clientsVariant, setClientsVariant] = useState<LayoutVariant>(
+    CLIENTS_VARIANT_DEFAULT,
+  );
+  const [copyRules, setCopyRules] = useState<ClientsCopyRules | null>(null);
+  const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingMode, setSavingMode] = useState(false);
 
-  const globalMode = isClientsGlobalOn(visibility);
   const sectionShown = isAnyClientsPlacementOn(visibility);
 
   useEffect(() => {
-    appearanceApi
-      .get()
-      .then(
-        ({ data }) =>
-          data?.success && setVisibility(data.data.visibility ?? {}),
-      )
-      .catch(() => toast.error("Failed to load visibility"));
-    cmsApi
-      .getClientsSection()
-      .then(({ data }) => data?.success && setSection(data.data))
-      .catch(() => toast.error("Failed to load section copy"))
-      .finally(() => setLoading(false));
+    void (async () => {
+      try {
+        const [appearanceRes, sectionRes] = await Promise.all([
+          appearanceApi.get(),
+          cmsApi.getClientsSection(),
+        ]);
+
+        if (appearanceRes.data?.success) {
+          const appearance = appearanceRes.data.data;
+          setVisibility(appearance.visibility ?? {});
+          setClientsVariant(
+            appearance.clientsVariant ?? CLIENTS_VARIANT_DEFAULT,
+          );
+          setImageStyles(appearance.imageStyles);
+        }
+
+        if (sectionRes.data?.success) {
+          const data = sectionRes.data.data;
+          setSection({ title: data.title, description: data.description });
+          if (data.rules) setCopyRules(data.rules);
+        }
+      } catch {
+        toast.error(
+          "Failed to load clients settings (is the backend running?)",
+        );
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const saveVisibility = async (next: VisibilityMap) => {
@@ -87,17 +108,9 @@ const ClientsManager = () => {
 
   const placementRows = CLIENTS_PLACEMENT_SWITCHES.map((meta) => ({
     ...meta,
-    checked:
-      meta.key === CLIENTS_VISIBILITY.GLOBAL
-        ? globalMode
-        : isVisible(visibility, meta.key),
-    disabled:
-      savingMode || (meta.key !== CLIENTS_VISIBILITY.GLOBAL && globalMode),
+    checked: isVisible(visibility, meta.key),
+    disabled: savingMode,
     onCheckedChange: (on: boolean) => {
-      if (meta.key === CLIENTS_VISIBILITY.GLOBAL) {
-        patchVisibility(setClientsGlobalMode(visibility, on));
-        return;
-      }
       patchVisibility({ ...visibility, [meta.key]: on });
     },
   }));
@@ -106,7 +119,7 @@ const ClientsManager = () => {
     <div className="space-y-6">
       <PageHeader
         title="Clients & partners"
-        description="Shared logo list and section intro for Global, Home, and About. Use the switches below to control where they appear on the site."
+        description="Shared logo list and section intro for Global, Home, and About. Layout style is on the Appearance tab."
       />
 
       <PreviewPanel
@@ -116,12 +129,21 @@ const ClientsManager = () => {
         draft={{
           clientsContent: { section },
           clientsList: items,
-          appearance: { visibility },
+          appearance: {
+            visibility,
+            clientsVariant,
+            ...(imageStyles && { imageStyles }),
+          },
         }}
         caption="The live Clients band (intro + logos), rendered by the website. Unsaved copy, logos and visibility show here before you save."
         sectionHidden={!sectionShown}
         onShowSection={() =>
-          patchVisibility(setClientsGlobalMode(visibility, true))
+          patchVisibility({
+            ...visibility,
+            [CLIENTS_VISIBILITY.GLOBAL]: true,
+            [CLIENTS_VISIBILITY.HOME]: true,
+            [CLIENTS_VISIBILITY.ABOUT]: true,
+          })
         }
       >
         <SwitchOptionsCard
@@ -130,17 +152,28 @@ const ClientsManager = () => {
           rows={placementRows}
         />
 
-        <SectionContentCard
-          name="Clients"
-          description="Shared intro copy for Global and page-specific placements. Leave a field empty to keep the placeholder."
-          fields={CLIENTS_SECTION_FIELDS}
-          content={section}
-          onChange={setSection}
-          onSave={cmsApi.updateClientsSection}
-          visibilityKey={CLIENTS_SECTION_VISIBILITY_KEY}
-          visibility={visibility}
-          onVisibilityChange={setVisibility}
-        />
+        {copyRules ? (
+          <SectionContentCard
+            name="Clients"
+            description="Intro copy for Home and About placements. Helpers change with the layout selected under Appearance."
+            fields={clientsSectionFields(copyRules)}
+            content={section}
+            onChange={setSection}
+            onSave={cmsApi.updateClientsSection}
+            visibilityKey={CLIENTS_SECTION_VISIBILITY_KEY}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+          />
+        ) : null}
+
+        {imageStyles ? (
+          <ImageStyleCard
+            section={ImageStyleSection.CLIENTS}
+            description="Logo grid styling for Variant 2 (border mesh, rounding, and hover colour). Other variants ignore these switches."
+            styles={imageStyles}
+            onChange={setImageStyles}
+          />
+        ) : null}
 
         <ClientsLogosPanel
           items={items}
