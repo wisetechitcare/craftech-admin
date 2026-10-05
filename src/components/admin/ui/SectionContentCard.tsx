@@ -13,7 +13,7 @@ import {
 } from "@/components/admin/ui/VisibilityToggle";
 import { Button } from "@/components/ui/button";
 
-import { appearanceApi } from "@/services/api";
+import { updateAppearanceVisibility } from "@/lib/utils/appearance";
 import type { SectionCopyField } from "@/types/common";
 import { cn } from "@/utils/utils";
 
@@ -87,8 +87,8 @@ const SectionContentCard = <T extends { [K in keyof T]: string }>({
         // every save the way the Hero page sends it.
         const saved = message;
         message = `${name} section saved, but its visibility did not. Try again.`;
-        const { data: appearance } = await appearanceApi.update({ visibility });
-        onVisibilityChange(appearance.data.visibility ?? {});
+        const nextVisibility = await updateAppearanceVisibility(visibility);
+        onVisibilityChange(nextVisibility);
 
         isError = false;
         message = saved;
@@ -119,6 +119,7 @@ const SectionContentCard = <T extends { [K in keyof T]: string }>({
               onChange={(e) => patch(field.key, e.target.value)}
               placeholder={field.placeholder}
               tooltip={field.tooltip}
+              maxChars={field.maxChars}
               labelAction={fieldToggle(field.key)}
             />
           ) : (
@@ -128,6 +129,8 @@ const SectionContentCard = <T extends { [K in keyof T]: string }>({
               value={content[field.key]}
               onChange={(e) => patch(field.key, e.target.value)}
               placeholder={field.placeholder}
+              tooltip={field.tooltip}
+              maxChars={field.maxChars}
               labelAction={fieldToggle(field.key)}
             />
           );

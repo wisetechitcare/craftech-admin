@@ -19,7 +19,8 @@ import FeaturesCMS from "./pages/admin/cms/FeaturesCMS";
 import PillarsCMS from "./pages/admin/cms/PillarsCMS";
 import ServicesCMS from "./pages/admin/cms/ServicesCMS";
 import TestimonialsList from "./pages/admin/cms/TestimonialsList";
-import ClientsList from "./pages/admin/cms/ClientsList";
+import ClientsManager from "./pages/admin/clients/ClientsManager";
+import ClientForm from "./pages/admin/clients/ClientForm";
 import LeadsCRM from "./pages/admin/LeadsCRM";
 import Settings from "./pages/admin/cms/Settings";
 import AppearanceStyle from "./pages/admin/appearance/AppearanceStyle";
@@ -94,7 +95,6 @@ function App() {
               />
             </Route>
             <Route path="services" element={<ServicesCMS />} />
-            <Route path="clients" element={<ClientsList />} />
             <Route path="gallery" element={<SectionTabs />}>
               <Route index element={<GalleryManager />} />
               <Route
@@ -157,6 +157,26 @@ function App() {
                 />
               }
             />
+          </Route>
+          <Route path="clients">
+            <Route element={<SectionTabs />}>
+              <Route index element={<ClientsManager />} />
+              <Route
+                path="appearance"
+                element={
+                  <AppearanceStyle
+                    key="clients"
+                    field="clientsVariant"
+                    label="Clients Style"
+                    section={PreviewSection.CLIENTS}
+                    viewportHeight={420}
+                    note="Home and About clients sections follow the site theme. The global bottom strip always uses the scrolling logo band. Logo grid image options stay on the Content tab."
+                  />
+                }
+              />
+            </Route>
+            <Route path="new" element={<ClientForm />} />
+            <Route path=":id/edit" element={<ClientForm />} />
           </Route>
           <Route path="navbar" element={<SectionTabs />}>
             <Route index element={<NavbarCMS />} />

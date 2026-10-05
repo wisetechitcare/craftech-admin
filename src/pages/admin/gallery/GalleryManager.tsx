@@ -327,6 +327,15 @@ const GalleryManager = () => {
           setVisibility((prev) => ({ ...prev, [GALLERY_VISIBILITY_KEY]: true }))
         }
       >
+        {imageStyles && (
+          <ImageStyleCard
+            section={ImageStyleSection.GALLERY}
+            description="How every Gallery layout draws its images, on the homepage and the Gallery page. The preview shows a change before you save it."
+            styles={imageStyles}
+            onChange={setImageStyles}
+          />
+        )}
+
         <SectionContentCard
           name="Gallery"
           description="Shown above the images on the homepage and the Gallery page. Leave a field empty to keep the text shown as its placeholder."
@@ -338,15 +347,6 @@ const GalleryManager = () => {
           visibility={visibility}
           onVisibilityChange={setVisibility}
         />
-
-        {imageStyles && (
-          <ImageStyleCard
-            section={ImageStyleSection.GALLERY}
-            description="How every Gallery layout draws its images, on the homepage and the Gallery page. The preview shows a change before you save it."
-            styles={imageStyles}
-            onChange={setImageStyles}
-          />
-        )}
 
         <SectionCard
           title="Images"

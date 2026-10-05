@@ -7,6 +7,7 @@ export enum AboutSectionKey {
   WHAT_WE_DO = "about.whatWeDo",
   WHY_CHOOSE_US = "about.whyChooseUs",
   HOW_WE_WORK = "about.howWeWork",
+  CLIENTS = "about.clients",
   CTA = "about.cta",
 }
 

@@ -20,6 +20,7 @@ import {
   SETTINGS_TAB_FIELDS,
   SettingsTab,
 } from "@/lib/constants/settings";
+import { updateAppearanceVisibility } from "@/lib/utils/appearance";
 import { appearanceApi, cmsApi } from "@/services/api";
 import type { SettingsTabProps, SiteSettings } from "@/types/settings";
 
@@ -142,10 +143,8 @@ export default function Settings() {
         if (visibilityChanged) {
           const saveMessage = "Settings saved";
           message = "Settings saved, but what is shown did not. Try again.";
-          const { data: appearance } = await appearanceApi.update({
-            visibility,
-          });
-          adoptVisibility(appearance.data.visibility ?? {});
+          const nextVisibility = await updateAppearanceVisibility(visibility);
+          adoptVisibility(nextVisibility);
           message = saveMessage;
         } else {
           message = "Settings saved";
