@@ -23,6 +23,7 @@ import {
   Sparkles,
   Star,
   Users,
+  UserPlus,
 } from "lucide-react";
 
 import type { NavGroup, SectionTab } from "@/types/navigation";
@@ -39,6 +40,12 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutDashboard,
         path: DASHBOARD_PATH,
         end: true,
+      },
+      {
+        name: "Users",
+        icon: UserPlus,
+        path: "/admin/users",
+        superAdminOnly: true,
       },
     ],
   },

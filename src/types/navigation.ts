@@ -15,6 +15,8 @@ export interface NavItem {
   end?: boolean;
   /** Present on pages that open onto a hub of module cards. */
   modules?: NavModule[];
+  /** Shown only when the signed-in admin has platform (super admin) scope. */
+  superAdminOnly?: boolean;
 }
 
 export interface SectionTab {

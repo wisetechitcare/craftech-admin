@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { authApi } from "../../services/api";
+import { authApi } from "@/services/api";
 import {
   FolderOpen,
   MessageSquare,
@@ -14,7 +14,7 @@ import {
   Database,
   ArrowUpRight,
 } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 const StatCard = ({ label, value, icon: Icon, loading, accent }: any) => (
   <div className="relative bg-paper border border-line rounded-2xl p-5 overflow-hidden">
@@ -93,7 +93,7 @@ const Panel = ({ title, action, children }: any) => (
 export default function DashboardHome() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { admin } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     authApi
@@ -150,7 +150,7 @@ export default function DashboardHome() {
       <header>
         <p className="admin-eyebrow mb-2.5">{greeting()}</p>
         <h1 className="font-display text-[1.9rem] leading-tight font-bold text-ink">
-          {admin?.name || "Admin"}
+          {user?.fullName || "Admin"}
         </h1>
         <p className="text-sm text-ink-mute mt-1">
           Manage projects, content, and media for craftechengineers.com.

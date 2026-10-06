@@ -1,33 +1,51 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import toast from 'react-hot-toast';
-import { Lock, Loader2 } from 'lucide-react';
-import InputField from '../../components/admin/ui/InputField';
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
+import toast from "react-hot-toast";
+import { Lock, Loader2 } from "lucide-react";
+
+import InputField from "@/components/admin/ui/InputField";
+import { Button } from "@/components/ui/button";
+
+import { useAuth } from "@/context/AuthContext";
+import { authApi } from "@/services/api";
 
 // ponytail: demo creds inline — move to VITE_ env vars if the demo login outlives dev
-const DEMO = { email: 'admin@craftechengineers.com', password: 'Admin123' };
+const DEMO = { email: "wisetechit.care@gmail.com", password: "WiseTech@00" };
 
-export default function Login() {
+interface LoginForm {
+  email: string;
+  password: string;
+}
+
+const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState<LoginForm>({ email: "", password: "" });
+  const [loading, setLoading] = useState<boolean>(false);
 
   const signIn = async (email: string, password: string) => {
+    let message = "Invalid credentials";
+    let isError = true;
     setLoading(true);
+
     try {
       await login(email, password);
-      toast.success('Welcome back!');
-      navigate('/admin');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Invalid credentials');
+      message = "Welcome back!";
+      isError = false;
+      navigate("/admin");
+    } catch (error) {
+      if (isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+      }
     } finally {
+      if (isError) toast.error(message);
+      else toast.success(message);
       setLoading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     signIn(form.email, form.password);
   };
@@ -37,10 +55,16 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="text-center mb-7">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent mb-4">
-            <span className="text-lg font-bold text-white tracking-wider">CE</span>
+            <span className="text-lg font-bold text-white tracking-wider">
+              CE
+            </span>
           </div>
-          <h1 className="font-display text-2xl font-bold text-ink">Craftech Admin</h1>
-          <p className="text-ink-mute text-sm mt-1.5">Sign in to manage your website</p>
+          <h1 className="font-display text-2xl font-bold text-ink">
+            Craftech Admin
+          </h1>
+          <p className="text-ink-mute text-sm mt-1.5">
+            Sign in to manage your website
+          </p>
         </div>
 
         <div className="card">
@@ -66,19 +90,43 @@ export default function Login() {
                 autoComplete="current-password"
               />
 
-              <button type="submit" className="btn-primary w-full justify-center py-2.5" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
+              <div className="flex justify-end">
+                <Link to="/forgot-password" className="text-xs text-accent">
+                  Forgot password?
+                </Link>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => signIn(DEMO.email, DEMO.password)}
+              <Button
+                type="submit"
+                className="w-full justify-center"
+                disabled={loading}
+                startIcon={
+                  loading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Lock className="size-4" />
+                  )
+                }
+              >
+                {loading ? "Signing in..." : "Sign In"}
+              </Button>
+
+              <a
+                href={authApi.googleLoginUrl()}
                 className="btn-ghost w-full justify-center py-2.5"
+              >
+                Continue with Google
+              </a>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() => signIn(DEMO.email, DEMO.password)}
                 disabled={loading}
               >
                 Demo Login
-              </button>
+              </Button>
             </form>
           </div>
         </div>
@@ -89,4 +137,6 @@ export default function Login() {
       </div>
     </div>
   );
-}
+};
+
+export default Login;

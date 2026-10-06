@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Menu, Bell, ChevronRight, Home } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { DASHBOARD_PATH, NAV_GROUPS } from "@/lib/constants/sidebar";
 
 interface Crumb {
@@ -50,7 +50,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { pathname } = useLocation();
-  const { admin } = useAuth();
+  const { user } = useAuth();
   const [dateStr, setDateStr] = useState(formatDate());
 
   useEffect(() => {
@@ -61,8 +61,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const crumbs = buildCrumbs(pathname);
 
   const pageTitle = crumbs[crumbs.length - 1]?.label || "Admin";
-  const initials = admin?.name
-    ? admin.name
+  const initials = user?.fullName
+    ? user.fullName
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -127,7 +127,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
         <div
           className="w-9 h-9 rounded-[10px] bg-navy flex items-center justify-center text-[0.7rem] font-bold text-white select-none cursor-default"
-          title={admin?.name}
+          title={user?.fullName}
         >
           {initials}
         </div>

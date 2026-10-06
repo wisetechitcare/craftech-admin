@@ -1,59 +1,83 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi } from '../services/api';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
-interface Admin {
-  [key: string]: any;
-}
+import {
+  authApi,
+  setTenantContext,
+  type MeResponse,
+  type UserIdentity,
+} from "@/services/api";
 
 interface AuthContextValue {
-  admin: Admin | null;
+  user: UserIdentity | null;
+  access: MeResponse["access"] | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<Admin>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<UserIdentity>;
+  logout: () => Promise<void>;
+  refreshMe: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [admin, setAdmin] = useState<Admin | null>(() => {
-    const stored = localStorage.getItem('craftech_admin_user');
-    const token = localStorage.getItem('adminToken');
-    return stored && token ? JSON.parse(stored) : null;
-  });
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<UserIdentity | null>(null);
+  const [access, setAccess] = useState<MeResponse["access"] | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const applyMe = (res: MeResponse) => {
+    setUser(res.user);
+    setAccess(res.access);
+    if (res.access.scope === "tenant" && res.access.tenantId) {
+      setTenantContext(res.access.tenantId);
+    } else {
+      setTenantContext(null);
+    }
+  };
+
+  const refreshMe = async () => {
+    const res = await authApi.getMe();
+    applyMe(res.data);
+  };
 
   useEffect(() => {
-    const verifyToken = async () => {
-      if (admin) {
-        try {
-          await authApi.getMe();
-        } catch {
-          logout();
-        }
+    const bootstrap = async () => {
+      try {
+        await refreshMe();
+      } catch {
+        setUser(null);
+        setAccess(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    verifyToken();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    bootstrap();
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await authApi.login({ email, password });
-    const { admin: adminData, token } = res.data;
-    localStorage.setItem('craftech_admin_user', JSON.stringify(adminData));
-    localStorage.setItem('adminToken', token);
-    setAdmin(adminData);
-    return adminData;
+    applyMe(res.data);
+    return res.data.user;
   };
 
-  const logout = () => {
-    localStorage.removeItem('craftech_admin_user');
-    localStorage.removeItem('adminToken');
-    setAdmin(null);
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      setUser(null);
+      setAccess(null);
+      setTenantContext(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ admin, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, access, loading, login, logout, refreshMe }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -61,6 +85,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 };

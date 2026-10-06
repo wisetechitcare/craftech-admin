@@ -12,20 +12,20 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { admin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/admin/login");
   };
 
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(`${path}/`);
 
-  const initials = admin?.name
-    ? admin.name
+  const initials = user?.fullName
+    ? user.fullName
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -117,7 +117,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               <p className="px-3 mb-1.5 text-sm font-semibold uppercase  text-ink">
                 {group.label}
               </p>
-              <ul className="space-y-0.5">{group.items.map(renderNavItem)}</ul>
+              <ul className="space-y-0.5">
+                {group.items
+                  .filter(
+                    (item) =>
+                      !item.superAdminOnly || user?.role === "SUPER_ADMIN",
+                  )
+                  .map(renderNavItem)}
+              </ul>
             </div>
           ))}
         </nav>
@@ -129,10 +136,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-ink truncate">
-                {admin?.name || "Admin"}
+                {user?.fullName || "User"}
               </p>
               <p className="text-[0.65rem] text-ink-mute truncate">
-                {admin?.email}
+                {user?.email}
               </p>
             </div>
           </div>
