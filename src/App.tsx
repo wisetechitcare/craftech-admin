@@ -6,7 +6,8 @@ import Login from "./pages/admin/Login";
 import AcceptInvite from "./pages/admin/AcceptInvite";
 import ForgotPassword from "./pages/admin/ForgotPassword";
 import ResetPassword from "./pages/admin/ResetPassword";
-import Users from "./pages/admin/Users";
+import InviteNewClient from "./pages/admin/users/InviteNewClient";
+import InvitePlatformAdmin from "./pages/admin/users/InvitePlatformAdmin";
 import AdminLayout from "./components/admin/Layout";
 
 import DashboardHome from "./pages/admin/DashboardHome";
@@ -83,7 +84,11 @@ function App() {
           }
         >
           <Route index element={<DashboardHome />} />
-          <Route path="users" element={<Users />} />
+          <Route path="users">
+            <Route index element={<ModuleHub />} />
+            <Route path="platform" element={<InvitePlatformAdmin />} />
+            <Route path="new-client" element={<InviteNewClient />} />
+          </Route>
           <Route
             path="invitations"
             element={<Navigate to="/admin/users" replace />}

@@ -20,6 +20,7 @@ import {
   PanelTop,
   PenLine,
   Settings,
+  Shield,
   Sparkles,
   Star,
   Users,
@@ -46,6 +47,18 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: UserPlus,
         path: "/admin/users",
         superAdminOnly: true,
+        modules: [
+          {
+            name: "Platform admin",
+            icon: Shield,
+            path: "/admin/users/platform",
+          },
+          {
+            name: "New client",
+            icon: Building2,
+            path: "/admin/users/new-client",
+          },
+        ],
       },
     ],
   },

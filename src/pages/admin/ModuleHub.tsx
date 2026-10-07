@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 
 import { NAV_GROUPS } from "@/lib/constants/sidebar";
+import { cn } from "@/utils/utils";
 
 export default function ModuleHub() {
   const { pathname } = useLocation();
@@ -9,6 +10,9 @@ export default function ModuleHub() {
   );
 
   if (!page?.modules) return null;
+
+  const moduleCount = page.modules.length;
+  const compactHub = moduleCount <= 2;
 
   return (
     <div className="space-y-6">
@@ -24,7 +28,12 @@ export default function ModuleHub() {
         </div>
       </div>
 
-      <div className="mx-auto grid w-full sm:max-w-2/3 grid-cols-4 gap-4 sm:gap-10">
+      <div
+        className={cn(
+          "mx-auto grid w-full gap-4 sm:gap-10",
+          compactHub ? "max-w-md grid-cols-2" : "sm:max-w-2/3 grid-cols-4",
+        )}
+      >
         {page.modules.map((module) => (
           <Link
             key={module.path}
