@@ -9,6 +9,7 @@ import {
 import {
   authApi,
   setTenantContext,
+  setWebsiteContext,
   type MeResponse,
   type UserIdentity,
 } from "@/services/api";
@@ -34,8 +35,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAccess(res.access);
     if (res.access.scope === "tenant" && res.access.tenantId) {
       setTenantContext(res.access.tenantId);
-    } else {
+    } else if (res.access.scope !== "platform") {
       setTenantContext(null);
+      setWebsiteContext(null);
     }
   };
 
@@ -71,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setAccess(null);
       setTenantContext(null);
+      setWebsiteContext(null);
     }
   };
 

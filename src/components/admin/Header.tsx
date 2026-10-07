@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Menu, Bell, ChevronRight, Home } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
+import WorkspaceSwitcher from "@/components/admin/WorkspaceSwitcher";
 import { useAuth } from "@/context/AuthContext";
 import { DASHBOARD_PATH, NAV_GROUPS } from "@/lib/constants/sidebar";
 
@@ -110,6 +111,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
           </React.Fragment>
         ))}
       </nav>
+
+      <WorkspaceSwitcher />
 
       {/* Right actions */}
       <div className="flex items-center gap-2 shrink-0">

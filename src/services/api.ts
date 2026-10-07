@@ -26,6 +26,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 const api = axios.create({ baseURL: BASE_URL, withCredentials: true });
 
 const TENANT_HEADER = "x-tenant-id";
+const WEBSITE_HEADER = "x-website-id";
 
 export function setTenantContext(tenantId: string | null) {
   if (tenantId) {
@@ -33,6 +34,33 @@ export function setTenantContext(tenantId: string | null) {
   } else {
     delete api.defaults.headers.common[TENANT_HEADER];
   }
+}
+
+export function setWebsiteContext(websiteId: string | null) {
+  if (websiteId) {
+    api.defaults.headers.common[WEBSITE_HEADER] = websiteId;
+  } else {
+    delete api.defaults.headers.common[WEBSITE_HEADER];
+  }
+}
+
+export interface WorkspaceWebsite {
+  id: string;
+  name: string;
+  status: string;
+}
+
+export interface WorkspaceTenantOption {
+  id: string;
+  name: string;
+  status: string;
+  websites: WorkspaceWebsite[];
+}
+
+export interface WorkspacePayload {
+  tenant: { id: string; name: string; status: string };
+  websites: WorkspaceWebsite[];
+  currentWebsiteId: string;
 }
 
 api.interceptors.response.use(
@@ -108,11 +136,21 @@ export const usersApi = {
   }) => api.post("/admin/users/tenant", body),
 };
 
+export const workspaceApi = {
+  get: () =>
+    api.get<{ success: boolean; data: WorkspacePayload }>("/admin/workspace"),
+};
+
 export const tenantsApi = {
   list: () =>
     api.get<{
       success: boolean;
-      data: { id: string; name: string; status: string }[];
+      data: {
+        id: string;
+        name: string;
+        status: string;
+        websites: WorkspaceWebsite[];
+      }[];
     }>("/admin/tenants"),
   createWithUser: (body: {
     fullName: string;
