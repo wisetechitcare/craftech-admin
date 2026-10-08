@@ -15,3 +15,14 @@ const CONFIGURED_SITE_URL = import.meta.env.VITE_SITE_URL as string | undefined;
 export const SITE_URL = CONFIGURED_SITE_URL
   ? onCurrentHost(CONFIGURED_SITE_URL)
   : undefined;
+
+/** SITE_URL on one website's hostname, which is how the site picks the tenant.
+ *  A dev site on localhost reaches a stored slug (`bm`) as `bm.localhost`. */
+export const siteUrlForHost = (host: string): string | undefined => {
+  if (!SITE_URL) return undefined;
+  const url = new URL(SITE_URL);
+  const isSlug = host !== "localhost" && !host.includes(".");
+  url.hostname =
+    url.hostname === "localhost" && isSlug ? `${host}.localhost` : host;
+  return url.origin;
+};

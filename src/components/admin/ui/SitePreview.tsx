@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
+import { usePreviewSiteUrl } from "@/hooks";
 import type { AboutContent } from "@/types/about";
 import type { AppearanceUpdatePayload } from "@/types/appearance";
 import type { ContactSectionContent } from "@/types/contact";
@@ -22,6 +23,8 @@ export enum PreviewSection {
   CONTACT = "contact",
   CLIENTS = "clients",
   SITE = "site",
+  CURSOR = "cursor",
+  SCROLL_PROGRESS = "scroll-progress",
 }
 
 /** The slice of the website's CMS context an editing screen overrides. Keys are
@@ -73,9 +76,10 @@ export default function SitePreview({
   const [ready, setReady] = useState<boolean>(false);
   const [scale, setScale] = useState<number>(0);
 
-  const origin = SITE_URL ?? null;
+  const origin = usePreviewSiteUrl();
 
   useEffect(() => {
+    setReady(false);
     if (!origin) return;
 
     const onMessage = (event: MessageEvent) => {
@@ -107,11 +111,20 @@ export default function SitePreview({
     return () => observer.disconnect();
   }, [viewportWidth]);
 
-  if (!SITE_URL)
+  if (origin === null)
     return (
       <p className="rounded-lg border border-line bg-raise p-4 text-xs text-ink-faint">
-        Set <code>VITE_SITE_URL</code> to the website&rsquo;s origin to preview
-        it here.
+        {SITE_URL ? (
+          <>
+            This website has no domain yet, so there is nothing to preview. Add
+            one under Site Identity → Domains.
+          </>
+        ) : (
+          <>
+            Set <code>VITE_SITE_URL</code> to the website&rsquo;s origin to
+            preview it here.
+          </>
+        )}
       </p>
     );
 
@@ -121,19 +134,21 @@ export default function SitePreview({
       className="overflow-hidden rounded-lg border border-line bg-raise"
       style={{ height: viewportHeight * scale }}
     >
-      <iframe
-        ref={frame}
-        src={`${SITE_URL}/preview/${section}`}
-        title={`${section} preview`}
-        sandbox="allow-scripts allow-same-origin"
-        style={{
-          width: viewportWidth,
-          height: viewportHeight,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-          border: 0,
-        }}
-      />
+      {origin && (
+        <iframe
+          ref={frame}
+          src={`${origin}/preview/${section}`}
+          title={`${section} preview`}
+          sandbox="allow-scripts allow-same-origin"
+          style={{
+            width: viewportWidth,
+            height: viewportHeight,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            border: 0,
+          }}
+        />
+      )}
     </div>
   );
 }

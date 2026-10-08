@@ -117,7 +117,7 @@ export default function AppearanceStyle({
   return (
     <PreviewPanel
       section={section}
-      draft={{ appearance: { [field]: value } }}
+      draft={{ appearance: siteThemePayload(value) }}
       viewportHeight={viewportHeight}
     >
       <AdminInfoCallout description="One theme is shared by the whole website. Changing it here also changes every other section, and the Site Theme under Global → Site Identity." />
