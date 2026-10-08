@@ -6,12 +6,15 @@ import { Lock, Loader2 } from "lucide-react";
 
 import InputField from "@/components/admin/ui/InputField";
 import { Button } from "@/components/ui/button";
+import GoogleIcon from "@/components/common/GoogleIcon";
 
 import { useAuth } from "@/context/AuthContext";
 import { authApi } from "@/services/api";
 
-// ponytail: demo creds inline — move to VITE_ env vars if the demo login outlives dev
-const DEMO = { email: "wisetechit.care@gmail.com", password: "WiseTech@00" };
+import AuthPageShell, {
+  authBackLinkClass,
+  authPrimaryButtonClass,
+} from "./AuthPageShell";
 
 interface LoginForm {
   email: string;
@@ -51,91 +54,67 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-7">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent mb-4">
-            <span className="text-lg font-bold text-white tracking-wider">
-              CE
-            </span>
-          </div>
-          <h1 className="font-display text-2xl font-bold text-ink">
-            Craftech Admin
-          </h1>
-          <p className="text-ink-mute text-sm mt-1.5">
-            Sign in to manage your website
-          </p>
+    <AuthPageShell subtitle="Sign in to manage your website">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <InputField
+          label="Email Address"
+          required
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          autoComplete="email"
+        />
+
+        <InputField
+          label="Password"
+          required
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          autoComplete="current-password"
+        />
+
+        <div className="flex justify-end">
+          <Link to="/forgot-password" className={authBackLinkClass}>
+            Forgot password?
+          </Link>
         </div>
 
-        <div className="card">
-          <div className="card-body">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <InputField
-                label="Email Address"
-                required
-                type="email"
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                autoComplete="email"
-              />
+        <Button
+          type="submit"
+          variant="none"
+          className={authPrimaryButtonClass}
+          disabled={loading}
+          startIcon={
+            loading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Lock className="size-4" />
+            )
+          }
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </Button>
 
-              <InputField
-                label="Password"
-                required
-                type="password"
-                placeholder="Password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                autoComplete="current-password"
-              />
-
-              <div className="flex justify-end">
-                <Link to="/forgot-password" className="text-xs text-accent">
-                  Forgot password?
-                </Link>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full justify-center"
-                disabled={loading}
-                startIcon={
-                  loading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Lock className="size-4" />
-                  )
-                }
-              >
-                {loading ? "Signing in..." : "Sign In"}
-              </Button>
-
-              <a
-                href={authApi.googleLoginUrl()}
-                className="btn-ghost w-full justify-center py-2.5"
-              >
-                Continue with Google
-              </a>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-center"
-                onClick={() => signIn(DEMO.email, DEMO.password)}
-                disabled={loading}
-              >
-                Demo Login
-              </Button>
-            </form>
-          </div>
+        <div className="flex items-center gap-4">
+          <span className="h-px flex-1 bg-line" />
+          <span className="text-sm uppercase tracking-widest text-ink-mute">
+            or
+          </span>
+          <span className="h-px flex-1 bg-line" />
         </div>
 
-        <p className="text-center text-xs text-ink-mute mt-6">
-          Craftech Engineers Admin Panel &mdash; Authorized Access Only
-        </p>
-      </div>
-    </div>
+        <a
+          href={authApi.googleLoginUrl()}
+          className="btn-ghost w-full justify-center py-2.5"
+        >
+          <GoogleIcon className="size-5 shrink-0" />
+          Continue with Google
+        </a>
+      </form>
+    </AuthPageShell>
   );
 };
 

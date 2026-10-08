@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 
 import { authApi } from "@/services/api";
 
+import AuthPageShell, {
+  authBackLinkClass,
+  authPrimaryButtonClass,
+} from "./AuthPageShell";
+
 const ForgotPassword = () => {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -39,41 +44,46 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
-      <div className="w-full max-w-md card">
-        <div className="card-body space-y-5">
-          <h1 className="font-display text-xl font-bold text-ink">
-            Forgot password
-          </h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <InputField
-              label="Email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <Button
-              type="submit"
-              className="w-full justify-center"
-              disabled={loading}
-              startIcon={
-                loading ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Mail className="size-4" />
-                )
-              }
-            >
-              Send reset link
-            </Button>
-          </form>
-          <Link to="/admin/login" className="text-sm text-accent">
-            Back to sign in
-          </Link>
-        </div>
+    <AuthPageShell subtitle="We'll email you a link to reset your password">
+      <div className="space-y-5">
+        <h1 className="font-display text-xl font-bold text-ink">
+          Forgot password
+        </h1>
+        <p className="text-sm text-ink-mute">
+          Enter the email for your account. If it exists, we&apos;ll send reset
+          instructions.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <InputField
+            label="Email Address"
+            type="email"
+            required
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+          />
+          <Button
+            type="submit"
+            variant="none"
+            className={authPrimaryButtonClass}
+            disabled={loading}
+            startIcon={
+              loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Mail className="size-4" />
+              )
+            }
+          >
+            {loading ? "Sending..." : "Send reset link"}
+          </Button>
+        </form>
+        <Link to="/admin/login" className={authBackLinkClass}>
+          Back to sign in
+        </Link>
       </div>
-    </div>
+    </AuthPageShell>
   );
 };
 

@@ -2,12 +2,17 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
-import { Loader2, KeyRound } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 
 import InputField from "@/components/admin/ui/InputField";
 import { Button } from "@/components/ui/button";
 
 import { authApi } from "@/services/api";
+
+import AuthPageShell, {
+  authBackLinkClass,
+  authPrimaryButtonClass,
+} from "./AuthPageShell";
 
 const ResetPassword = () => {
   const [params] = useSearchParams();
@@ -45,43 +50,64 @@ const ResetPassword = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
-      <div className="w-full max-w-md card">
-        <div className="card-body space-y-5">
-          <h1 className="font-display text-xl font-bold text-ink">
-            Reset password
-          </h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <InputField
-              label="New password"
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Button
-              type="submit"
-              className="w-full justify-center"
-              disabled={loading}
-              startIcon={
-                loading ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <KeyRound className="size-4" />
-                )
-              }
-            >
-              Update password
-            </Button>
-          </form>
-          <Link to="/admin/login" className="text-sm text-accent">
-            Back to sign in
+  if (!token) {
+    return (
+      <AuthPageShell subtitle="This reset link is not valid">
+        <div className="space-y-4 text-center">
+          <p className="text-sm text-ink-mute">
+            The link is missing a token. Request a new reset email and try
+            again.
+          </p>
+          <Link to="/forgot-password" className={authBackLinkClass}>
+            Request reset link
           </Link>
         </div>
+      </AuthPageShell>
+    );
+  }
+
+  return (
+    <AuthPageShell subtitle="Choose a new password for your account">
+      <div className="space-y-5">
+        <h1 className="font-display text-xl font-bold text-ink">
+          Set new password
+        </h1>
+        <p className="text-sm text-ink-mute">
+          Use at least 8 characters. You&apos;ll sign in with this password
+          next.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <InputField
+            label="New password"
+            type="password"
+            required
+            minLength={8}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+          <Button
+            type="submit"
+            variant="none"
+            className={authPrimaryButtonClass}
+            disabled={loading}
+            startIcon={
+              loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <KeyRound className="size-4" />
+              )
+            }
+          >
+            {loading ? "Updating..." : "Update password"}
+          </Button>
+        </form>
+        <Link to="/admin/login" className={authBackLinkClass}>
+          Back to sign in
+        </Link>
       </div>
-    </div>
+    </AuthPageShell>
   );
 };
 

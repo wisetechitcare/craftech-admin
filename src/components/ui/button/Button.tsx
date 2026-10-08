@@ -36,7 +36,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       type={type}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg transition",
+        "inline-flex items-center justify-center gap-2 rounded-lg transition cursor-pointer",
         BUTTON_SIZES[size],
         BUTTON_VARIANTS[variant],
         disabled && "cursor-not-allowed opacity-50",
