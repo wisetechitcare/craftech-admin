@@ -123,7 +123,7 @@ const [mobileNumber, setMobileNumber] = useState<string>("");
 2. Do not use native HTML elements if an equivalent reusable component already exists.
 3. Prefer the following shared components whenever applicable:
    - `src/components/ui/button/Button.tsx`
-   - `src/components/form/input/InputField.tsx`
+   - `src/components/admin/ui/InputField.tsx`
 4. Create a new reusable component only if the existing components cannot satisfy the requirement without unnecessary modifications.
 
 ## Code Reusability

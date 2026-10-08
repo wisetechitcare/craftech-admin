@@ -23,26 +23,62 @@ import type { FontPage, FontQuery } from "../types/rich-text";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
-const api = axios.create({ baseURL: BASE_URL });
+const api = axios.create({ baseURL: BASE_URL, withCredentials: true });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("adminToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+const TENANT_HEADER = "x-tenant-id";
+const WEBSITE_HEADER = "x-website-id";
+
+export function setTenantContext(tenantId: string | null) {
+  if (tenantId) {
+    api.defaults.headers.common[TENANT_HEADER] = tenantId;
+  } else {
+    delete api.defaults.headers.common[TENANT_HEADER];
   }
-  return config;
-});
+}
+
+export function setWebsiteContext(websiteId: string | null) {
+  if (websiteId) {
+    api.defaults.headers.common[WEBSITE_HEADER] = websiteId;
+  } else {
+    delete api.defaults.headers.common[WEBSITE_HEADER];
+  }
+}
+
+export interface WorkspaceWebsite {
+  id: string;
+  name: string;
+  status: string;
+}
+
+export interface WorkspaceTenantOption {
+  id: string;
+  tenantCode?: string | null;
+  name: string;
+  status: string;
+  websites: WorkspaceWebsite[];
+}
+
+export interface WorkspacePayload {
+  tenant: { id: string; name: string; status: string };
+  websites: WorkspaceWebsite[];
+  currentWebsiteId: string;
+}
 
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (
-      err.response?.status === 401 &&
-      !err.config?.url?.includes("/admin/login")
-    ) {
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("craftech_admin_user");
-      window.location.href = "/admin/login";
+    const url = err.config?.url ?? "";
+    const skipRedirect =
+      url.includes("/admin/me") ||
+      url.includes("/admin/auth/login") ||
+      url.includes("/admin/login") ||
+      url.includes("/admin/auth/activate") ||
+      url.includes("/admin/auth/forgot-password") ||
+      url.includes("/admin/auth/reset-password");
+    if (err.response?.status === 401 && !skipRedirect) {
+      const path = window.location.pathname;
+      if (!path.startsWith("/admin/login"))
+        window.location.href = "/admin/login";
     }
     return Promise.reject(err);
   },
@@ -50,12 +86,100 @@ api.interceptors.response.use(
 
 export default api;
 
+export type UserRole = "ADMIN" | "SUPER_ADMIN";
+
+export interface UserIdentity {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  status: string;
+  tenantId: string | null;
+}
+
+export interface MeResponse {
+  success: boolean;
+  user: UserIdentity;
+  access: { scope: "platform" | "tenant"; tenantId: string | null };
+}
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 export const authApi = {
-  login: (data: any) => api.post("/admin/login", data),
-  getMe: () => api.get("/admin/me"),
+  login: (data: { email: string; password: string }) =>
+    api.post<MeResponse>("/admin/auth/login", data),
+  logout: () => api.post("/admin/auth/logout"),
+  getMe: () => api.get<MeResponse>("/admin/me"),
   getStats: () => api.get("/admin/stats"),
-  changePassword: (data: any) => api.patch("/admin/change-password", data),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.patch("/admin/change-password", data),
+  forgotPassword: (email: string) =>
+    api.post("/admin/auth/forgot-password", { email }),
+  resetPassword: (token: string, newPassword: string) =>
+    api.post("/admin/auth/reset-password", { token, newPassword }),
+  getInviteMetadata: (token: string) =>
+    api.get("/admin/auth/activate", { params: { token } }),
+  acceptInvite: (data: { token: string; password: string; name?: string }) =>
+    api.post("/admin/auth/activate", data),
+  googleLoginUrl: () => `${BASE_URL}/admin/auth/google`,
+  googleAcceptUrl: (inviteToken: string) =>
+    `${BASE_URL}/admin/auth/google?inviteToken=${encodeURIComponent(inviteToken)}`,
+};
+
+export const usersApi = {
+  invitePlatform: (body: { fullName: string; email: string; phone: string }) =>
+    api.post("/admin/users/platform", body),
+  inviteTenant: (body: {
+    fullName: string;
+    email: string;
+    phone: string;
+    tenantId: string;
+  }) => api.post("/admin/users/tenant", body),
+};
+
+export const workspaceApi = {
+  get: () =>
+    api.get<{ success: boolean; data: WorkspacePayload }>("/admin/workspace"),
+};
+
+export interface WebsiteDomainRecord {
+  _id: string;
+  host: string;
+  isPrimary: boolean;
+  websiteId: string;
+}
+
+export const domainsApi = {
+  list: () =>
+    api.get<{ success: boolean; data: WebsiteDomainRecord[] }>(
+      "/admin/domains",
+    ),
+  create: (body: { host: string }) =>
+    api.post<{ success: boolean; data: WebsiteDomainRecord }>(
+      "/admin/domains",
+      body,
+    ),
+  update: (id: string, body: { host: string }) =>
+    api.patch<{ success: boolean; data: WebsiteDomainRecord }>(
+      `/admin/domains/${id}`,
+      body,
+    ),
+  remove: (id: string) => api.delete(`/admin/domains/${id}`),
+};
+
+export const tenantsApi = {
+  list: () =>
+    api.get<{
+      success: boolean;
+      data: WorkspaceTenantOption[];
+    }>("/admin/tenants"),
+  createWithUser: (body: {
+    fullName: string;
+    email: string;
+    phone: string;
+    tenantName: string;
+    description?: string;
+  }) => api.post("/admin/tenants/with-user", body),
 };
 
 // ── Projects ─────────────────────────────────────────────────────────────────

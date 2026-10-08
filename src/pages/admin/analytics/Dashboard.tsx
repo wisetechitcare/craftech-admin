@@ -146,13 +146,13 @@ const AnalyticsDashboard = () => {
                 <p className="text-sm text-mid uppercase tracking-widest font-bold">
                   Conversion Rate
                 </p>
-                <p className="text-4xl font-semibold text-accent mt-2">
+                <p className="mt-2 text-4xl font-semibold text-violet-600">
                   {dateRange === "week"
                     ? summary?.week?.conversionRatePercent || "0%"
                     : summary?.month?.conversionRatePercent || "0%"}
                 </p>
               </div>
-              <TrendingUp className="w-8 h-8 text-accent/20" />
+              <TrendingUp className="h-8 w-8 text-violet-500/25" />
             </div>
             <p className="text-xs text-mid">Lead to booking</p>
           </div>
@@ -244,7 +244,7 @@ const AnalyticsDashboard = () => {
                       <span className="capitalize font-bold text-navy">
                         {source}
                       </span>
-                      <span className="font-bold text-accent">
+                      <span className="font-bold text-violet-600">
                         {count as number}
                       </span>
                     </div>
@@ -318,7 +318,7 @@ const AnalyticsDashboard = () => {
                 toast.error("Export failed");
               }
             }}
-            className="px-8 py-3 bg-navy text-white rounded-lg font-bold uppercase text-sm hover:bg-accent transition-colors"
+            className="rounded-lg bg-linear-to-br from-navy via-brand to-violet-600 px-8 py-3 text-sm font-bold uppercase text-white shadow-theme-xs transition-all hover:brightness-105"
           >
             📥 Export as CSV
           </button>

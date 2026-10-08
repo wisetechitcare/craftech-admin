@@ -1,3 +1,4 @@
+import { adminPrimaryButtonClass } from "@/lib/constants/admin-theme";
 import { cn } from "@/utils/utils";
 import { ButtonProps, ButtonSize, ButtonVariant } from "@/types/common";
 
@@ -14,8 +15,7 @@ export const BUTTON_SIZES: Record<ButtonSize, string> = {
 // system the nearest scope declares, so these need no `dark:` pair and stay
 // correct inside an .on-dark band as well.
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary:
-    "bg-brand text-on-brand shadow-xs hover:bg-brand-2 disabled:bg-brand/50",
+  primary: `${adminPrimaryButtonClass} disabled:opacity-50`,
   outline: "bg-surface text-ink ring-1 ring-inset ring-line hover:bg-surface-2",
   none: "",
 };
@@ -36,7 +36,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       type={type}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg transition",
+        "inline-flex items-center justify-center gap-2 rounded-lg transition cursor-pointer",
         BUTTON_SIZES[size],
         BUTTON_VARIANTS[variant],
         disabled && "cursor-not-allowed opacity-50",

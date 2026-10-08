@@ -3,6 +3,11 @@ import { Toaster } from "react-hot-toast";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/admin/Login";
+import AcceptInvite from "./pages/admin/AcceptInvite";
+import ForgotPassword from "./pages/admin/ForgotPassword";
+import ResetPassword from "./pages/admin/ResetPassword";
+import InviteNewClient from "./pages/admin/users/InviteNewClient";
+import InvitePlatformAdmin from "./pages/admin/users/InvitePlatformAdmin";
 import AdminLayout from "./components/admin/Layout";
 
 import DashboardHome from "./pages/admin/DashboardHome";
@@ -23,6 +28,7 @@ import ClientsManager from "./pages/admin/clients/ClientsManager";
 import ClientForm from "./pages/admin/clients/ClientForm";
 import LeadsCRM from "./pages/admin/LeadsCRM";
 import Settings from "./pages/admin/cms/Settings";
+import SiteIdentityDomains from "./pages/admin/site-identity/SiteIdentityDomains";
 import AppearanceStyle from "./pages/admin/appearance/AppearanceStyle";
 import { PreviewSection } from "./components/admin/ui/SitePreview";
 import SectionTabs from "./components/admin/ui/SectionTabs";
@@ -45,9 +51,9 @@ import GalleryManager from "./pages/admin/gallery/GalleryManager";
 import MediaLibrary from "./pages/admin/media/MediaLibrary";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { admin, loading } = useAuth();
+  const { user, loading } = useAuth();
   if (loading) return null;
-  if (!admin) return <Navigate to="/admin/login" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
   return <>{children}</>;
 }
 
@@ -65,6 +71,9 @@ function App() {
 
         {/* Admin Auth */}
         <Route path="/admin/login" element={<Login />} />
+        <Route path="/accept-invite" element={<AcceptInvite />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Admin Dashboard */}
         <Route
@@ -76,6 +85,15 @@ function App() {
           }
         >
           <Route index element={<DashboardHome />} />
+          <Route path="users">
+            <Route index element={<ModuleHub />} />
+            <Route path="platform" element={<InvitePlatformAdmin />} />
+            <Route path="new-client" element={<InviteNewClient />} />
+          </Route>
+          <Route
+            path="invitations"
+            element={<Navigate to="/admin/users" replace />}
+          />
           <Route path="home">
             <Route index element={<ModuleHub />} />
             {/* Sections with a style get Content / Appearance tabs; the key
@@ -211,9 +229,14 @@ function App() {
           <Route path="leads" element={<LeadsCRM />} />
           <Route path="ctas" element={<CTACMS />} />
           <Route path="settings" element={<Settings />} />
+          <Route
+            path="domains"
+            element={<Navigate to="/admin/site-identity/domains" replace />}
+          />
           <Route path="site-identity">
             <Route index element={<ModuleHub />} />
             <Route element={<SiteIdentityLayout />}>
+              <Route path="domains" element={<SiteIdentityDomains />} />
               <Route path="branding" element={<SiteIdentityBranding />} />
               <Route
                 path="theme"

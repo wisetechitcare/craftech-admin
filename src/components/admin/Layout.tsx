@@ -1,16 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+
+import { WorkspaceProvider, useWorkspace } from "@/context/WorkspaceContext";
 
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
-export default function Layout() {
+function LayoutBody() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const main = useRef<HTMLElement>(null);
+  const { tenantId, websiteId } = useWorkspace();
+  const scopeKey = `${tenantId ?? ""}:${websiteId ?? ""}`;
 
-  // Every admin screen scrolls inside this one element, so registering it here
-  // gives auto-scroll to every drag list in the app at once.
   useEffect(() => {
     const element = main.current;
     if (!element) return;
@@ -27,10 +29,18 @@ export default function Layout() {
           className="relative flex-1 overflow-y-auto bg-canvas px-4 sm:px-6 py-5 sm:py-6"
         >
           <div className="max-w-(--breakpoint-2xl) mx-auto">
-            <Outlet />
+            <Outlet key={scopeKey} />
           </div>
         </main>
       </div>
     </div>
+  );
+}
+
+export default function Layout() {
+  return (
+    <WorkspaceProvider>
+      <LayoutBody />
+    </WorkspaceProvider>
   );
 }

@@ -6,6 +6,7 @@ import {
   FileText,
   FolderOpen,
   Gauge,
+  Globe,
   HelpCircle,
   Home,
   Image as ImageIcon,
@@ -20,9 +21,11 @@ import {
   PanelTop,
   PenLine,
   Settings,
+  Shield,
   Sparkles,
   Star,
   Users,
+  UserPlus,
 } from "lucide-react";
 
 import type { NavGroup, SectionTab } from "@/types/navigation";
@@ -39,6 +42,24 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutDashboard,
         path: DASHBOARD_PATH,
         end: true,
+      },
+      {
+        name: "Users",
+        icon: UserPlus,
+        path: "/admin/users",
+        superAdminOnly: true,
+        modules: [
+          {
+            name: "Platform admin",
+            icon: Shield,
+            path: "/admin/users/platform",
+          },
+          {
+            name: "New client",
+            icon: Building2,
+            path: "/admin/users/new-client",
+          },
+        ],
       },
     ],
   },
@@ -100,6 +121,11 @@ export const NAV_GROUPS: NavGroup[] = [
             name: "Scroll Progress",
             icon: Gauge,
             path: "/admin/site-identity/scroll-progress",
+          },
+          {
+            name: "Domains",
+            icon: Globe,
+            path: "/admin/site-identity/domains",
           },
         ],
       },

@@ -30,7 +30,7 @@
 }
 
 @utility btn-primary {
-  @apply btn bg-navy text-white hover:bg-navy-light;
+  @apply btn bg-linear-to-br from-navy via-brand to-violet-600 text-white shadow-theme-xs hover:brightness-105;
 }
 
 @utility btn-accent {
@@ -46,7 +46,7 @@
 }
 
 @utility input {
-  @apply w-full px-3 py-2 bg-paper border border-line rounded-[10px] text-ink placeholder-ink-faint text-sm focus:outline-hidden focus:border-navy/40 focus:ring-2 focus:ring-navy/10 transition-colors;
+  @apply w-full px-3 py-2 bg-paper border border-line rounded-[10px] text-ink placeholder-ink-faint text-sm focus:outline-hidden focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20 transition-colors;
 }
 
 @utility label {
@@ -90,7 +90,7 @@
      This plus the accent hairline is the through-line between the two UIs. */
   @apply flex items-center gap-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-ink-mute;
   &::before {
-    @apply block w-7 h-px bg-accent;
+    @apply block w-7 h-px bg-violet-600;
     content: '';
   }
 }
@@ -133,15 +133,12 @@
     -webkit-font-smoothing: antialiased;
   }
   body {
-    @apply text-dark bg-white dark:bg-dark dark:text-gray-200 overflow-x-hidden;
+    @apply bg-canvas text-ink overflow-x-hidden;
     line-height: 1.65;
   }
   /* Single focus style for the whole site — there were 5 across 14.5k lines. */
   :focus-visible {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-white rounded-[4px];
-  }
-  .dark :focus-visible {
-    @apply ring-offset-dark;
+    @apply outline-hidden ring-2 ring-violet-500/40 ring-offset-2 ring-offset-canvas rounded-[4px];
   }
   /* Reorderable cards (DragList.tsx) grab from anywhere but their controls. */
   [draggable="true"] {

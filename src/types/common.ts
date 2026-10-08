@@ -44,7 +44,7 @@ export type ButtonSize = "xs" | "sm" | "md" | "lg";
 export type ButtonVariant = "primary" | "outline" | "none";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  children: ReactNode;
+  children?: ReactNode;
   size?: ButtonSize;
   variant?: ButtonVariant;
   startIcon?: ReactNode;

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Menu, Bell, ChevronRight, Home } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import WorkspaceSwitcher from "@/components/admin/WorkspaceSwitcher";
+import { adminLinkClass } from "@/lib/constants/admin-theme";
+import { useAuth } from "@/context/AuthContext";
 import { DASHBOARD_PATH, NAV_GROUPS } from "@/lib/constants/sidebar";
+import { cn } from "@/utils/utils";
 
 interface Crumb {
   label: string;
@@ -50,7 +53,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { pathname } = useLocation();
-  const { admin } = useAuth();
+  const { user } = useAuth();
   const [dateStr, setDateStr] = useState(formatDate());
 
   useEffect(() => {
@@ -61,8 +64,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const crumbs = buildCrumbs(pathname);
 
   const pageTitle = crumbs[crumbs.length - 1]?.label || "Admin";
-  const initials = admin?.name
-    ? admin.name
+  const initials = user?.fullName
+    ? user.fullName
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -95,7 +98,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
             {crumb.href && i < crumbs.length - 1 ? (
               <Link
                 to={crumb.href}
-                className="text-xs text-ink-mute truncate hover:text-accent transition-colors"
+                className={cn(
+                  "text-xs text-ink-mute truncate transition-colors",
+                  adminLinkClass,
+                )}
               >
                 {crumb.label}
               </Link>
@@ -111,6 +117,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
         ))}
       </nav>
 
+      <WorkspaceSwitcher />
+
       {/* Right actions */}
       <div className="flex items-center gap-2 shrink-0">
         <span className="hidden sm:block text-xs text-ink-mute tabular-nums px-2.5 py-1.5 rounded-lg bg-raise border border-line-2">
@@ -122,12 +130,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent ring-2 ring-paper" />
+          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-violet-600 ring-2 ring-paper" />
         </button>
 
         <div
           className="w-9 h-9 rounded-[10px] bg-navy flex items-center justify-center text-[0.7rem] font-bold text-white select-none cursor-default"
-          title={admin?.name}
+          title={user?.fullName}
         >
           {initials}
         </div>

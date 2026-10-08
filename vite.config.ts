@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
           target: env.BACKEND_URL,
           changeOrigin: true,
           secure: false,
+          cookieDomainRewrite: "",
         },
       },
     },

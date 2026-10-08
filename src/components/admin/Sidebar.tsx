@@ -1,8 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, X } from "lucide-react";
 
+import { KaiznovaLogo, KaiznovaMark } from "@/components/common/KaiznovaBrand";
 import { useAuth } from "@/context/AuthContext";
-import { NAV_GROUPS } from "@/lib/constants/sidebar";
+import {
+  adminNavActiveBarClass,
+  adminNavActiveClass,
+  adminNavActiveIconClass,
+} from "@/lib/constants/admin-theme";
+import { DASHBOARD_PATH, NAV_GROUPS } from "@/lib/constants/sidebar";
 import { cn } from "@/utils/utils";
 import type { NavItem } from "@/types/navigation";
 
@@ -12,20 +18,20 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { admin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/admin/login");
   };
 
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(`${path}/`);
 
-  const initials = admin?.name
-    ? admin.name
+  const initials = user?.fullName
+    ? user.fullName
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -45,18 +51,23 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           className={cn(
             "group flex items-center gap-3 pl-3 pr-2 py-2 rounded-[10px] text-sm transition-colors duration-150 relative",
             active
-              ? "bg-accent/[0.07] text-ink font-semibold"
+              ? adminNavActiveClass
               : "text-ink-soft font-medium hover:bg-raise hover:text-ink",
           )}
         >
           {active && (
-            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-0.75 h-6 rounded-r bg-accent" />
+            <span
+              className={cn(
+                "absolute -left-3 top-1/2 -translate-y-1/2 w-0.75 h-6 rounded-r",
+                adminNavActiveBarClass,
+              )}
+            />
           )}
           <item.icon
             className={cn(
               "w-4.5 h-4.5 shrink-0",
               active
-                ? "text-accent"
+                ? adminNavActiveIconClass
                 : "text-ink-faint group-hover:text-ink-mute",
             )}
           />
@@ -86,22 +97,17 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         className={`fixed top-0 left-0 h-full w-64 z-30 flex flex-col bg-paper border-r border-line transition-transform duration-300 ease-in-out
           ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-line-2">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[10px] bg-accent flex items-center justify-center shrink-0">
-              <span className="text-xs font-bold text-white tracking-wider">
-                CT
-              </span>
+        <div className="flex items-center justify-between gap-2  py-2 border-b border-line-2">
+          <Link
+            to={DASHBOARD_PATH}
+            onClick={onClose}
+            className="flex min-w-0 flex-1 items-center gap-2.5"
+            aria-label="KAIZNOVA Admin home"
+          >
+            <div className="min-w-0 flex-1">
+              <KaiznovaLogo className="h-auto" />
             </div>
-            <div>
-              <p className="font-display text-[0.95rem] font-bold text-ink leading-none">
-                Craftech
-              </p>
-              <p className="text-[0.6rem] mt-1 font-semibold uppercase tracking-[0.14em] text-ink-faint">
-                Engineering Admin
-              </p>
-            </div>
-          </div>
+          </Link>
           <button
             onClick={onClose}
             aria-label="Close menu"
@@ -117,7 +123,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               <p className="px-3 mb-1.5 text-sm font-semibold uppercase  text-ink">
                 {group.label}
               </p>
-              <ul className="space-y-0.5">{group.items.map(renderNavItem)}</ul>
+              <ul className="space-y-0.5">
+                {group.items
+                  .filter(
+                    (item) =>
+                      !item.superAdminOnly || user?.role === "SUPER_ADMIN",
+                  )
+                  .map(renderNavItem)}
+              </ul>
             </div>
           ))}
         </nav>
@@ -129,10 +142,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-ink truncate">
-                {admin?.name || "Admin"}
+                {user?.fullName || "User"}
               </p>
               <p className="text-[0.65rem] text-ink-mute truncate">
-                {admin?.email}
+                {user?.email}
               </p>
             </div>
           </div>

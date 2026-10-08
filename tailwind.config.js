@@ -66,12 +66,12 @@ export default {
         // Names the shadcn primitives in components/ui are written against,
         // mapped onto the admin identity so they drop in unedited.
         "on-brand": "#ffffff",
-        primary: "#1d5fd0",
+        primary: "#7c3aed",
         "primary-foreground": "#ffffff",
-        background: "#ffffff",
+        background: "#f2f5f8",
         foreground: "#0A2647",
         input: "#dfe6ee",
-        ring: "#1d5fd0",
+        ring: "#7c3aed",
         destructive: "#c0271f",
       },
 
