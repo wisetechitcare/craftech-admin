@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 
+import { adminBrandMarkClass } from "@/lib/constants/admin-theme";
 import { SECTION_TABS } from "@/lib/constants/sidebar";
 import { cn } from "@/utils/utils";
 
@@ -22,7 +23,7 @@ export default function SectionTabs() {
                 "group relative isolate flex items-center gap-4 rounded-2xl border p-3 transition-all duration-200 sm:p-5",
                 isActive
                   ? "border-transparent shadow-lg"
-                  : "border-line bg-paper hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md",
+                  : "border-line bg-paper hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-md",
               )
             }
           >
@@ -32,9 +33,12 @@ export default function SectionTabs() {
                   <motion.span
                     layoutId="section-tab-fill"
                     transition={reduceMotion ? { duration: 0 } : FILL_SPRING}
-                    className="absolute inset-0 -z-10 overflow-hidden rounded-2xl bg-linear-to-br from-navy-light via-navy to-navy-dark"
+                    className={cn(
+                      "absolute inset-0 -z-10 overflow-hidden rounded-2xl",
+                      adminBrandMarkClass,
+                    )}
                   >
-                    <span className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-accent/30 blur-2xl" />
+                    <span className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-violet-400/35 blur-2xl" />
                   </motion.span>
                 )}
 
@@ -42,8 +46,8 @@ export default function SectionTabs() {
                   className={cn(
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 sm:h-12 sm:w-12",
                     isActive
-                      ? "bg-accent text-paper shadow-lg"
-                      : "bg-raise text-ink-mute ring-1 ring-line group-hover:text-accent",
+                      ? "bg-paper/20 text-paper shadow-lg ring-1 ring-paper/25"
+                      : "bg-raise text-ink-mute ring-1 ring-line group-hover:text-violet-600",
                   )}
                 >
                   <tab.icon className="h-5 w-5" />
@@ -74,7 +78,7 @@ export default function SectionTabs() {
                     "hidden font-display text-5xl font-bold leading-none tabular-nums transition-colors sm:block",
                     isActive
                       ? "text-paper/15"
-                      : "text-ink/5 group-hover:text-accent/15",
+                      : "text-ink/5 group-hover:text-violet-500/15",
                   )}
                 >
                   {String(index + 1).padStart(2, "0")}

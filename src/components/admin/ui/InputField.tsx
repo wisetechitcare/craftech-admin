@@ -56,16 +56,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       hint ?? (typeof error === "object" && error ? error.message : undefined);
 
     const fieldClassName = cn(
-      "h-11 w-full appearance-none rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30",
+      "h-11 w-full appearance-none rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-ink-faint focus:outline-hidden focus:ring-3",
       isPasswordField && "pr-11",
       disabled &&
-        "cursor-not-allowed border-gray-300 bg-gray-100 text-gray-500 opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400",
+        "cursor-not-allowed border-line bg-raise text-ink-mute opacity-40",
       !disabled &&
         hasError &&
-        "border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:border-error-500 dark:text-error-400 dark:focus:border-error-800",
+        "border-error-500 focus:border-error-300 focus:ring-error-500/20",
       !disabled &&
         !hasError &&
-        "border-gray-300 bg-transparent text-gray-800 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800",
+        "border-line bg-paper text-ink focus:border-violet-400 focus:ring-violet-500/20",
       className,
     );
 

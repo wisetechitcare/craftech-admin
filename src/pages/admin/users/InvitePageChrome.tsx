@@ -2,6 +2,8 @@ import type { LucideIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { adminSoftIconTileClass } from "@/lib/constants/admin-theme";
+
 export const USERS_HUB_PATH = "/admin/users";
 
 interface UsersInviteHeaderProps {
@@ -24,7 +26,9 @@ export function UsersInviteHeader({
       >
         <ArrowLeft className="size-5 text-ink" />
       </Link>
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent ring-1 ring-line">
+      <span
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${adminSoftIconTileClass}`}
+      >
         <Icon className="h-5.5 w-5.5" />
       </span>
       <div className="min-w-0">
@@ -50,7 +54,7 @@ export function InviteTipsPanel({ title, steps }: InviteTipsPanelProps) {
         {steps.map((step, index) => (
           <li key={step} className="flex gap-3 text-sm text-ink">
             <span
-              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-accent"
+              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-700"
               aria-hidden
             >
               {index + 1}

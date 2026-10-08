@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Menu, Bell, ChevronRight, Home } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import WorkspaceSwitcher from "@/components/admin/WorkspaceSwitcher";
+import { adminLinkClass } from "@/lib/constants/admin-theme";
 import { useAuth } from "@/context/AuthContext";
 import { DASHBOARD_PATH, NAV_GROUPS } from "@/lib/constants/sidebar";
+import { cn } from "@/utils/utils";
 
 interface Crumb {
   label: string;
@@ -96,7 +98,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
             {crumb.href && i < crumbs.length - 1 ? (
               <Link
                 to={crumb.href}
-                className="text-xs text-ink-mute truncate hover:text-accent transition-colors"
+                className={cn(
+                  "text-xs text-ink-mute truncate transition-colors",
+                  adminLinkClass,
+                )}
               >
                 {crumb.label}
               </Link>
@@ -125,7 +130,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-accent ring-2 ring-paper" />
+          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-violet-600 ring-2 ring-paper" />
         </button>
 
         <div

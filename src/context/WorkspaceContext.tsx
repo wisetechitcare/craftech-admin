@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { useAuth } from "@/context/AuthContext";
+import { PLATFORM_DEMO_TENANT_CODE } from "@/lib/constants/platform-demo";
 import {
   WORKSPACE_TENANT_STORAGE_KEY,
   WORKSPACE_WEBSITE_STORAGE_KEY,
@@ -107,20 +108,29 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           const listRes = await tenantsApi.list();
           const list = listRes.data.data.map((t) => ({
             id: t.id,
+            tenantCode: t.tenantCode,
             name: t.name,
             status: t.status,
             websites: t.websites ?? [],
           }));
           setTenants(list);
 
+          const demoTenant =
+            list.find((t) => t.tenantCode === PLATFORM_DEMO_TENANT_CODE) ??
+            list[0] ??
+            null;
           const storedTenant = localStorage.getItem(
             WORKSPACE_TENANT_STORAGE_KEY,
           );
           const tenant =
-            list.find((t) => t.id === storedTenant) ?? list[0] ?? null;
+            (storedTenant ? list.find((t) => t.id === storedTenant) : null) ??
+            demoTenant;
           if (tenant) {
             setTenantContext(tenant.id);
             await refreshWorkspace();
+          } else {
+            setTenantContext(null);
+            setWebsiteContext(null);
           }
         } else if (access.tenantId) {
           setTenantContext(access.tenantId);

@@ -15,16 +15,21 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import {
+  adminHighlightIconClass,
+  adminHighlightRuleClass,
+  adminHighlightSurfaceClass,
+  adminHighlightTextClass,
+  adminLinkClass,
+} from "@/lib/constants/admin-theme";
 
 const StatCard = ({ label, value, icon: Icon, loading, accent }: any) => (
   <div className="relative bg-paper border border-line rounded-2xl p-5 overflow-hidden">
-    {/* Accent rule — the public site's section marker, reused as the card's
-        identity line. Only the primary metric gets the red one. */}
     <span
-      className={`absolute top-0 left-5 w-8 h-[2px] ${accent ? "bg-accent" : "bg-line"}`}
+      className={`absolute top-0 left-5 w-8 h-px ${accent ? adminHighlightRuleClass : "bg-line"}`}
     />
     <div className="flex items-center gap-2 mb-4 text-ink-mute">
-      <Icon className="w-[18px] h-[18px]" />
+      <Icon className="w-4.5 h-4.5" />
       <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em]">
         {label}
       </span>
@@ -44,18 +49,18 @@ const QuickAction = ({ to, icon: Icon, label, description, accent }: any) => (
     to={to}
     className={`group flex items-center gap-3.5 p-3.5 rounded-xl border transition-colors ${
       accent
-        ? "bg-accent/6 border-accent/25 hover:bg-accent/11"
+        ? adminHighlightSurfaceClass
         : "bg-raise border-line hover:bg-line-2"
     }`}
   >
     <div
       className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 ${
         accent
-          ? "bg-accent text-white"
+          ? adminHighlightIconClass
           : "bg-paper border border-line text-ink-soft"
       }`}
     >
-      <Icon className="w-[18px] h-[18px]" />
+      <Icon className="w-4.5 h-4.5" />
     </div>
     <div className="flex-1 min-w-0">
       <p className="text-sm font-semibold text-ink">{label}</p>
@@ -63,7 +68,7 @@ const QuickAction = ({ to, icon: Icon, label, description, accent }: any) => (
     </div>
     <ArrowRight
       className={`w-4 h-4 shrink-0 transition-transform group-hover:translate-x-0.5 ${
-        accent ? "text-accent" : "text-ink-faint"
+        accent ? adminHighlightTextClass : "text-ink-faint"
       }`}
     />
   </Link>
@@ -153,7 +158,7 @@ export default function DashboardHome() {
           {user?.fullName || "Admin"}
         </h1>
         <p className="text-sm text-ink-mute mt-1">
-          Manage projects, content, and media for craftechengineers.com.
+          Manage projects, content, and media for the selected workspace site.
         </p>
       </header>
 
@@ -210,7 +215,7 @@ export default function DashboardHome() {
         action={
           <Link
             to="/admin/media"
-            className="flex items-center gap-1 text-xs font-semibold text-ink-mute hover:text-accent transition-colors"
+            className={`flex items-center gap-1 text-xs font-semibold text-ink-mute transition-colors ${adminLinkClass}`}
           >
             View all <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>

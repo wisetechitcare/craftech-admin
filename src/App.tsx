@@ -28,6 +28,7 @@ import ClientsManager from "./pages/admin/clients/ClientsManager";
 import ClientForm from "./pages/admin/clients/ClientForm";
 import LeadsCRM from "./pages/admin/LeadsCRM";
 import Settings from "./pages/admin/cms/Settings";
+import SiteIdentityDomains from "./pages/admin/site-identity/SiteIdentityDomains";
 import AppearanceStyle from "./pages/admin/appearance/AppearanceStyle";
 import { PreviewSection } from "./components/admin/ui/SitePreview";
 import SectionTabs from "./components/admin/ui/SectionTabs";
@@ -228,9 +229,14 @@ function App() {
           <Route path="leads" element={<LeadsCRM />} />
           <Route path="ctas" element={<CTACMS />} />
           <Route path="settings" element={<Settings />} />
+          <Route
+            path="domains"
+            element={<Navigate to="/admin/site-identity/domains" replace />}
+          />
           <Route path="site-identity">
             <Route index element={<ModuleHub />} />
             <Route element={<SiteIdentityLayout />}>
+              <Route path="domains" element={<SiteIdentityDomains />} />
               <Route path="branding" element={<SiteIdentityBranding />} />
               <Route
                 path="theme"

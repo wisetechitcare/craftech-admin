@@ -5,13 +5,16 @@ import {
   KaiznovaTagline,
 } from "@/components/common/KaiznovaBrand";
 
+import {
+  adminLinkClass,
+  adminPrimaryButtonFullClass,
+} from "@/lib/constants/admin-theme";
+
 import LoginBuilderBackdrop from "./LoginBuilderBackdrop";
 
-export const authPrimaryButtonClass =
-  "w-full justify-center bg-linear-to-br from-navy via-brand to-violet-600 text-white shadow-theme-xs hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50";
+export const authPrimaryButtonClass = adminPrimaryButtonFullClass;
 
-export const authBackLinkClass =
-  "text-sm text-violet-600 hover:text-violet-700";
+export const authBackLinkClass = `text-sm ${adminLinkClass}`;
 
 interface AuthPageShellProps {
   subtitle: string;

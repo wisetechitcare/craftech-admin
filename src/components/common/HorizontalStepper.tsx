@@ -40,7 +40,7 @@ export function HorizontalStepper({
                 disabled={!isClickable}
                 onClick={() => isClickable && goTo(index)}
                 className={cn(
-                  "flex items-center gap-2.5 text-left transition-opacity focus-visible:outline-2 focus-visible:outline-accent",
+                  "flex items-center gap-2.5 text-left transition-opacity focus-visible:outline-2 focus-visible:outline-violet-600",
                   isClickable
                     ? "cursor-pointer hover:opacity-80"
                     : "cursor-default",
@@ -49,10 +49,11 @@ export function HorizontalStepper({
                 <span
                   className={cn(
                     "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-200",
-                    isDone && "border border-accent bg-accent text-paper",
+                    isDone &&
+                      "border border-violet-600 bg-linear-to-br from-navy via-brand to-violet-600 text-paper",
                     isActive &&
                       !isDone &&
-                      "border border-accent bg-accent text-paper shadow-sm",
+                      "border border-violet-600 bg-linear-to-br from-navy via-brand to-violet-600 text-paper shadow-sm",
                     !isDone &&
                       !isActive &&
                       "border border-line bg-surface-2 text-ink-mute",
@@ -68,7 +69,7 @@ export function HorizontalStepper({
                 <span
                   className={cn(
                     "whitespace-nowrap text-xs font-medium uppercase tracking-wider transition-colors duration-200",
-                    isActive && "font-semibold text-accent",
+                    isActive && "font-semibold text-violet-600",
                     isDone && !isActive && "font-medium text-ink",
                     !isActive && !isDone && "text-ink-mute",
                   )}

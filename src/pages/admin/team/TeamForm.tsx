@@ -10,7 +10,9 @@ import { teamApi } from "../../../services/api";
 import toast from "react-hot-toast";
 import SelectField from "../../../components/admin/ui/SelectField";
 import { PhoneField } from "@/components/common";
+import { adminPrimaryButtonClass } from "@/lib/constants/admin-theme";
 import { PHONE_ERROR_MESSAGE } from "@/lib/constants/common";
+import { cn } from "@/utils/utils";
 import { isValidPhone, toSelectOptions } from "../../../utils/utils";
 
 const teamValidationSchema = z.object({
@@ -331,7 +333,10 @@ const TeamForm = () => {
                     setNewExpertise("");
                   }
                 }}
-                className="px-4 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors flex items-center gap-2"
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-4 py-3",
+                  adminPrimaryButtonClass,
+                )}
               >
                 <Plus size={18} />
               </button>
@@ -340,7 +345,7 @@ const TeamForm = () => {
               {expertise.map((exp, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-3 py-1 bg-accent/20 text-accent rounded-full"
+                  className="flex items-center gap-2 rounded-full bg-violet-500/15 px-3 py-1 text-violet-700"
                 >
                   <span>{exp}</span>
                   <button
@@ -348,7 +353,7 @@ const TeamForm = () => {
                     onClick={() =>
                       setExpertise(expertise.filter((_, idx) => idx !== i))
                     }
-                    className="text-accent/60 hover:text-accent"
+                    className="text-violet-500/70 hover:text-violet-700"
                   >
                     <X size={14} />
                   </button>
@@ -379,7 +384,10 @@ const TeamForm = () => {
                     setNewCert("");
                   }
                 }}
-                className="px-4 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors flex items-center gap-2"
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-4 py-3",
+                  adminPrimaryButtonClass,
+                )}
               >
                 <Plus size={18} />
               </button>
@@ -388,7 +396,7 @@ const TeamForm = () => {
               {certifications.map((cert, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-3 py-1 bg-accent/20 text-accent rounded-full"
+                  className="flex items-center gap-2 rounded-full bg-violet-500/15 px-3 py-1 text-violet-700"
                 >
                   <span>{cert}</span>
                   <button
@@ -398,7 +406,7 @@ const TeamForm = () => {
                         certifications.filter((_, idx) => idx !== i),
                       )
                     }
-                    className="text-accent/60 hover:text-accent"
+                    className="text-violet-500/70 hover:text-violet-700"
                   >
                     <X size={14} />
                   </button>
@@ -441,7 +449,10 @@ const TeamForm = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 px-6 py-3 bg-accent text-white rounded-xl font-bold hover:shadow-lg hover:shadow-accent/50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3 font-bold transition-all hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50",
+              adminPrimaryButtonClass,
+            )}
           >
             {submitting && <Loader2 size={18} className="animate-spin" />}
             {id ? "Update Member" : "Create Member"}

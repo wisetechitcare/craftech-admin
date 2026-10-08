@@ -52,6 +52,7 @@ export interface WorkspaceWebsite {
 
 export interface WorkspaceTenantOption {
   id: string;
+  tenantCode?: string | null;
   name: string;
   status: string;
   websites: WorkspaceWebsite[];
@@ -141,16 +142,36 @@ export const workspaceApi = {
     api.get<{ success: boolean; data: WorkspacePayload }>("/admin/workspace"),
 };
 
+export interface WebsiteDomainRecord {
+  _id: string;
+  host: string;
+  isPrimary: boolean;
+  websiteId: string;
+}
+
+export const domainsApi = {
+  list: () =>
+    api.get<{ success: boolean; data: WebsiteDomainRecord[] }>(
+      "/admin/domains",
+    ),
+  create: (body: { host: string }) =>
+    api.post<{ success: boolean; data: WebsiteDomainRecord }>(
+      "/admin/domains",
+      body,
+    ),
+  update: (id: string, body: { host: string }) =>
+    api.patch<{ success: boolean; data: WebsiteDomainRecord }>(
+      `/admin/domains/${id}`,
+      body,
+    ),
+  remove: (id: string) => api.delete(`/admin/domains/${id}`),
+};
+
 export const tenantsApi = {
   list: () =>
     api.get<{
       success: boolean;
-      data: {
-        id: string;
-        name: string;
-        status: string;
-        websites: WorkspaceWebsite[];
-      }[];
+      data: WorkspaceTenantOption[];
     }>("/admin/tenants"),
   createWithUser: (body: {
     fullName: string;

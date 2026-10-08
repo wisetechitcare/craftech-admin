@@ -95,7 +95,7 @@ const MediaLibrary = () => {
         </div>
         <button
           onClick={() => setUploadModal(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-bold uppercase tracking-wider text-sm hover:shadow-lg hover:shadow-accent/50 transition-all"
+          className="flex items-center gap-2 rounded-xl bg-linear-to-br from-navy via-brand to-violet-600 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-theme-xs transition-all hover:brightness-105 hover:shadow-lg hover:shadow-violet-500/20"
         >
           <Plus size={18} /> Upload Media
         </button>
@@ -109,7 +109,7 @@ const MediaLibrary = () => {
             onClick={() => setSelectedCategory(cat)}
             className={`whitespace-nowrap px-4 py-2 rounded-lg text-[0.7rem] font-semibold uppercase tracking-[0.18em] transition-all ${
               selectedCategory === cat
-                ? "bg-accent text-white"
+                ? "bg-linear-to-br from-navy via-brand to-violet-600 text-white"
                 : "bg-raise text-ink-soft-soft hover:bg-line hover:text-ink"
             }`}
           >
@@ -165,7 +165,7 @@ const MediaLibrary = () => {
                 <p className="text-ink text-[0.75rem] font-bold truncate">
                   {item.name}
                 </p>
-                <p className="text-accent text-[0.65rem] font-bold uppercase">
+                <p className="text-[0.65rem] font-bold uppercase text-violet-600">
                   {item.category}
                 </p>
               </div>
@@ -244,7 +244,7 @@ const MediaLibrary = () => {
                 <button
                   onClick={handleUpload}
                   disabled={uploading}
-                  className="flex-1 px-4 py-2 rounded-lg bg-accent text-white font-bold hover:shadow-lg hover:shadow-accent/50 transition-all disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-linear-to-br from-navy via-brand to-violet-600 px-4 py-2 font-bold text-white shadow-theme-xs transition-all hover:brightness-105 hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50"
                 >
                   {uploading ? "Uploading..." : "Upload"}
                 </button>
@@ -289,7 +289,7 @@ const MediaLibrary = () => {
                 </div>
                 <div>
                   <p className="text-ink-mute text-sm">Category</p>
-                  <p className="text-accent font-bold">
+                  <p className="font-bold text-violet-600">
                     {selectedMedia.category}
                   </p>
                 </div>

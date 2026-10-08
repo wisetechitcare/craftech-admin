@@ -45,11 +45,12 @@ export function Stepper({
                   disabled={!isClickable}
                   onClick={() => isClickable && goTo(index)}
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-accent",
-                    isDone && "border border-accent bg-accent text-paper",
+                    "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-violet-600",
+                    isDone &&
+                      "border border-violet-600 bg-linear-to-br from-navy via-brand to-violet-600 text-paper",
                     isActive &&
                       !isDone &&
-                      "border border-accent bg-accent text-paper shadow-sm",
+                      "border border-violet-600 bg-linear-to-br from-navy via-brand to-violet-600 text-paper shadow-sm",
                     !isDone &&
                       !isActive &&
                       "border border-line bg-surface-2 text-ink-mute",
@@ -78,7 +79,7 @@ export function Stepper({
                 disabled={!isClickable}
                 onClick={() => isClickable && goTo(index)}
                 className={cn(
-                  "min-w-0 flex-1 pb-12 text-left transition-opacity focus-visible:outline-2 focus-visible:outline-accent",
+                  "min-w-0 flex-1 pb-12 text-left transition-opacity focus-visible:outline-2 focus-visible:outline-violet-600",
                   isLast && "pb-0",
                   isClickable
                     ? "cursor-pointer hover:opacity-80"
@@ -88,7 +89,7 @@ export function Stepper({
                 <div
                   className={cn(
                     "text-base font-semibold leading-tight transition-colors duration-200",
-                    isActive && "text-accent",
+                    isActive && "text-violet-600",
                     isDone && !isActive && "text-ink",
                     !isActive && !isDone && "text-ink-mute",
                   )}

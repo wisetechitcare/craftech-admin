@@ -58,7 +58,7 @@ const TeamManager = () => {
         </div>
         <button
           onClick={() => navigate("/admin/team/new")}
-          className="flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-bold uppercase tracking-wider text-sm hover:shadow-lg hover:shadow-accent/50 transition-all"
+          className="flex items-center gap-2 rounded-xl bg-linear-to-br from-navy via-brand to-violet-600 px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-theme-xs transition-all hover:brightness-105 hover:shadow-lg hover:shadow-violet-500/20"
         >
           <Plus size={18} /> New Member
         </button>
@@ -99,7 +99,7 @@ const TeamManager = () => {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-linear-to-br from-blue-500 to-accent overflow-hidden">
+                        <div className="h-12 w-12 overflow-hidden rounded-lg bg-linear-to-br from-navy via-brand to-violet-600">
                           {member.image && (
                             <img
                               src={member.image}
