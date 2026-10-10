@@ -1,223 +1,153 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useDropzone } from "react-dropzone";
-import { projectsApi, uploadApi } from "../../../services/api";
+import { isAxiosError } from "axios";
+import toast from "react-hot-toast";
+import { Save, ArrowLeft, Loader2, RotateCcw } from "lucide-react";
+
 import FileUpload from "@/components/admin/ui/FileUpload";
+import InputField from "@/components/admin/ui/InputField";
+import SelectField from "@/components/admin/ui/SelectField";
+import TextArea from "@/components/admin/ui/TextArea";
+import { SectionCard } from "@/components/admin/ui/SectionCard";
+import { Button } from "@/components/ui/button";
+
 import {
   IMAGE_UPLOAD_ACCEPT,
   IMAGE_UPLOAD_MAX_SIZE_MB,
 } from "@/lib/constants/common";
-import InputField from "../../../components/admin/ui/InputField";
-import SelectField from "../../../components/admin/ui/SelectField";
-import { toSelectOptions } from "../../../utils/utils";
-import TextArea from "../../../components/admin/ui/TextArea";
-import VideoDropzone from "../../../components/admin/ui/VideoDropzone";
-import ConfirmModal from "../../../components/admin/ui/ConfirmModal";
-import toast from "react-hot-toast";
-import {
-  Save,
-  ArrowLeft,
-  Loader2,
-  Trash2,
-  Upload,
-  Star,
-  Film,
-  Image as ImageIcon,
-  ImagePlus,
-} from "lucide-react";
+import { DragList } from "@/lib/constants/drag-lists";
+import { projectsApi, uploadApi } from "@/services/api";
+import { toSelectOptions } from "@/utils/utils";
 
-const CATEGORIES = [
-  "Structural Evolution",
-  "Luxury Fit-Out",
-  "Architecture & MEP",
-  "Building Construction",
-  "Interior Fit Outs",
-  "MEP Execution",
-  "Project Management",
-];
+import { ProjectFormImageTile } from "./ProjectFormImageTile";
 
-const slugify = (str: string) =>
-  str
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-/* ── Thumbnail dropzone (single image, inline) ──────────────────────── */
-function ThumbnailDropzone({
-  currentUrl,
-  onDrop: onDropProp,
-}: {
-  currentUrl?: string;
-  onDrop: (file: File) => void;
-}) {
-  const [preview, setPreview] = useState<string | null>(null);
-
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const f = acceptedFiles[0];
-      if (!f) return;
-      if (preview) URL.revokeObjectURL(preview);
-      const url = URL.createObjectURL(f);
-      setPreview(url);
-      onDropProp(f);
-    },
-    [preview, onDropProp],
-  );
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
-    multiple: false,
-  });
-
-  const displayed = preview || currentUrl;
-
-  return (
-    <div
-      {...getRootProps()}
-      className="relative cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 group"
-      style={{
-        aspectRatio: "4/3",
-        border: `2px dashed ${isDragActive ? "#C41B1F" : displayed ? "transparent" : "#9fb0c4"}`,
-        background: displayed
-          ? "transparent"
-          : isDragActive
-            ? "rgba(196,27,31,0.06)"
-            : "rgba(10,38,71,0.25)",
-        boxShadow: isDragActive ? "0 0 0 4px rgba(196,27,31,0.1)" : "none",
-      }}
-    >
-      <input {...getInputProps()} />
-      {displayed ? (
-        <>
-          <img
-            src={displayed}
-            alt="Thumbnail"
-            className="w-full h-full object-cover"
-          />
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-            style={{
-              background: "rgba(10,38,71,0.45)",
-              backdropFilter: "blur(4px)",
-            }}
-          >
-            <ImagePlus className="w-8 h-8 text-ink mb-2" />
-            <p className="text-sm font-semibold text-ink">Change Thumbnail</p>
-            <p className="text-xs mt-1" style={{ color: "#47596e" }}>
-              Drop or click to replace
-            </p>
-          </div>
-        </>
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
-            style={{
-              background: isDragActive ? "rgba(196,27,31,0.15)" : "#f6f8fb",
-            }}
-          >
-            <ImageIcon
-              className="w-5 h-5"
-              style={{ color: isDragActive ? "#C41B1F" : "#7386a0" }}
-            />
-          </div>
-          <p
-            className="text-sm font-semibold"
-            style={{ color: isDragActive ? "#C41B1F" : "#47596e" }}
-          >
-            {isDragActive ? "Drop thumbnail" : "Drag & drop thumbnail"}
-          </p>
-          <p className="text-xs mt-1" style={{ color: "#7386a0" }}>
-            or click to browse
-          </p>
-        </div>
-      )}
-    </div>
-  );
+interface ProjectImageRow {
+  url: string;
+  publicId?: string;
 }
 
-/* ── Section card ───────────────────────────────────────────────────── */
-function SectionCard({
-  title,
-  children,
-  action,
-}: {
+interface ProjectMedia {
+  slug: string;
+  thumbnail?: string;
+  thumbnailPublicId?: string;
+  images: string[];
+  imagePublicIds?: string[];
+}
+
+interface ProjectFormState {
   title: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: "#ffffff",
-        border: "1px solid #dfe6ee",
-        backdropFilter: "blur(8px)",
-      }}
-    >
-      <div
-        className="flex items-center justify-between px-5 py-4"
-        style={{ borderBottom: "1px solid #dfe6ee" }}
-      >
-        <h3 className="text-sm font-bold text-ink">{title}</h3>
-        {action}
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
+  category: string;
+  description: string;
+  client: string;
+  year: number | string;
+  location: string;
+  area: string;
+  withCollaboration: string;
 }
 
-/* ── Main component ─────────────────────────────────────────────────── */
+function rowsFromProject(project: ProjectMedia): ProjectImageRow[] {
+  const rows = project.images.map((url, i) => ({
+    url,
+    publicId: project.imagePublicIds?.[i],
+  }));
+  if (!rows.length || !project.thumbnail) return rows;
+  const coverAt = rows.findIndex((r) => r.url === project.thumbnail);
+  if (coverAt <= 0) return rows;
+  const next = [...rows];
+  const [cover] = next.splice(coverAt, 1);
+  next.unshift(cover);
+  return next;
+}
+
+function moveRow<T>(items: T[], from: number, to: number): T[] {
+  const next = [...items];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+}
+
 export default function ProjectForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = !id;
 
-  const [form, setForm] = useState<any>({
+  const [form, setForm] = useState<ProjectFormState>({
     title: "",
-    category: CATEGORIES[0],
+    category: "",
     description: "",
     client: "",
     year: new Date().getFullYear(),
     location: "",
-    thumbnail: "",
-    featured: false,
-    order: 0,
+    area: "",
+    withCollaboration: "",
   });
-  const [project, setProject] = useState<any>(null);
+  const [typologies, setTypologies] = useState<string[]>([]);
+  const [project, setProject] = useState<ProjectMedia | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
-  const [thumbFile, setThumbFile] = useState<File | null>(null);
-  const [uploadingThumb, setUploadingThumb] = useState(false);
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
-  const [imageUploadSlot, setImageUploadSlot] = useState<number>(0);
+  const [imageUploadSlot, setImageUploadSlot] = useState(0);
   const [deletingImage, setDeletingImage] = useState<number | null>(null);
 
-  const [videoLabel, setVideoLabel] = useState("");
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
+  const [savedImageRows, setSavedImageRows] = useState<ProjectImageRow[]>([]);
+  const [imageRows, setImageRows] = useState<ProjectImageRow[]>([]);
+  const [savingOrder, setSavingOrder] = useState(false);
+
+  const isReordered = useMemo(
+    () =>
+      imageRows.length !== savedImageRows.length ||
+      imageRows.some((row, i) => row.url !== savedImageRows[i]?.url),
+    [imageRows, savedImageRows],
+  );
+
+  const typologyOptions = useMemo(() => {
+    const values = new Set(typologies);
+    const current = form.category.trim();
+    if (current) values.add(current);
+    return toSelectOptions([...values].sort((a, b) => a.localeCompare(b)));
+  }, [typologies, form.category]);
+
+  const rememberTypology = (category: string) => {
+    const trimmed = category.trim();
+    if (!trimmed) return;
+    setTypologies((prev) => {
+      if (prev.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
+        return prev;
+      }
+      return [...prev, trimmed].sort((a, b) => a.localeCompare(b));
+    });
+  };
 
   useEffect(() => {
-    if (!isNew) {
+    projectsApi
+      .getTypologies()
+      .then((res) => {
+        if (res.data?.success) setTypologies(res.data.data ?? []);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!isNew && id) {
       projectsApi
-        .getById(id!)
-        .then((res: any) => {
-          const p = res.data.data;
+        .getById(id)
+        .then((res) => {
+          const p = res.data.data as ProjectMedia & ProjectFormState;
           setProject(p);
+          const rows = rowsFromProject(p);
+          setSavedImageRows(rows);
+          setImageRows(rows);
           setForm({
             title: p.title,
-            category: p.category,
+            category: p.category ?? "",
             description: p.description,
             client: p.client,
             year: p.year,
             location: p.location,
-            thumbnail: p.thumbnail,
-            featured: p.featured,
-            order: p.order,
+            area: p.area ?? "",
+            withCollaboration: p.withCollaboration ?? "",
           });
         })
         .catch(() => {
@@ -226,80 +156,146 @@ export default function ProjectForm() {
         })
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, isNew, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      if (isNew) {
-        const res = await projectsApi.create(form);
-        toast.success("Project created!");
-        navigate(`/admin/projects/${res.data.data._id}`);
-      } else {
-        await projectsApi.update(id!, form);
-        toast.success("Project saved!");
-        setProject((prev: any) => ({ ...prev, ...form }));
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Save failed");
-    } finally {
-      setSaving(false);
+  const syncRowsToProject = (rows: ProjectImageRow[]) => {
+    setImageRows(rows);
+    setSavedImageRows(rows);
+    setProject((prev) =>
+      prev
+        ? {
+            ...prev,
+            images: rows.map((r) => r.url),
+            imagePublicIds: rows.map((r) => r.publicId ?? ""),
+            thumbnail: rows[0]?.url ?? prev.thumbnail,
+            thumbnailPublicId: rows[0]?.publicId ?? prev.thumbnailPublicId,
+          }
+        : prev,
+    );
+  };
+
+  const uploadPendingMedia = async (projectId: string, slug: string) => {
+    if (!pendingImages.length) return;
+
+    const fd = new FormData();
+    pendingImages.forEach((f) => fd.append("images", f));
+    const res = await uploadApi.images(slug, fd);
+    const uploaded = res.data.data as { url: string; publicId: string }[];
+    await projectsApi.addImages(projectId, {
+      urls: uploaded.map((u) => u.url),
+      publicIds: uploaded.map((u) => u.publicId),
+    });
+    const cover = uploaded[0];
+    if (cover) {
+      await projectsApi.update(projectId, {
+        thumbnail: cover.url,
+        thumbnailPublicId: cover.publicId,
+      });
     }
   };
 
-  const handleThumbUpload = async () => {
-    if (!thumbFile || !project?.slug) return;
-    setUploadingThumb(true);
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!form.category.trim()) {
+      toast.error("Typology is required");
+      return;
+    }
+
+    setSaving(true);
+    let message = "Save failed";
+    let isError = true;
+
     try {
-      const fd = new FormData();
-      fd.append("thumbnail", thumbFile);
-      const res = await uploadApi.thumbnail(project.slug, fd);
-      const { url, publicId } = res.data.data;
-      await projectsApi.update(id!, {
-        thumbnail: url,
-        thumbnailPublicId: publicId,
-      });
-      setForm((prev: any) => ({ ...prev, thumbnail: url }));
-      setProject((prev: any) => ({ ...prev, thumbnail: url }));
-      setThumbFile(null);
-      toast.success("Thumbnail updated");
-    } catch {
-      toast.error("Thumbnail upload failed");
+      const payload = {
+        ...form,
+        year: Number(form.year),
+        category: form.category.trim(),
+        area: form.area.trim() || undefined,
+        withCollaboration: form.withCollaboration.trim() || undefined,
+        thumbnail: "",
+      };
+
+      if (isNew) {
+        const res = await projectsApi.create(payload);
+        message = "Project created";
+        if (res.data?.success) {
+          isError = false;
+          rememberTypology(form.category);
+          const created = res.data.data;
+          if (pendingImages.length) {
+            await uploadPendingMedia(created._id, created.slug);
+          }
+          toast.success(message);
+          navigate(`/admin/projects/${created._id}`);
+          return;
+        }
+      } else {
+        const res = await projectsApi.update(id!, payload);
+        message = res.data?.message || "Project saved";
+        if (res.data?.success) {
+          isError = false;
+          rememberTypology(form.category);
+          setProject((prev) => (prev ? { ...prev, ...form } : prev));
+        }
+      }
+    } catch (err) {
+      if (isAxiosError(err)) {
+        message = err.response?.data?.message || message;
+      }
     } finally {
-      setUploadingThumb(false);
+      setSaving(false);
+      toast[isError ? "error" : "success"](message);
     }
   };
 
   const handleImagesUpload = async (files: File[]) => {
-    if (!project?.slug || uploadingImages || !files.length) return;
+    if (!project?.slug || uploadingImages || !files.length || !id) return;
     setUploadingImages(true);
     try {
       const fd = new FormData();
       files.forEach((f) => fd.append("images", f));
       const res = await uploadApi.images(project.slug, fd);
-      const uploaded = res.data.data;
-      await projectsApi.addImages(id!, {
-        urls: uploaded.map((u: any) => u.url),
-        publicIds: uploaded.map((u: any) => u.publicId),
+      const uploaded = res.data.data as { url: string; publicId: string }[];
+      const newRows = uploaded.map((u) => ({
+        url: u.url,
+        publicId: u.publicId,
+      }));
+      await projectsApi.addImages(id, {
+        urls: newRows.map((r) => r.url),
+        publicIds: newRows.map((r) => r.publicId),
       });
-      const updated = await projectsApi.getById(id!);
-      setProject(updated.data.data);
+      const merged = [...imageRows, ...newRows];
+      if (!imageRows.length && merged[0]) {
+        await projectsApi.update(id, {
+          thumbnail: merged[0].url,
+          thumbnailPublicId: merged[0].publicId,
+        });
+      }
+      syncRowsToProject(merged);
       toast.success(`${files.length} image(s) uploaded`);
     } catch {
       toast.error("Image upload failed");
     } finally {
-      setImageUploadSlot((slot) => slot + 1);
+      setImageUploadSlot((s) => s + 1);
       setUploadingImages(false);
     }
   };
 
   const handleImageDelete = async (index: number) => {
+    if (!id || !project) return;
+    const row = imageRows[index];
+    if (!row) return;
+    const serverIndex = project.images.indexOf(row.url);
+    if (serverIndex < 0) return;
+
     setDeletingImage(index);
     try {
-      await projectsApi.removeImage(id!, index);
-      const updated = await projectsApi.getById(id!);
-      setProject(updated.data.data);
+      await projectsApi.removeImage(id, serverIndex);
+      const updated = await projectsApi.getById(id);
+      const p = updated.data.data as ProjectMedia;
+      setProject(p);
+      const rows = rowsFromProject(p);
+      syncRowsToProject(rows);
       toast.success("Image removed");
     } catch {
       toast.error("Failed to remove image");
@@ -308,536 +304,284 @@ export default function ProjectForm() {
     }
   };
 
-  const handleVideoUpload = async () => {
-    if (!videoFile || !videoLabel.trim() || !project?.slug) return;
-    setUploadingVideo(true);
+  const saveImageOrder = async () => {
+    if (!id || !imageRows.length) return;
+    setSavingOrder(true);
+    let message = "Failed to save image order";
+    let isError = true;
     try {
-      const fd = new FormData();
-      fd.append("video", videoFile);
-      const res = await uploadApi.video(project.slug, fd);
-      const { url, publicId } = res.data.data;
-      await projectsApi.addVideo(id!, {
-        label: videoLabel.trim(),
-        url,
-        publicId,
+      const res = await projectsApi.update(id, {
+        images: imageRows.map((r) => r.url),
+        imagePublicIds: imageRows.map((r) => r.publicId ?? ""),
+        thumbnail: imageRows[0].url,
+        thumbnailPublicId: imageRows[0].publicId,
       });
-      const updated = await projectsApi.getById(id!);
-      setProject(updated.data.data);
-      setVideoLabel("");
-      setVideoFile(null);
-      toast.success("Video uploaded");
-    } catch {
-      toast.error("Video upload failed");
+      message = res.data?.message || "Order saved";
+      if (res.data?.success) {
+        isError = false;
+        setSavedImageRows(imageRows);
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                images: imageRows.map((r) => r.url),
+                imagePublicIds: imageRows.map((r) => r.publicId ?? ""),
+                thumbnail: imageRows[0].url,
+                thumbnailPublicId: imageRows[0].publicId,
+              }
+            : prev,
+        );
+      }
+    } catch (err) {
+      if (isAxiosError(err)) {
+        message = err.response?.data?.message || message;
+      }
     } finally {
-      setUploadingVideo(false);
-    }
-  };
-
-  const handleVideoDelete = async (videoId: string) => {
-    setDeletingVideo(videoId);
-    try {
-      await projectsApi.removeVideo(id!, videoId);
-      setProject((prev: any) => ({
-        ...prev,
-        videos: prev.videos.filter((v: any) => v._id !== videoId),
-      }));
-      toast.success("Video removed");
-    } catch {
-      toast.error("Failed to remove video");
-    } finally {
-      setDeletingVideo(null);
+      setSavingOrder(false);
+      toast[isError ? "error" : "success"](message);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center space-y-3">
-          <Loader2
-            className="w-8 h-8 animate-spin mx-auto"
-            style={{ color: "#C41B1F" }}
-          />
-          <p className="text-sm" style={{ color: "#7386a0" }}>
-            Loading project...
-          </p>
-        </div>
+      <div className="flex justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-ink-faint" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button
           type="button"
-          onClick={() => navigate("/admin/projects")}
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all"
-          style={{
-            background: "#f6f8fb",
-            border: "1px solid #dfe6ee",
-            color: "#47596e",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#9fb0c4";
-            e.currentTarget.style.color = "#fff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#9fb0c4";
-            e.currentTarget.style.color = "#47596e";
-          }}
+          onClick={() =>
+            navigate(isNew ? "/admin/projects" : `/admin/projects/${id}`)
+          }
+          aria-label="Back"
+          className="rounded-lg bg-raise p-2 transition-colors hover:bg-line"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-5 w-5 text-ink" />
         </button>
         <div>
-          <h2 className="text-xl font-bold text-ink">
-            {isNew ? "New Project" : form.title || "Edit Project"}
-          </h2>
-          {!isNew && (
-            <p className="text-xs mt-0.5" style={{ color: "#7386a0" }}>
-              /{slugify(form.title)}
+          {!isNew ? (
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-mute">
+              Project
             </p>
-          )}
+          ) : null}
+          <h2 className="text-xl font-bold text-ink">
+            {isNew ? "New project" : form.title || "Edit project"}
+          </h2>
+          <p className="text-sm text-ink-mute">
+            {isNew
+              ? "Save details first; photos upload with the project."
+              : "The public URL is generated from the project name."}
+          </p>
         </div>
       </div>
 
-      {/* Desktop: two-column; Mobile: single column */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left — thumbnail (xl only) */}
-        {!isNew && (
-          <div className="xl:col-span-1 space-y-4">
-            <SectionCard
-              title="Thumbnail"
-              action={
-                thumbFile && (
-                  <button
-                    type="button"
-                    onClick={handleThumbUpload}
-                    disabled={uploadingThumb}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                    style={{
-                      background: "rgba(196,27,31,0.15)",
-                      color: "#C41B1F",
-                      border: "1px solid rgba(196,27,31,0.25)",
-                    }}
-                  >
-                    {uploadingThumb ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Upload className="w-3.5 h-3.5" />
-                    )}
-                    {uploadingThumb ? "Uploading..." : "Save"}
-                  </button>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <SectionCard
+          title="Project details"
+          description="Core information shown on the project page."
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <InputField
+                label="Project name"
+                required
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="e.g. Luxury Tower Dubai"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <SelectField
+                label="Typology"
+                required
+                creatable
+                value={form.category}
+                onValueChange={(category) => setForm({ ...form, category })}
+                options={typologyOptions}
+                placeholder="Type or choose from the list"
+                tooltip="Start typing for a new typology, or pick one from the dropdown. Saved projects add to the list."
+              />
+            </div>
+
+            <InputField
+              label="Client name"
+              required
+              value={form.client}
+              onChange={(e) => setForm({ ...form, client: e.target.value })}
+            />
+
+            <InputField
+              label="Year of completion"
+              required
+              type="number"
+              min="2000"
+              max="2100"
+              value={form.year}
+              onChange={(e) => setForm({ ...form, year: e.target.value })}
+            />
+
+            <InputField
+              label="Location"
+              required
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              placeholder="City, Country"
+            />
+
+            <InputField
+              label="Area"
+              value={form.area}
+              onChange={(e) => setForm({ ...form, area: e.target.value })}
+              placeholder="e.g. 2,500 sq. ft."
+            />
+
+            <div className="sm:col-span-2">
+              <InputField
+                label="With collaboration"
+                value={form.withCollaboration}
+                onChange={(e) =>
+                  setForm({ ...form, withCollaboration: e.target.value })
+                }
+                placeholder="Collaborator name(s), optional"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <TextArea
+                label="Detailed description"
+                required
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                placeholder="Use a blank line after the first paragraph for the short intro on the project page."
+                rows={6}
+                className="resize-y"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button
+              type="submit"
+              disabled={saving}
+              size="sm"
+              className="text-sm font-bold"
+              startIcon={
+                saving ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <Save className="size-5" />
                 )
               }
             >
-              <ThumbnailDropzone
-                currentUrl={project?.thumbnail}
-                onDrop={(f) => setThumbFile(f)}
-              />
-              {thumbFile && (
-                <p
-                  className="text-xs text-center mt-2"
-                  style={{ color: "#7386a0" }}
-                >
-                  New thumbnail selected — click Save to upload.
-                </p>
-              )}
-            </SectionCard>
+              {isNew ? "Create project" : "Save changes"}
+            </Button>
           </div>
-        )}
+        </SectionCard>
+      </form>
 
-        {/* Right — project details form */}
-        <div className={isNew ? "xl:col-span-3" : "xl:col-span-2"}>
-          <form onSubmit={handleSubmit}>
-            <SectionCard
-              title="Project Details"
-              action={
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl text-white transition-all disabled:opacity-50"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #C41B1F 0%, #8b0000 100%)",
-                    boxShadow: "0 2px 8px rgba(196,27,31,0.18)",
-                  }}
-                >
-                  {saving ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Save className="w-3.5 h-3.5" />
-                  )}
-                  {saving
-                    ? "Saving..."
-                    : isNew
-                      ? "Create Project"
-                      : "Save Changes"}
-                </button>
-              }
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <InputField
-                    label="Title"
-                    required
-                    value={form.title}
-                    onChange={(e) =>
-                      setForm({ ...form, title: e.target.value })
-                    }
-                    placeholder="e.g. Luxury Tower Dubai"
-                  />
-                </div>
-
-                <SelectField
-                  label="Category"
-                  required
-                  value={form.category}
-                  onValueChange={(category) => setForm({ ...form, category })}
-                  options={toSelectOptions(CATEGORIES)}
-                />
-
-                <InputField
-                  label="Client"
-                  required
-                  value={form.client}
-                  onChange={(e) => setForm({ ...form, client: e.target.value })}
-                  placeholder="Client name"
-                />
-
-                <InputField
-                  label="Year"
-                  required
-                  type="number"
-                  min="2000"
-                  max="2100"
-                  value={form.year}
-                  onChange={(e) => setForm({ ...form, year: e.target.value })}
-                />
-
-                <InputField
-                  label="Location"
-                  required
-                  value={form.location}
-                  onChange={(e) =>
-                    setForm({ ...form, location: e.target.value })
-                  }
-                  placeholder="City, Country"
-                />
-
-                <div className="sm:col-span-2">
-                  <TextArea
-                    label="Description"
-                    required
-                    value={form.description}
-                    onChange={(e) =>
-                      setForm({ ...form, description: e.target.value })
-                    }
-                    placeholder="Describe the project scope, materials, and outcomes..."
-                    rows={5}
-                    className="resize-y"
-                  />
-                </div>
-
-                {isNew && (
-                  <div className="sm:col-span-2">
-                    <InputField
-                      label="Initial Thumbnail URL"
-                      placeholder="https://res.cloudinary.com/... (optional, upload after creating)"
-                      value={form.thumbnail}
-                      onChange={(e) =>
-                        setForm({ ...form, thumbnail: e.target.value })
-                      }
-                      tooltip="You can drag & drop a thumbnail after creating the project."
-                    />
-                  </div>
-                )}
-
-                {/* Featured toggle */}
-                <div className="sm:col-span-2 flex items-center gap-3 pt-1">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setForm({ ...form, featured: !form.featured })
-                    }
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 shrink-0"
-                    style={{
-                      background: form.featured
-                        ? "linear-gradient(135deg, #a86a00 0%, #b8962e 100%)"
-                        : "#9fb0c4",
-                    }}
-                  >
-                    <div
-                      className="absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 shadow"
-                      style={{ left: form.featured ? "26px" : "4px" }}
-                    />
-                  </button>
-                  <div className="flex items-center gap-1.5">
-                    <Star
-                      className="w-4 h-4"
-                      style={{
-                        color: form.featured ? "#a86a00" : "#7386a0",
-                        fill: form.featured ? "#a86a00" : "none",
-                      }}
-                    />
-                    <span
-                      className="text-sm font-medium"
-                      style={{ color: form.featured ? "#a86a00" : "#47596e" }}
-                    >
-                      Featured project
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
-          </form>
-        </div>
-      </div>
-
-      {/* Thumbnail on mobile (when editing) */}
-      {!isNew && (
-        <div className="xl:hidden">
-          <SectionCard
-            title="Thumbnail"
-            action={
-              thumbFile && (
-                <button
-                  type="button"
-                  onClick={handleThumbUpload}
-                  disabled={uploadingThumb}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                  style={{
-                    background: "rgba(196,27,31,0.15)",
-                    color: "#C41B1F",
-                    border: "1px solid rgba(196,27,31,0.25)",
-                  }}
-                >
-                  {uploadingThumb ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Upload className="w-3.5 h-3.5" />
-                  )}
-                  {uploadingThumb ? "Uploading..." : "Save Thumbnail"}
-                </button>
-              )
+      <SectionCard
+        title="Images"
+        description="Drag by the handle to reorder. The first image is the cover on cards and listings."
+      >
+        <FileUpload
+          key={isNew ? "new" : imageUploadSlot}
+          acceptTypes={IMAGE_UPLOAD_ACCEPT}
+          maxSizeMB={IMAGE_UPLOAD_MAX_SIZE_MB}
+          onFilesChange={(files) => {
+            if (isNew) {
+              setPendingImages((prev) => [...prev, ...files]);
+            } else {
+              handleImagesUpload(files);
             }
-          >
-            <div className="max-w-sm">
-              <ThumbnailDropzone
-                currentUrl={project?.thumbnail}
-                onDrop={(f) => setThumbFile(f)}
-              />
-            </div>
-          </SectionCard>
-        </div>
-      )}
+          }}
+        />
+        {!isNew && uploadingImages ? (
+          <p className="text-xs text-ink-mute">Uploading…</p>
+        ) : null}
 
-      {/* Gallery Images */}
-      {!isNew && (
-        <SectionCard
-          title={`Gallery Images (${project?.images?.length || 0})`}
-          action={
-            <span className="text-xs" style={{ color: "#7386a0" }}>
-              Drag & drop multiple images
-            </span>
-          }
-        >
-          <div className="space-y-5">
-            <FileUpload
-              key={imageUploadSlot}
-              acceptTypes={IMAGE_UPLOAD_ACCEPT}
-              maxSizeMB={IMAGE_UPLOAD_MAX_SIZE_MB}
-              onFilesChange={handleImagesUpload}
-            />
-            {uploadingImages && (
-              <p className="text-xs text-ink-mute">Uploading…</p>
-            )}
-
-            {project?.images?.length > 0 && (
-              <div>
-                <p
-                  className="text-xs font-semibold uppercase tracking-wider mb-3"
-                  style={{ color: "#7386a0" }}
-                >
-                  Uploaded · {project.images.length} files
-                </p>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-                  {project.images.map((url: string, i: number) => (
-                    <div
-                      key={i}
-                      className="relative aspect-square rounded-xl overflow-hidden group"
-                      style={{ background: "#f6f8fb" }}
-                    >
-                      <img
-                        src={url}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                      <div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ background: "rgba(10,38,71,0.45)" }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleImageDelete(i)}
-                        disabled={deletingImage === i}
-                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                        style={{ background: "rgba(196,27,31,0.9)" }}
-                      >
-                        {deletingImage === i ? (
-                          <Loader2 className="w-3 h-3 animate-spin text-ink" />
-                        ) : (
-                          <Trash2 className="w-3 h-3 text-ink" />
-                        )}
-                      </button>
-                      <span
-                        className="absolute bottom-1 left-1 text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity font-medium"
-                        style={{
-                          background: "rgba(10,38,71,0.45)",
-                          color: "#0A2647",
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Videos */}
-      {!isNew && (
-        <SectionCard title={`Videos (${project?.videos?.length || 0})`}>
-          <div className="space-y-5">
-            {/* Upload new video */}
-            <div
-              className="rounded-xl p-4 space-y-4"
-              style={{ background: "#ffffff", border: "1px solid #dfe6ee" }}
-            >
-              <p
-                className="text-xs font-bold uppercase tracking-wider"
-                style={{ color: "#7386a0" }}
+        {!isNew && isReordered ? (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-line bg-info/10 px-6 py-3">
+            <p className="text-sm font-medium text-ink">
+              The order has changed. Save it to update the cover and gallery.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="none"
+                size="xs"
+                onClick={() => setImageRows(savedImageRows)}
+                disabled={savingOrder}
+                startIcon={<RotateCcw size={14} />}
+                className="gap-1.5 text-sm font-medium text-ink-soft hover:bg-raise"
               >
-                Upload New Video
-              </p>
-
-              <InputField
-                label="Video Label"
-                required
-                placeholder="e.g. Project Walkthrough, Site Aerial"
-                value={videoLabel}
-                onChange={(e) => setVideoLabel(e.target.value)}
-              />
-
-              <VideoDropzone
-                onSelect={(f: File) => setVideoFile(f)}
-                onClear={() => setVideoFile(null)}
-                label="Drop project video here"
-                hint="MP4, MOV, WebM · Max recommended 200MB"
-              />
-
-              {videoFile && videoLabel.trim() && (
-                <button
-                  type="button"
-                  onClick={handleVideoUpload}
-                  disabled={uploadingVideo}
-                  className="w-full flex items-center justify-center gap-2.5 py-3 px-5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)",
-                    boxShadow: "0 4px 20px rgba(124,58,237,0.3)",
-                  }}
-                >
-                  {uploadingVideo ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
-                    </>
+                Reset
+              </Button>
+              <Button
+                variant="none"
+                size="xs"
+                onClick={saveImageOrder}
+                disabled={savingOrder}
+                startIcon={
+                  savingOrder ? (
+                    <Loader2 size={14} className="animate-spin" />
                   ) : (
-                    <>
-                      <Film className="w-4 h-4" /> Upload Video
-                    </>
-                  )}
-                </button>
-              )}
+                    <Save size={14} />
+                  )
+                }
+                className="gap-1.5 bg-info px-4 py-2 text-sm font-medium text-white"
+              >
+                Save order
+              </Button>
             </div>
-
-            {/* Existing videos list */}
-            {project?.videos?.length > 0 && (
-              <div className="space-y-3">
-                <p
-                  className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: "#7386a0" }}
-                >
-                  Uploaded videos
-                </p>
-                {project.videos.map((v: any) => (
-                  <div
-                    key={v._id}
-                    className="rounded-xl overflow-hidden"
-                    style={{
-                      background: "#f6f8fb",
-                      border: "1px solid #dfe6ee",
-                    }}
-                  >
-                    <div className="aspect-video bg-black">
-                      <video
-                        src={v.url}
-                        className="w-full h-full object-contain"
-                        controls
-                      />
-                    </div>
-                    <div
-                      className="flex items-center gap-3 px-4 py-3"
-                      style={{ borderTop: "1px solid #dfe6ee" }}
-                    >
-                      <Film
-                        className="w-4 h-4 shrink-0"
-                        style={{ color: "#7c3aed" }}
-                      />
-                      <p className="flex-1 text-sm font-medium text-ink truncate">
-                        {v.label}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleVideoDelete(v._id)}
-                        disabled={deletingVideo === v._id}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all disabled:opacity-50"
-                        style={{
-                          background: "rgba(196,27,31,0.12)",
-                          border: "1px solid rgba(196,27,31,0.2)",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.background =
-                            "rgba(196,27,31,0.25)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.background =
-                            "rgba(196,27,31,0.12)")
-                        }
-                      >
-                        {deletingVideo === v._id ? (
-                          <Loader2
-                            className="w-3.5 h-3.5 animate-spin"
-                            style={{ color: "#c0271f" }}
-                          />
-                        ) : (
-                          <Trash2
-                            className="w-3.5 h-3.5"
-                            style={{ color: "#c0271f" }}
-                          />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        </SectionCard>
-      )}
+        ) : null}
+
+        {isNew && pendingImages.length > 0 ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {pendingImages.map((file, i) => (
+              <ProjectFormImageTile
+                key={`${file.name}-${file.lastModified}-${i}`}
+                src={URL.createObjectURL(file)}
+                index={i}
+                count={pendingImages.length}
+                listId={DragList.PROJECT_IMAGES_PENDING}
+                onMove={(from, to) =>
+                  setPendingImages((prev) => moveRow(prev, from, to))
+                }
+                onDelete={() =>
+                  setPendingImages((prev) => prev.filter((_, j) => j !== i))
+                }
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {!isNew && imageRows.length > 0 ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {imageRows.map((row, i) => (
+              <ProjectFormImageTile
+                key={`${row.url}-${i}`}
+                src={row.url}
+                index={i}
+                count={imageRows.length}
+                listId={DragList.PROJECT_IMAGES}
+                onMove={(from, to) =>
+                  setImageRows((prev) => moveRow(prev, from, to))
+                }
+                onDelete={() => handleImageDelete(i)}
+                deleting={deletingImage === i}
+              />
+            ))}
+          </div>
+        ) : null}
+      </SectionCard>
     </div>
   );
 }

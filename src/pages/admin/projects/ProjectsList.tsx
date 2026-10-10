@@ -1,101 +1,57 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { projectsApi } from "../../../services/api";
-import ConfirmModal from "../../../components/admin/ui/ConfirmModal";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { isAxiosError } from "axios";
 import {
   Plus,
-  Pencil,
-  Trash2,
   Loader2,
-  Star,
-  MapPin,
-  Calendar,
-  Image as ImageIcon,
-  Video,
   Search,
   FolderOpen,
   SlidersHorizontal,
+  RotateCcw,
+  Save,
 } from "lucide-react";
-import SelectField from "../../../components/admin/ui/SelectField";
-import { toSelectOptions } from "../../../utils/utils";
 
-const CATEGORY_COLORS: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
-  "Structural Evolution": {
-    bg: "rgba(29,95,208,0.12)",
-    text: "#1d5fd0",
-    border: "rgba(29,95,208,0.2)",
-  },
-  "Luxury Fit-Out": {
-    bg: "rgba(168,106,0,0.12)",
-    text: "#a86a00",
-    border: "rgba(168,106,0,0.2)",
-  },
-  "Architecture & MEP": {
-    bg: "rgba(15,122,82,0.12)",
-    text: "#0f7a52",
-    border: "rgba(15,122,82,0.2)",
-  },
-  "Building Construction": {
-    bg: "rgba(29,95,208,0.12)",
-    text: "#1d5fd0",
-    border: "rgba(29,95,208,0.2)",
-  },
-  "Interior Fit Outs": {
-    bg: "rgba(168,106,0,0.12)",
-    text: "#a86a00",
-    border: "rgba(168,106,0,0.2)",
-  },
-  "MEP Execution": {
-    bg: "rgba(15,122,82,0.12)",
-    text: "#0f7a52",
-    border: "rgba(15,122,82,0.2)",
-  },
-  "Project Management": {
-    bg: "rgba(196,27,31,0.12)",
-    text: "#c0271f",
-    border: "rgba(196,27,31,0.2)",
-  },
-};
+import { PageHeader } from "@/components/common";
+import ConfirmModal from "@/components/admin/ui/ConfirmModal";
+import { SectionCard } from "@/components/admin/ui/SectionCard";
+import { Button } from "@/components/ui/button";
+import SelectField from "@/components/admin/ui/SelectField";
+import { projectsApi } from "@/services/api";
+import { move, toSelectOptions } from "@/utils/utils";
 
-const CATEGORIES_ALL = ["All", ...Object.keys(CATEGORY_COLORS)];
+import ProjectAdminCard, { type AdminProjectRow } from "./ProjectAdminCard";
+import ProjectsSectionPanel from "./ProjectsSectionPanel";
 
-function CategoryBadge({ category }: { category: string }) {
-  const c = CATEGORY_COLORS[category] || {
-    bg: "#f6f8fb",
-    text: "#47596e",
-    border: "#dfe6ee",
-  };
-  return (
-    <span
-      className="inline-block text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
-      style={{
-        background: c.bg,
-        color: c.text,
-        border: `1px solid ${c.border}`,
-      }}
-    >
-      {category}
-    </span>
-  );
-}
+const projectIds = (rows: AdminProjectRow[]) => rows.map((p) => p._id);
 
 export default function ProjectsList() {
-  const [projects, setProjects] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const [savedProjects, setSavedProjects] = useState<AdminProjectRow[]>([]);
+  const [projects, setProjects] = useState<AdminProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AdminProjectRow | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
 
+  const canReorder = !search.trim() && categoryFilter === "All";
+  const isReordered =
+    canReorder &&
+    (projects.length !== savedProjects.length ||
+      projects.some((p, i) => p._id !== savedProjects[i]?._id));
+
   const fetchProjects = () => {
     setLoading(true);
     projectsApi
-      .getAll()
-      .then((res: any) => setProjects(res.data.data))
+      .getAll({ sort: "order", limit: 50 })
+      .then((res: { data: { data: AdminProjectRow[] } }) => {
+        setProjects(res.data.data);
+        setSavedProjects(res.data.data);
+      })
       .catch(() => toast.error("Failed to load projects"))
       .finally(() => setLoading(false));
   };
@@ -105,6 +61,7 @@ export default function ProjectsList() {
   }, []);
 
   const handleDelete = async () => {
+    if (!deleteTarget) return;
     setDeleting(true);
     try {
       await projectsApi.delete(deleteTarget._id);
@@ -118,6 +75,34 @@ export default function ProjectsList() {
     }
   };
 
+  const saveOrder = async () => {
+    setSavingOrder(true);
+    let message = "Failed to save project order";
+    let isError = true;
+    try {
+      const res = await projectsApi.reorder(projectIds(projects));
+      message = res.data?.message || "Order saved";
+      if (res.data?.success) {
+        isError = false;
+        const rows = res.data.data as AdminProjectRow[];
+        setProjects(rows);
+        setSavedProjects(rows);
+      }
+    } catch (err) {
+      if (isAxiosError(err)) {
+        message = err.response?.data?.message || message;
+      }
+    } finally {
+      setSavingOrder(false);
+      toast[isError ? "error" : "success"](message);
+    }
+  };
+
+  const typologyOptions = useMemo(() => {
+    const fromProjects = projects.map((p) => p.category).filter(Boolean);
+    return ["All", ...new Set(fromProjects)];
+  }, [projects]);
+
   const filtered = projects.filter((p) => {
     const matchSearch =
       p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -126,268 +111,146 @@ export default function ProjectsList() {
     return matchSearch && matchCat;
   });
 
+  const displayList = canReorder ? projects : filtered;
+
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1">
-          <h2 className="text-2xl font-bold text-ink">Projects</h2>
-          <p className="text-sm mt-0.5" style={{ color: "#7386a0" }}>
-            {projects.length} total project{projects.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Link
-          to="/admin/projects/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-          style={{
-            background: "linear-gradient(135deg, #C41B1F 0%, #8b0000 100%)",
-            boxShadow: "0 2px 8px rgba(196,27,31,0.18)",
-          }}
-        >
-          <Plus className="w-4 h-4" /> New Project
-        </Link>
-      </div>
+      <ProjectsSectionPanel />
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Search */}
-        <div
-          className="flex items-center gap-2 px-3 py-2.5 rounded-xl flex-1"
-          style={{ background: "#f6f8fb", border: "1px solid #dfe6ee" }}
-        >
-          <Search className="w-4 h-4 shrink-0" style={{ color: "#7386a0" }} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title or client..."
-            className="bg-transparent text-sm text-ink placeholder:text-ink/30 outline-none flex-1"
-          />
-        </div>
+      <PageHeader
+        title="Projects"
+        count={projects.length}
+        description="Manage portfolio entries and their media."
+      />
 
-        {/* Category filter */}
-        <div
-          className="flex items-center gap-2 px-3 py-2 rounded-xl"
-          style={{ background: "#f6f8fb", border: "1px solid #dfe6ee" }}
-        >
-          <SlidersHorizontal
-            className="w-4 h-4 shrink-0"
-            style={{ color: "#7386a0" }}
-          />
-          <SelectField
-            className="min-w-0 flex-1"
-            value={categoryFilter}
-            onValueChange={setCategoryFilter}
-            options={toSelectOptions(CATEGORIES_ALL)}
-            triggerClassName="h-auto border-0 bg-transparent px-0 py-0 text-ink shadow-none focus:ring-0"
-          />
-        </div>
-      </div>
-
-      {/* Loading */}
-      {loading ? (
-        <div className="flex items-center justify-center h-56">
-          <div className="text-center space-y-3">
-            <Loader2
-              className="w-8 h-8 animate-spin mx-auto"
-              style={{ color: "#C41B1F" }}
+      <SectionCard
+        title="All projects"
+        description={
+          canReorder
+            ? "Drag a card by its handle to reorder. This order is used on the homepage and /projects."
+            : "Clear search and typology filters to reorder projects."
+        }
+        controls={
+          <Button
+            variant="primary"
+            size="sm"
+            startIcon={<Plus size={20} />}
+            onClick={() => navigate("/admin/projects/new")}
+            className="text-sm font-bold"
+          >
+            New project
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-1 items-center gap-2 rounded-xl border border-line bg-raise px-3 py-2.5">
+            <Search className="h-4 w-4 shrink-0 text-ink-mute" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title or client..."
+              className="flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink/30"
             />
-            <p className="text-sm" style={{ color: "#7386a0" }}>
-              Loading projects...
-            </p>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-raise px-3 py-2">
+            <SlidersHorizontal className="h-4 w-4 shrink-0 text-ink-mute" />
+            <SelectField
+              className="min-w-0 flex-1"
+              value={categoryFilter}
+              onValueChange={setCategoryFilter}
+              options={toSelectOptions(typologyOptions)}
+              triggerClassName="h-auto border-0 bg-transparent px-0 py-0 text-ink shadow-none focus:ring-0"
+            />
           </div>
         </div>
-      ) : filtered.length === 0 ? (
-        <div
-          className="text-center py-20 rounded-2xl"
-          style={{ background: "#ffffff", border: "1px dashed #dfe6ee" }}
-        >
-          <FolderOpen
-            className="w-12 h-12 mx-auto mb-4"
-            style={{ color: "#9fb0c4" }}
-          />
-          <p className="text-ink font-semibold mb-1">
-            {projects.length === 0
-              ? "No projects yet"
-              : "No projects match your filters"}
-          </p>
-          <p className="text-sm mb-5" style={{ color: "#7386a0" }}>
-            {projects.length === 0
-              ? "Add your first construction project."
-              : "Try adjusting search or category."}
-          </p>
-          {projects.length === 0 && (
-            <Link
-              to="/admin/projects/new"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
-              style={{
-                background: "linear-gradient(135deg, #C41B1F 0%, #8b0000 100%)",
-              }}
-            >
-              <Plus className="w-4 h-4" /> Create First Project
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((p) => (
-            <div
-              key={p._id}
-              className="group rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-              style={{
-                background: "#ffffff",
-                border: "1px solid #dfe6ee",
-                backdropFilter: "blur(8px)",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.borderColor = "rgba(196,27,31,0.25)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.borderColor = "#dfe6ee")
-              }
-            >
-              {/* Thumbnail */}
-              <div
-                className="relative aspect-video overflow-hidden"
-                style={{ background: "#f6f8fb" }}
+
+        {isReordered ? (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-line bg-info/10 px-6 py-3">
+            <p className="text-sm font-medium text-ink">
+              The order has changed. Save it to publish the new arrangement.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="none"
+                size="xs"
+                onClick={() => setProjects(savedProjects)}
+                disabled={savingOrder}
+                startIcon={<RotateCcw size={14} />}
+                className="gap-1.5 text-sm font-medium text-ink-soft hover:bg-raise"
               >
-                {p.thumbnail ? (
-                  <img
-                    src={p.thumbnail}
-                    alt={p.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <FolderOpen
-                      className="w-10 h-10"
-                      style={{ color: "#9fb0c4" }}
-                    />
-                  </div>
-                )}
-                {/* Featured badge */}
-                {p.featured && (
-                  <div
-                    className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full"
-                    style={{
-                      background: "rgba(168,106,0,0.9)",
-                      backdropFilter: "blur(4px)",
-                    }}
-                  >
-                    <Star className="w-2.5 h-2.5 text-ink fill-white" />
-                    <span className="text-[10px] font-bold text-ink">
-                      Featured
-                    </span>
-                  </div>
-                )}
-                {/* Overlay actions */}
-                <div
-                  className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  style={{
-                    background: "rgba(10,38,71,0.45)",
-                    backdropFilter: "blur(4px)",
-                  }}
-                >
-                  <Link
-                    to={`/admin/projects/${p._id}`}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-ink transition-colors"
-                    style={{ background: "rgba(196,27,31,0.9)" }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Pencil className="w-3.5 h-3.5" /> Edit
-                  </Link>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteTarget(p);
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
-                    style={{ background: "#f6f8fb", color: "#c0271f" }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                  </button>
-                </div>
-              </div>
-
-              {/* Card body */}
-              <div className="p-4 space-y-3">
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h3 className="text-sm font-bold text-ink leading-snug line-clamp-2 flex-1">
-                      {p.title}
-                    </h3>
-                  </div>
-                  <CategoryBadge category={p.category} />
-                </div>
-
-                <div
-                  className="flex items-center gap-3 text-xs"
-                  style={{ color: "#7386a0" }}
-                >
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> {p.year}
-                  </span>
-                  <span className="flex items-center gap-1 truncate">
-                    <MapPin className="w-3 h-3 shrink-0" /> {p.location}
-                  </span>
-                </div>
-
-                <div
-                  className="flex items-center justify-between pt-2"
-                  style={{ borderTop: "1px solid #dfe6ee" }}
-                >
-                  <div
-                    className="flex items-center gap-3 text-xs"
-                    style={{ color: "#7386a0" }}
-                  >
-                    <span className="flex items-center gap-1">
-                      <ImageIcon className="w-3 h-3" /> {p.images?.length || 0}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Video className="w-3 h-3" /> {p.videos?.length || 0}
-                    </span>
-                    <span style={{ color: "#9fb0c4" }}>{p.client}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <Link
-                      to={`/admin/projects/${p._id}`}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-                      style={{ background: "#f6f8fb", color: "#47596e" }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(196,27,31,0.15)";
-                        e.currentTarget.style.color = "#C41B1F";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#9fb0c4";
-                        e.currentTarget.style.color = "#47596e";
-                      }}
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Link>
-                    <button
-                      onClick={() => setDeleteTarget(p)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-                      style={{ background: "#f6f8fb", color: "#47596e" }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(196,27,31,0.15)";
-                        e.currentTarget.style.color = "#c0271f";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#9fb0c4";
-                        e.currentTarget.style.color = "#47596e";
-                      }}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+                Reset
+              </Button>
+              <Button
+                variant="none"
+                size="xs"
+                onClick={saveOrder}
+                disabled={savingOrder}
+                startIcon={
+                  savingOrder ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Save size={14} />
+                  )
+                }
+                className="gap-1.5 bg-info px-4 py-2 text-sm font-medium text-white"
+              >
+                Save order
+              </Button>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div className="flex h-56 items-center justify-center">
+            <div className="space-y-3 text-center">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-ink-faint" />
+              <p className="text-sm text-ink-mute">Loading projects...</p>
+            </div>
+          </div>
+        ) : displayList.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-line bg-paper py-20 text-center">
+            <FolderOpen className="mx-auto mb-4 h-12 w-12 text-ink-faint" />
+            <p className="mb-1 font-semibold text-ink">
+              {projects.length === 0
+                ? "No projects yet"
+                : "No projects match your filters"}
+            </p>
+            <p className="mb-5 text-sm text-ink-mute">
+              {projects.length === 0
+                ? "Add your first construction project."
+                : "Try adjusting search or category."}
+            </p>
+            {projects.length === 0 && (
+              <Button
+                variant="primary"
+                size="sm"
+                startIcon={<Plus size={20} />}
+                onClick={() => navigate("/admin/projects/new")}
+                className="text-sm font-bold"
+              >
+                Create first project
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {displayList.map((p, i) => (
+              <ProjectAdminCard
+                key={p._id}
+                project={p}
+                index={i}
+                count={displayList.length}
+                reorderEnabled={canReorder}
+                onMove={(from, to) =>
+                  setProjects((prev) => move(prev, from, to))
+                }
+                onDelete={() => setDeleteTarget(p)}
+              />
+            ))}
+          </div>
+        )}
+      </SectionCard>
 
       <ConfirmModal
         open={!!deleteTarget}

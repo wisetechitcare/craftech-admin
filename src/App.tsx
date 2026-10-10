@@ -13,6 +13,7 @@ import AdminLayout from "./components/admin/Layout";
 import DashboardHome from "./pages/admin/DashboardHome";
 import ModuleHub from "./pages/admin/ModuleHub";
 import ProjectsList from "./pages/admin/projects/ProjectsList";
+import ProjectDetail from "./pages/admin/projects/ProjectDetail";
 import ProjectForm from "./pages/admin/projects/ProjectForm";
 import MediaManager from "./pages/admin/MediaManager";
 
@@ -222,7 +223,8 @@ function App() {
           <Route path="features" element={<FeaturesCMS />} />
           <Route path="projects" element={<ProjectsList />} />
           <Route path="projects/new" element={<ProjectForm />} />
-          <Route path="projects/:id" element={<ProjectForm />} />
+          <Route path="projects/:id/edit" element={<ProjectForm />} />
+          <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="media" element={<MediaManager />} />
           <Route path="media-library" element={<MediaLibrary />} />
           <Route path="testimonials" element={<TestimonialsList />} />
