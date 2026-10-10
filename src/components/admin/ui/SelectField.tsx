@@ -13,9 +13,19 @@ import { ChevronDown, Search } from "lucide-react";
 import DropdownPanel from "./DropdownPanel";
 import { InfoTooltip } from "./Tooltip";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  selectContentClassName,
+  selectItemClassName,
+  selectTriggerClassName,
+} from "@/components/ui/select";
 import { useClickOutside } from "@/hooks";
 import {
-  // SELECT_CREATABLE_EMPTY_MESSAGE,
+  SELECT_CREATABLE_EMPTY_MESSAGE,
   SELECT_EMPTY_MESSAGE,
   SELECT_LOADING_PLACEHOLDER,
   SELECT_SEARCH_PLACEHOLDER,
@@ -42,6 +52,7 @@ export interface SelectFieldProps {
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
+  /** Text input + dropdown: type a new value or pick an existing option. */
   creatable?: boolean;
   searchable?: boolean;
   className?: string;
@@ -117,29 +128,9 @@ export function SelectFieldWrapper({
   );
 }
 
-/** Shared by the plain trigger and the creatable input below. */
-const selectTriggerClassName = ({
-  disabled = false,
-  hasError = false,
-  className,
-}: {
-  disabled?: boolean;
-  hasError?: boolean;
-  className?: string;
-}): string =>
-  cn(
-    "flex h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border px-4 py-2.5 text-sm shadow-theme-xs transition-colors duration-200 focus:outline-hidden focus:ring-3",
-    disabled
-      ? "cursor-not-allowed border-line bg-raise text-ink-mute opacity-40"
-      : hasError
-        ? "border-error-500 focus:border-error-300 focus:ring-error-500/20"
-        : "border-line bg-paper text-ink focus:border-violet-400 focus:ring-violet-500/20",
-    className,
-  );
-
 const optionButtonClassName = cn(
-  "w-full cursor-pointer px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-violet-500/10 hover:text-ink",
-  "data-[selected=true]:bg-violet-500/15 data-[selected=true]:font-medium data-[selected=true]:text-ink",
+  selectItemClassName,
+  "text-left data-[selected=true]:bg-violet-500/15 data-[selected=true]:font-medium",
 );
 
 function filterOptions(options: SelectOption[], query: string) {
@@ -154,6 +145,28 @@ function filterOptions(options: SelectOption[], query: string) {
   );
 }
 
+function buildCreatableOptions(options: SelectOption[], value: string) {
+  const filtered = filterOptions(options, value);
+  const trimmed = value.trim();
+  if (!trimmed) return filtered;
+
+  const exists = options.some(
+    (option) => option.label.toLowerCase() === trimmed.toLowerCase(),
+  );
+  if (exists) return filtered;
+
+  const createOption = { value: trimmed, label: trimmed };
+  if (
+    filtered.some(
+      (option) => option.label.toLowerCase() === trimmed.toLowerCase(),
+    )
+  ) {
+    return filtered;
+  }
+
+  return [createOption, ...filtered];
+}
+
 interface SelectDropdownProps {
   anchorRef: RefObject<HTMLElement | null>;
   open: boolean;
@@ -165,6 +178,7 @@ interface SelectDropdownProps {
   /** Absent means the list is not searchable. */
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  emptyMessage?: string;
 }
 
 // One list for both the plain and the searchable select: the two were the same
@@ -179,6 +193,7 @@ function SelectDropdown({
   loading,
   searchQuery,
   onSearchChange,
+  emptyMessage = SELECT_EMPTY_MESSAGE,
 }: SelectDropdownProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchable = onSearchChange !== undefined;
@@ -190,7 +205,12 @@ function SelectDropdown({
   }, [open, loading]);
 
   return (
-    <DropdownPanel anchorRef={anchorRef} open={open} onClose={onClose}>
+    <DropdownPanel
+      anchorRef={anchorRef}
+      open={open}
+      onClose={onClose}
+      className={selectContentClassName}
+    >
       {searchable && !loading && (
         <div className="border-b border-gray-100 p-2 dark:border-gray-700">
           <div className="relative">
@@ -209,7 +229,7 @@ function SelectDropdown({
 
       <ul role="listbox" className="py-1">
         {loading ? (
-          <li className="px-4 py-2.5 text-sm text-gray-500">
+          <li className="px-4 py-2.5 text-sm text-ink-mute">
             {SELECT_LOADING_PLACEHOLDER}
           </li>
         ) : options.length > 0 ? (
@@ -229,9 +249,7 @@ function SelectDropdown({
             </li>
           ))
         ) : (
-          <li className="px-4 py-2.5 text-sm text-gray-500">
-            {SELECT_EMPTY_MESSAGE}
-          </li>
+          <li className="px-4 py-2.5 text-sm text-ink-mute">{emptyMessage}</li>
         )}
       </ul>
     </DropdownPanel>
@@ -255,6 +273,7 @@ function DefaultSelectField({
   options,
   value,
   onValueChange,
+  onOptionSelect,
   placeholder,
   disabled,
   loading,
@@ -262,7 +281,9 @@ function DefaultSelectField({
   hasError,
   triggerClassName,
   ariaLabel,
-}: DefaultSelectFieldProps) {
+}: DefaultSelectFieldProps & {
+  onOptionSelect?: (option: SelectOption) => void;
+}) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -287,47 +308,86 @@ function DefaultSelectField({
 
   const handleSelectOption = (option: SelectOption) => {
     onValueChange?.(option.value);
+    onOptionSelect?.(option);
     closeDropdown();
   };
 
+  if (searchable) {
+    return (
+      <>
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-label={ariaLabel}
+          aria-invalid={hasError}
+          aria-expanded={isOpen}
+          disabled={disabled}
+          onClick={handleToggleDropdown}
+          className={selectTriggerClassName({
+            disabled,
+            hasError,
+            className: triggerClassName,
+          })}
+        >
+          <span className={cn("truncate", !selectedOption && "text-ink-mute")}>
+            {selectedOption?.label || placeholder}
+          </span>
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 text-ink-mute transition-transform duration-200",
+              isOpen && "rotate-180",
+            )}
+          />
+        </button>
+
+        <SelectDropdown
+          anchorRef={triggerRef}
+          open={isOpen && !disabled}
+          onClose={closeDropdown}
+          options={filteredOptions}
+          onSelectOption={handleSelectOption}
+          isOptionSelected={(option) => option.value === value}
+          loading={loading}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+      </>
+    );
+  }
+
+  const radixValue =
+    value && options.some((option) => option.value === value)
+      ? value
+      : undefined;
+
   return (
-    <>
-      <button
-        ref={triggerRef}
-        type="button"
+    <Select
+      value={radixValue}
+      onValueChange={(next) => {
+        onValueChange?.(next);
+        const option = options.find((row) => row.value === next);
+        if (option) onOptionSelect?.(option);
+      }}
+      disabled={disabled || loading}
+    >
+      <SelectTrigger
+        hasError={hasError}
+        className={triggerClassName}
         aria-label={ariaLabel}
         aria-invalid={hasError}
-        aria-expanded={isOpen}
-        disabled={disabled}
-        onClick={handleToggleDropdown}
-        className={selectTriggerClassName({
-          disabled,
-          hasError,
-          className: triggerClassName,
-        })}
       >
-        <span className={cn("truncate", !selectedOption && "text-gray-400")}>
-          {selectedOption?.label || placeholder}
-        </span>
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-gray-500 transition-transform duration-200",
-            isOpen && "rotate-180",
-          )}
+        <SelectValue
+          placeholder={loading ? SELECT_LOADING_PLACEHOLDER : placeholder}
         />
-      </button>
-
-      <SelectDropdown
-        anchorRef={triggerRef}
-        open={isOpen && !disabled}
-        onClose={closeDropdown}
-        options={searchable ? filteredOptions : options}
-        onSelectOption={handleSelectOption}
-        isOptionSelected={(option) => option.value === value}
-        loading={loading}
-        {...(searchable ? { searchQuery, onSearchChange: setSearchQuery } : {})}
-      />
-    </>
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -358,9 +418,10 @@ function CreatableSelectField({
 }: CreatableSelectFieldProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
-  const filteredOptions = useMemo(
-    () => filterOptions(options, value),
+  const listOptions = useMemo(
+    () => buildCreatableOptions(options, value),
     [options, value],
   );
 
@@ -370,40 +431,43 @@ function CreatableSelectField({
 
   useClickOutside(containerRef, closeDropdown);
 
-  const handleOpenDropdown = () => {
+  const toggleDropdown = () => {
     if (disabled) return;
-
-    setIsOpen(true);
+    setIsOpen((open) => !open);
   };
 
   const handleSelectOption = (option: SelectOption) => {
-    onValueChange?.(option.label);
+    onValueChange?.(option.value);
     onOptionSelect?.(option);
     closeDropdown();
   };
 
   return (
     <div ref={containerRef} className="relative">
-      <div className="relative">
+      <div ref={triggerRef} className="relative">
         <input
           type="text"
           role="combobox"
           aria-expanded={isOpen}
+          aria-autocomplete="list"
           aria-label={ariaLabel}
           aria-invalid={hasError}
           value={value}
           placeholder={placeholder}
           disabled={disabled}
-          onFocus={handleOpenDropdown}
+          onFocus={() => !disabled && setIsOpen(true)}
           onChange={(event) => {
             onValueChange?.(event.target.value);
             setIsOpen(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") closeDropdown();
           }}
           className={selectTriggerClassName({
             disabled,
             hasError,
             className: cn(
-              "appearance-none pr-10 placeholder:text-gray-400 dark:placeholder:text-white/30",
+              "cursor-text appearance-none pr-10 placeholder:text-ink-mute",
               triggerClassName,
             ),
           })}
@@ -413,8 +477,8 @@ function CreatableSelectField({
           type="button"
           aria-label="Open options"
           disabled={disabled}
-          onClick={handleOpenDropdown}
-          className="absolute right-0 top-0 flex h-11 w-10 cursor-pointer items-center justify-center text-gray-500"
+          onClick={toggleDropdown}
+          className="absolute right-0 top-0 flex h-11 w-10 cursor-pointer items-center justify-center text-ink-mute"
         >
           <ChevronDown
             className={cn(
@@ -425,15 +489,16 @@ function CreatableSelectField({
         </button>
       </div>
 
-      {/* {isOpen && !disabled && (
-        <SelectOptionsList
-          filteredOptions={filteredOptions}
-          emptyMessage={SELECT_CREATABLE_EMPTY_MESSAGE} 
-          onSelectOption={handleSelectOption}
-          isOptionSelected={(option) => value === option.label}
-          loading={loading}
-        />
-      )} */}
+      <SelectDropdown
+        anchorRef={triggerRef}
+        open={isOpen && !disabled}
+        onClose={closeDropdown}
+        options={listOptions}
+        onSelectOption={handleSelectOption}
+        isOptionSelected={(option) => value === option.value}
+        loading={loading}
+        emptyMessage={SELECT_CREATABLE_EMPTY_MESSAGE}
+      />
     </div>
   );
 }
@@ -493,6 +558,7 @@ export default function SelectField({
           options={options}
           value={value}
           onValueChange={onValueChange}
+          onOptionSelect={onOptionSelect}
           placeholder={placeholder}
           disabled={disabled}
           loading={loading}
