@@ -5,18 +5,25 @@ import toast from "react-hot-toast";
 import { Save, ArrowLeft, Loader2, RotateCcw } from "lucide-react";
 
 import FileUpload from "@/components/admin/ui/FileUpload";
-import InputField from "@/components/admin/ui/InputField";
-import SelectField from "@/components/admin/ui/SelectField";
-import TextArea from "@/components/admin/ui/TextArea";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 import { Button } from "@/components/ui/button";
+
+import ProjectCaptionModal from "./ProjectCaptionModal";
+import { ProjectDetailsFields } from "./ProjectDetailsFields";
 
 import {
   IMAGE_UPLOAD_ACCEPT,
   IMAGE_UPLOAD_MAX_SIZE_MB,
 } from "@/lib/constants/common";
 import { DragList } from "@/lib/constants/drag-lists";
-import { projectsApi, uploadApi } from "@/services/api";
+import {
+  projectImageCaptionMatchesDefault,
+  projectImageCaptionPlainLabel,
+  resolveProjectImageCaption,
+} from "@/lib/constants/projects";
+import { projectsApi, appearanceApi, uploadApi } from "@/services/api";
+import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
+import type { ProjectMetadata } from "@/types/project";
 import { toSelectOptions } from "@/utils/utils";
 
 import { ProjectFormImageTile } from "./ProjectFormImageTile";
@@ -94,6 +101,9 @@ export default function ProjectForm() {
   const [savedImageRows, setSavedImageRows] = useState<ProjectImageRow[]>([]);
   const [imageRows, setImageRows] = useState<ProjectImageRow[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [metadata, setMetadata] = useState<ProjectMetadata>({});
+  const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
+  const [captionUrl, setCaptionUrl] = useState<string | null>(null);
 
   const isReordered = useMemo(
     () =>
@@ -121,6 +131,17 @@ export default function ProjectForm() {
   };
 
   useEffect(() => {
+    appearanceApi
+      .get()
+      .then((res) => {
+        if (res.data?.success) {
+          setImageStyles(res.data.data.imageStyles);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     projectsApi
       .getTypologies()
       .then((res) => {
@@ -134,11 +155,13 @@ export default function ProjectForm() {
       projectsApi
         .getById(id)
         .then((res) => {
-          const p = res.data.data as ProjectMedia & ProjectFormState;
+          const p = res.data.data as ProjectMedia &
+            ProjectFormState & { metadata?: ProjectMetadata };
           setProject(p);
           const rows = rowsFromProject(p);
           setSavedImageRows(rows);
           setImageRows(rows);
+          setMetadata(p.metadata ?? {});
           setForm({
             title: p.title,
             category: p.category ?? "",
@@ -213,6 +236,7 @@ export default function ProjectForm() {
         area: form.area.trim() || undefined,
         withCollaboration: form.withCollaboration.trim() || undefined,
         thumbnail: "",
+        metadata,
       };
 
       if (isNew) {
@@ -383,89 +407,15 @@ export default function ProjectForm() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <SectionCard
           title="Project details"
-          description="Core information shown on the project page."
+          description="Core information shown on the project page. Use the eye on each field to hide it on the public project page."
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <InputField
-                label="Project name"
-                required
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Luxury Tower Dubai"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <SelectField
-                label="Typology"
-                required
-                creatable
-                value={form.category}
-                onValueChange={(category) => setForm({ ...form, category })}
-                options={typologyOptions}
-                placeholder="Type or choose from the list"
-                tooltip="Start typing for a new typology, or pick one from the dropdown. Saved projects add to the list."
-              />
-            </div>
-
-            <InputField
-              label="Client name"
-              required
-              value={form.client}
-              onChange={(e) => setForm({ ...form, client: e.target.value })}
-            />
-
-            <InputField
-              label="Year of completion"
-              required
-              type="number"
-              min="2000"
-              max="2100"
-              value={form.year}
-              onChange={(e) => setForm({ ...form, year: e.target.value })}
-            />
-
-            <InputField
-              label="Location"
-              required
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              placeholder="City, Country"
-            />
-
-            <InputField
-              label="Area"
-              value={form.area}
-              onChange={(e) => setForm({ ...form, area: e.target.value })}
-              placeholder="e.g. 2,500 sq. ft."
-            />
-
-            <div className="sm:col-span-2">
-              <InputField
-                label="With collaboration"
-                value={form.withCollaboration}
-                onChange={(e) =>
-                  setForm({ ...form, withCollaboration: e.target.value })
-                }
-                placeholder="Collaborator name(s), optional"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <TextArea
-                label="Detailed description"
-                required
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                placeholder="Use a blank line after the first paragraph for the short intro on the project page."
-                rows={6}
-                className="resize-y"
-              />
-            </div>
-          </div>
+          <ProjectDetailsFields
+            form={form}
+            onFormChange={setForm}
+            metadata={metadata}
+            onMetadataChange={setMetadata}
+            typologyOptions={typologyOptions}
+          />
 
           <div className="flex justify-end pt-2">
             <Button
@@ -489,7 +439,7 @@ export default function ProjectForm() {
 
       <SectionCard
         title="Images"
-        description="Drag by the handle to reorder. The first image is the cover on cards and listings."
+        description="Drag by the handle to reorder. The first image is the cover on cards and listings. When hover captions are on, you can edit the cover image caption only."
       >
         <FileUpload
           key={isNew ? "new" : imageUploadSlot}
@@ -577,11 +527,83 @@ export default function ProjectForm() {
                 }
                 onDelete={() => handleImageDelete(i)}
                 deleting={deletingImage === i}
+                showCaption={
+                  i === 0 &&
+                  Boolean(
+                    imageStyles?.[ImageStyleSection.PROJECT_DETAIL]
+                      .hoverCaption,
+                  )
+                }
+                captionLabel={
+                  i === 0
+                    ? projectImageCaptionPlainLabel(
+                        resolveProjectImageCaption(
+                          metadata.imageCaptions?.[row.url],
+                          form.title,
+                          form.location,
+                        ),
+                      )
+                    : undefined
+                }
+                onEditCaption={
+                  i === 0 ? () => setCaptionUrl(row.url) : undefined
+                }
               />
             ))}
           </div>
         ) : null}
       </SectionCard>
+
+      {captionUrl && imageStyles ? (
+        <ProjectCaptionModal
+          imageUrl={captionUrl}
+          position={
+            imageRows.findIndex((row) => row.url === captionUrl) + 1 || 1
+          }
+          count={imageRows.length}
+          caption={resolveProjectImageCaption(
+            metadata.imageCaptions?.[captionUrl],
+            form.title,
+            form.location,
+          )}
+          imageStyles={imageStyles}
+          onClose={() => setCaptionUrl(null)}
+          onSave={async (caption) => {
+            const imageCaptions = { ...metadata.imageCaptions };
+            if (
+              projectImageCaptionMatchesDefault(
+                caption,
+                form.title,
+                form.location,
+              )
+            ) {
+              delete imageCaptions[captionUrl];
+            } else {
+              imageCaptions[captionUrl] = caption;
+            }
+            const nextMetadata: ProjectMetadata = {
+              ...metadata,
+              imageCaptions:
+                Object.keys(imageCaptions).length > 0
+                  ? imageCaptions
+                  : undefined,
+            };
+            setMetadata(nextMetadata);
+            if (isNew || !id) return;
+            const res = await projectsApi.update(id, {
+              metadata: nextMetadata,
+            });
+            if (!res.data?.success) {
+              throw new Error(
+                res.data?.message || "Failed to save the caption",
+              );
+            }
+            if (res.data.data.metadata) {
+              setMetadata(res.data.data.metadata);
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }

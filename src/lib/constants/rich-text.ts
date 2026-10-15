@@ -62,8 +62,8 @@ const FONT_SIZE_LABELS: Record<FontSizeToken, string> = {
   "text-9xl": "128",
 };
 
-/** SelectField speaks in strings, so "inherit" is the empty one. */
-export const RICH_TEXT_DEFAULT_VALUE = "";
+/** Radix Select cannot use ""; marks “use field defaults” in font-size UI. */
+export const RICH_TEXT_DEFAULT_VALUE = "inherit";
 /** Word's wording for a colour the theme decides. */
 export const RICH_TEXT_AUTOMATIC_LABEL = "Automatic";
 

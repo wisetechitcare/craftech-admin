@@ -20,6 +20,7 @@ export interface GalleryImage {
   description?: RichTextValue;
   /** #rrggbb behind the caption; null keeps the site's gradient. */
   captionBackground?: string | null;
+  captionBackgroundNone?: boolean;
 }
 
 /** What POST /cms/gallery takes: the upload's result, named after its file. */

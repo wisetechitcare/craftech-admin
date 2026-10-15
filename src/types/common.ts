@@ -19,6 +19,7 @@ export enum ImageStyleSection {
   GALLERY = "gallery",
   CLIENTS = "clients",
   PORTFOLIO = "portfolio",
+  PROJECT_DETAIL = "projectDetail",
 }
 
 /** One section's image treatment; every layout of that section honours it. */

@@ -68,8 +68,8 @@ const ProjectsSectionPanel = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Homepage projects section"
-        description="Section copy, visibility and card image style. Project entries are managed in the list below."
+        title="Projects CMS"
+        description="Section copy, visibility and card image style. The layout follows the site theme. Project entries are managed in the list below."
         action={
           <SectionVisibilitySwitch
             visible={sectionVisible}

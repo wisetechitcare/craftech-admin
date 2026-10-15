@@ -355,10 +355,9 @@ function DefaultSelectField({
     );
   }
 
-  const radixValue =
-    value && options.some((option) => option.value === value)
-      ? value
-      : undefined;
+  const radixValue = options.some((option) => option.value === value)
+    ? value
+    : undefined;
 
   return (
     <Select

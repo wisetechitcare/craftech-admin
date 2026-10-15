@@ -248,7 +248,7 @@ function App() {
                     field="heroVariant"
                     label="Site Theme"
                     section={PreviewSection.SITE}
-                    viewportHeight={5600}
+                    viewportHeight={6800}
                   />
                 }
               />
