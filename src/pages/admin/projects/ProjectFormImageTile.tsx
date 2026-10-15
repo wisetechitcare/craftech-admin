@@ -1,4 +1,6 @@
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Type } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 import {
   DragHandle,
@@ -17,6 +19,9 @@ interface ProjectFormImageTileProps {
   onMove: (from: number, to: number) => void;
   onDelete: () => void;
   deleting?: boolean;
+  showCaption?: boolean;
+  captionLabel?: string;
+  onEditCaption?: () => void;
 }
 
 export function ProjectFormImageTile({
@@ -27,6 +32,9 @@ export function ProjectFormImageTile({
   onMove,
   onDelete,
   deleting = false,
+  showCaption = false,
+  captionLabel = "",
+  onEditCaption,
 }: ProjectFormImageTileProps) {
   const { ref, handleProps, isDragging, isTarget } = useDragItem({
     listId,
@@ -80,6 +88,23 @@ export function ProjectFormImageTile({
           )}
         </button>
       </div>
+      {showCaption && onEditCaption ? (
+        <Button
+          type="button"
+          variant="none"
+          size="xs"
+          onClick={onEditCaption}
+          startIcon={<Type className="size-4 shrink-0" />}
+          className={cn(
+            "w-full justify-start gap-2 rounded-lg border px-3 text-xs",
+            captionLabel
+              ? "border-line bg-paper text-ink hover:bg-raise"
+              : "border-dashed border-line text-ink-faint hover:text-ink",
+          )}
+        >
+          <span className="truncate">{captionLabel || "Add caption"}</span>
+        </Button>
+      ) : null}
     </div>
   );
 }

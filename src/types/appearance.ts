@@ -62,6 +62,7 @@ export interface AppearanceResponse {
   contactVariant: LayoutVariant;
   galleryVariant: LayoutVariant;
   clientsVariant: LayoutVariant;
+  portfolioVariant: LayoutVariant;
   customCursorVariant: CustomCursorVariant;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
@@ -87,6 +88,7 @@ export interface AppearanceUpdatePayload {
   contactVariant?: LayoutVariant;
   galleryVariant?: LayoutVariant;
   clientsVariant?: LayoutVariant;
+  portfolioVariant?: LayoutVariant;
   customCursorVariant?: CustomCursorVariant;
   navbar?: NavbarContent;
   visibility?: VisibilityMap;
