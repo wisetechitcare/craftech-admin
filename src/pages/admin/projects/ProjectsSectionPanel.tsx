@@ -22,6 +22,15 @@ import { appearanceApi, portfolioSectionApi } from "@/services/api";
 import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
 import type { PortfolioSectionContent } from "@/types/portfolio";
 
+/** Keep projectDetail in sync so caption tooling still reads the same flags. */
+const withSyncedProjectDetail = (styles: ImageStyleMap): ImageStyleMap => ({
+  ...styles,
+  [ImageStyleSection.PROJECT_DETAIL]: {
+    ...styles[ImageStyleSection.PROJECT_DETAIL],
+    ...styles[ImageStyleSection.PORTFOLIO],
+  },
+});
+
 const ProjectsSectionPanel = () => {
   const [section, setSection] = useState<PortfolioSectionContent>({
     eyebrow: "",
@@ -69,7 +78,7 @@ const ProjectsSectionPanel = () => {
     <div className="space-y-6">
       <PageHeader
         title="Projects CMS"
-        description="Section copy, visibility and card image style. The layout follows the site theme. Project entries are managed in the list below."
+        description="Section copy, visibility and image style. Layout style is on the Appearance tab. Project entries are managed in the list below."
         action={
           <SectionVisibilitySwitch
             visible={sectionVisible}
@@ -101,9 +110,9 @@ const ProjectsSectionPanel = () => {
         {imageStyles ? (
           <ImageStyleCard
             section={ImageStyleSection.PORTFOLIO}
-            description="How project cards draw thumbnails on the homepage and /projects."
+            description="List thumbnails and detail photos. Inline gallery puts every photo below the project copy."
             styles={imageStyles}
-            onChange={setImageStyles}
+            onChange={(next) => setImageStyles(withSyncedProjectDetail(next))}
             options={PORTFOLIO_IMAGE_STYLE_OPTIONS}
           />
         ) : null}

@@ -8,6 +8,7 @@ import LayoutVariantPicker from "@/components/admin/ui/LayoutVariantPicker";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import type { PreviewSection } from "@/components/admin/ui/SitePreview";
 import { AdminInfoCallout } from "@/components/common";
+import { Button } from "@/components/ui/button";
 
 import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
 import { siteThemeOf, siteThemePayload } from "@/lib/utils/common";
@@ -32,7 +33,7 @@ const themeChangeMessage = (
   const intro = current
     ? `Your website theme is currently ${LAYOUT_VARIANT_LABELS[current]}.`
     : "Your sections currently use different styles.";
-  return `${intro} Saving ${nextLabel} here switches the whole website to ${nextLabel} — the navbar, hero, about page, gallery, FAQ and contact sections all follow it.`;
+  return `${intro} Saving ${nextLabel} here switches the whole website to ${nextLabel} — the navbar, hero, about, gallery, projects, FAQ and contact sections all follow it.`;
 };
 
 /** One section's style picker. Styles are shared: a save sets the theme for every section. */
@@ -129,19 +130,22 @@ export default function AppearanceStyle({
       >
         <LayoutVariantPicker label={label} value={value} onChange={setValue} />
 
-        <div className="flex justify-end pt-6 border-t border-line">
-          <button
+        <div className="flex justify-end border-t border-line pt-6">
+          <Button
             type="submit"
+            variant="primary"
+            size="sm"
             disabled={saving}
-            className="px-6 py-2 bg-info text-white rounded-lg font-bold text-sm hover:bg-info disabled:opacity-50 flex items-center gap-2 transition-colors"
+            startIcon={
+              saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )
+            }
           >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
             Save {label}
-          </button>
+          </Button>
         </div>
       </form>
 
