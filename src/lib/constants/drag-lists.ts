@@ -18,6 +18,7 @@ export enum DragList {
   PROJECT_IMAGES = "project.images",
   PROJECT_IMAGES_PENDING = "project.images.pending",
   PROJECT_CARDS = "project.cards",
+  PROJECT_FIELDS = "project.fields",
   HERO_SLIDES = "hero.slides",
   HERO_TRUST_STRIP = "hero.trustStrip",
   NAVBAR_LINKS = "navbar.links",

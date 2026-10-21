@@ -21,57 +21,25 @@ import {
   projectImageCaptionPlainLabel,
   resolveProjectImageCaption,
 } from "@/lib/constants/projects";
-import { projectsApi, appearanceApi, uploadApi } from "@/services/api";
+import { projectImageRows } from "@/lib/utils/projects";
+import {
+  projectsApi,
+  appearanceApi,
+  portfolioSectionApi,
+  uploadApi,
+} from "@/services/api";
 import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
-import type { ProjectMetadata } from "@/types/project";
-import { toSelectOptions } from "@/utils/utils";
+import {
+  ProjectStatus,
+  type ProjectFieldDefinition,
+  type ProjectFormState,
+  type ProjectImageRow,
+  type ProjectMedia,
+  type ProjectMetadata,
+} from "@/types/project";
+import { move, toSelectOptions } from "@/utils/utils";
 
 import { ProjectFormImageTile } from "./ProjectFormImageTile";
-
-interface ProjectImageRow {
-  url: string;
-  publicId?: string;
-}
-
-interface ProjectMedia {
-  slug: string;
-  thumbnail?: string;
-  thumbnailPublicId?: string;
-  images: string[];
-  imagePublicIds?: string[];
-}
-
-interface ProjectFormState {
-  title: string;
-  category: string;
-  description: string;
-  client: string;
-  year: number | string;
-  location: string;
-  area: string;
-  withCollaboration: string;
-}
-
-function rowsFromProject(project: ProjectMedia): ProjectImageRow[] {
-  const rows = project.images.map((url, i) => ({
-    url,
-    publicId: project.imagePublicIds?.[i],
-  }));
-  if (!rows.length || !project.thumbnail) return rows;
-  const coverAt = rows.findIndex((r) => r.url === project.thumbnail);
-  if (coverAt <= 0) return rows;
-  const next = [...rows];
-  const [cover] = next.splice(coverAt, 1);
-  next.unshift(cover);
-  return next;
-}
-
-function moveRow<T>(items: T[], from: number, to: number): T[] {
-  const next = [...items];
-  const [item] = next.splice(from, 1);
-  next.splice(to, 0, item);
-  return next;
-}
 
 export default function ProjectForm() {
   const { id } = useParams();
@@ -87,6 +55,7 @@ export default function ProjectForm() {
     location: "",
     area: "",
     withCollaboration: "",
+    status: ProjectStatus.PUBLISHED,
   });
   const [typologies, setTypologies] = useState<string[]>([]);
   const [project, setProject] = useState<ProjectMedia | null>(null);
@@ -104,6 +73,9 @@ export default function ProjectForm() {
   const [metadata, setMetadata] = useState<ProjectMetadata>({});
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
   const [captionUrl, setCaptionUrl] = useState<string | null>(null);
+  const [fieldDefinitions, setFieldDefinitions] = useState<
+    ProjectFieldDefinition[]
+  >([]);
 
   const isReordered = useMemo(
     () =>
@@ -129,6 +101,15 @@ export default function ProjectForm() {
       return [...prev, trimmed].sort((a, b) => a.localeCompare(b));
     });
   };
+
+  useEffect(() => {
+    portfolioSectionApi
+      .getSection()
+      .then((res) => {
+        if (res.data?.success) setFieldDefinitions(res.data.data.fields ?? []);
+      })
+      .catch(() => toast.error("Failed to load project fields"));
+  }, []);
 
   useEffect(() => {
     appearanceApi
@@ -158,7 +139,7 @@ export default function ProjectForm() {
           const p = res.data.data as ProjectMedia &
             ProjectFormState & { metadata?: ProjectMetadata };
           setProject(p);
-          const rows = rowsFromProject(p);
+          const rows = projectImageRows(p);
           setSavedImageRows(rows);
           setImageRows(rows);
           setMetadata(p.metadata ?? {});
@@ -166,11 +147,12 @@ export default function ProjectForm() {
             title: p.title,
             category: p.category ?? "",
             description: p.description,
-            client: p.client,
-            year: p.year,
-            location: p.location,
+            client: p.client ?? "",
+            year: p.year ?? "",
+            location: p.location ?? "",
             area: p.area ?? "",
             withCollaboration: p.withCollaboration ?? "",
+            status: p.status ?? ProjectStatus.PUBLISHED,
           });
         })
         .catch(() => {
@@ -219,11 +201,6 @@ export default function ProjectForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.category.trim()) {
-      toast.error("Typology is required");
-      return;
-    }
-
     setSaving(true);
     let message = "Save failed";
     let isError = true;
@@ -231,10 +208,12 @@ export default function ProjectForm() {
     try {
       const payload = {
         ...form,
-        year: Number(form.year),
+        year: form.year === "" ? null : Number(form.year),
         category: form.category.trim(),
-        area: form.area.trim() || undefined,
-        withCollaboration: form.withCollaboration.trim() || undefined,
+        client: form.client.trim() || null,
+        location: form.location.trim() || null,
+        area: form.area.trim() || null,
+        withCollaboration: form.withCollaboration.trim() || null,
         thumbnail: "",
         metadata,
       };
@@ -318,7 +297,7 @@ export default function ProjectForm() {
       const updated = await projectsApi.getById(id);
       const p = updated.data.data as ProjectMedia;
       setProject(p);
-      const rows = rowsFromProject(p);
+      const rows = projectImageRows(p);
       syncRowsToProject(rows);
       toast.success("Image removed");
     } catch {
@@ -415,6 +394,7 @@ export default function ProjectForm() {
             metadata={metadata}
             onMetadataChange={setMetadata}
             typologyOptions={typologyOptions}
+            fields={fieldDefinitions}
           />
 
           <div className="flex justify-end pt-2">
@@ -503,7 +483,7 @@ export default function ProjectForm() {
                 count={pendingImages.length}
                 listId={DragList.PROJECT_IMAGES_PENDING}
                 onMove={(from, to) =>
-                  setPendingImages((prev) => moveRow(prev, from, to))
+                  setPendingImages((prev) => move(prev, from, to))
                 }
                 onDelete={() =>
                   setPendingImages((prev) => prev.filter((_, j) => j !== i))
@@ -523,7 +503,7 @@ export default function ProjectForm() {
                 count={imageRows.length}
                 listId={DragList.PROJECT_IMAGES}
                 onMove={(from, to) =>
-                  setImageRows((prev) => moveRow(prev, from, to))
+                  setImageRows((prev) => move(prev, from, to))
                 }
                 onDelete={() => handleImageDelete(i)}
                 deleting={deletingImage === i}
@@ -591,7 +571,7 @@ export default function ProjectForm() {
             setMetadata(nextMetadata);
             if (isNew || !id) return;
             const res = await projectsApi.update(id, {
-              metadata: nextMetadata,
+              metadata: { imageCaptions: nextMetadata.imageCaptions },
             });
             if (!res.data?.success) {
               throw new Error(
