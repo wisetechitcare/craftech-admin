@@ -12,12 +12,19 @@ import {
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
+import ProjectFieldsCard from "./ProjectFieldsCard";
 
 import { PORTFOLIO_IMAGE_STYLE_OPTIONS } from "@/lib/constants/portfolio/image-style";
 import {
   PORTFOLIO_SECTION_FIELDS,
   PORTFOLIO_VISIBILITY_KEY,
+  type PortfolioSectionCopy,
 } from "@/lib/constants/portfolio";
+import {
+  PROJECT_CARD_FIELD_LIMIT,
+  PROJECT_FIELD_LABEL_MAX,
+  PROJECT_FIELD_LIMIT,
+} from "@/lib/constants/projects";
 import { appearanceApi, portfolioSectionApi } from "@/services/api";
 import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
 import type { PortfolioSectionContent } from "@/types/portfolio";
@@ -36,12 +43,67 @@ const ProjectsSectionPanel = () => {
     eyebrow: "",
     title: "",
     description: "",
+    viewAllLabel: "",
   });
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
   const [loading, setLoading] = useState(true);
+  const [savingFields, setSavingFields] = useState<boolean>(false);
 
   const sectionVisible = isVisible(visibility, PORTFOLIO_VISIBILITY_KEY);
+  const sectionCopy: PortfolioSectionCopy = {
+    eyebrow: section.eyebrow,
+    title: section.title,
+    description: section.description,
+    viewAllLabel: section.viewAllLabel,
+  };
+
+  const saveFields = async () => {
+    const fields = section.fields ?? [];
+    if (fields.length > PROJECT_FIELD_LIMIT) {
+      toast.error(
+        `A website can configure at most ${PROJECT_FIELD_LIMIT} project fields`,
+      );
+      return;
+    }
+    if (
+      fields.some(
+        (field) =>
+          !field.label.trim() ||
+          field.label.trim().length > PROJECT_FIELD_LABEL_MAX,
+      )
+    ) {
+      toast.error(
+        `Field labels must be 1–${PROJECT_FIELD_LABEL_MAX} characters`,
+      );
+      return;
+    }
+    if (
+      fields.filter((field) => field.enabled && field.showOnCard).length >
+      PROJECT_CARD_FIELD_LIMIT
+    ) {
+      toast.error(
+        `At most ${PROJECT_CARD_FIELD_LIMIT} fields can be shown on project cards`,
+      );
+      return;
+    }
+    setSavingFields(true);
+    let message = "Failed to save project fields";
+    let isError = true;
+    try {
+      const response = await portfolioSectionApi.updateSection(section);
+      message = response.data?.message || "Project fields saved";
+      if (response.data?.success) {
+        isError = false;
+        setSection(response.data.data);
+      }
+    } catch {
+      message = "Failed to save project fields";
+    } finally {
+      toast[isError ? "error" : "success"](message);
+      setSavingFields(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -121,12 +183,38 @@ const ProjectsSectionPanel = () => {
           name="Projects"
           description="Shown above the project cards on the homepage. Leave a field empty to use the site default."
           fields={PORTFOLIO_SECTION_FIELDS}
-          content={section}
-          onChange={setSection}
-          onSave={portfolioSectionApi.updateSection}
+          content={sectionCopy}
+          onChange={(content) =>
+            setSection((current) => ({ ...current, ...content }))
+          }
+          onSave={async (content) => {
+            const response = await portfolioSectionApi.updateSection(content);
+            const saved = response.data.data;
+            return {
+              ...response,
+              data: {
+                ...response.data,
+                data: {
+                  eyebrow: saved.eyebrow,
+                  title: saved.title,
+                  description: saved.description,
+                  viewAllLabel: saved.viewAllLabel,
+                },
+              },
+            };
+          }}
           visibilityKey={PORTFOLIO_VISIBILITY_KEY}
           visibility={visibility}
           onVisibilityChange={setVisibility}
+        />
+
+        <ProjectFieldsCard
+          fields={section.fields ?? []}
+          onChange={(fields) =>
+            setSection((current) => ({ ...current, fields }))
+          }
+          onSave={saveFields}
+          saving={savingFields}
         />
       </PreviewPanel>
     </div>

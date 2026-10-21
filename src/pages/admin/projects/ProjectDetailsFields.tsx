@@ -1,30 +1,31 @@
 import RichTextField from "@/components/admin/ui/RichTextField";
-import SelectField from "@/components/admin/ui/SelectField";
+import SelectField, {
+  type SelectOption,
+} from "@/components/admin/ui/SelectField";
+import InputField from "@/components/admin/ui/InputField";
 import {
   VisibilityToggle,
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
+import { Switch } from "@/components/ui/switch";
 
+import {
+  PROJECT_BUILT_IN_FIELDS,
+  PROJECT_FIELD_BODY_DEFAULTS,
+} from "@/lib/constants/projects";
 import { richTextToPlain, toRichText } from "@/lib/editor";
 import {
-  PROJECT_FIELD_BODY_DEFAULTS,
-  PROJECT_RICH_FIELDS,
-} from "@/lib/constants/projects";
-import type { ProjectContentField, ProjectMetadata } from "@/types/project";
+  PROJECT_CONTENT_FIELDS,
+  ProjectFieldType,
+  ProjectStatus,
+  type ProjectContentField,
+  type ProjectCustomValue,
+  type ProjectFieldDefinition,
+  type ProjectFormState,
+  type ProjectMetadata,
+} from "@/types/project";
 import type { RichTextDocument } from "@/types/rich-text";
-import type { SelectOption } from "@/components/admin/ui/SelectField";
-
-interface ProjectFormState {
-  title: string;
-  category: string;
-  description: string;
-  client: string;
-  year: number | string;
-  location: string;
-  area: string;
-  withCollaboration: string;
-}
 
 interface ProjectDetailsFieldsProps {
   form: ProjectFormState;
@@ -32,6 +33,7 @@ interface ProjectDetailsFieldsProps {
   metadata: ProjectMetadata;
   onMetadataChange: (next: ProjectMetadata) => void;
   typologyOptions: SelectOption[];
+  fields: ProjectFieldDefinition[];
 }
 
 const fieldToggle = (
@@ -45,11 +47,43 @@ const fieldToggle = (
   />
 );
 
-const richForField = (
+const fieldValue = (
+  field: ProjectFieldDefinition,
+  form: ProjectFormState,
   metadata: ProjectMetadata,
-  key: ProjectContentField,
-  plain: string,
-): RichTextDocument => metadata.content?.[key] ?? toRichText(plain);
+): ProjectCustomValue => {
+  const usesCustomStorage =
+    !PROJECT_BUILT_IN_FIELDS[field.key] ||
+    PROJECT_BUILT_IN_FIELDS[field.key] !== field.type;
+  if (
+    usesCustomStorage &&
+    Object.prototype.hasOwnProperty.call(metadata.customValues ?? {}, field.key)
+  ) {
+    return metadata.customValues?.[field.key] ?? "";
+  }
+  if (field.key === "shortDescription") {
+    return metadata.content?.shortDescription ?? toRichText("");
+  }
+  if (field.key === "tags") return metadata.tags ?? [];
+  const rich = metadata.content?.[field.key as ProjectContentField];
+  if (rich) {
+    return field.type === ProjectFieldType.RICH_TEXT
+      ? rich
+      : richTextToPlain(rich);
+  }
+  if (field.key in form) {
+    return form[field.key as keyof ProjectFormState] as string | number;
+  }
+  return metadata.customValues?.[field.key] ?? "";
+};
+
+const plainValue = (value: ProjectCustomValue): string => {
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "object" && value !== null) {
+    return richTextToPlain(value);
+  }
+  return String(value ?? "");
+};
 
 export function ProjectDetailsFields({
   form,
@@ -57,97 +91,204 @@ export function ProjectDetailsFields({
   metadata,
   onMetadataChange,
   typologyOptions,
+  fields,
 }: ProjectDetailsFieldsProps) {
   const visibility = metadata.visibility ?? {};
-
   const setVisibility = (next: VisibilityMap) =>
     onMetadataChange({ ...metadata, visibility: next });
 
   const patchRich = (key: ProjectContentField, doc: RichTextDocument) => {
-    const plain = richTextToPlain(doc);
-    const content = { ...metadata.content, [key]: doc };
-    onMetadataChange({ ...metadata, content });
-    const next = { ...form };
-    switch (key) {
-      case "title":
-        next.title = plain;
-        break;
-      case "category":
-        next.category = plain;
-        break;
-      case "client":
-        next.client = plain;
-        break;
-      case "year":
-        next.year = plain.replace(/\D/g, "").slice(0, 4) || plain;
-        break;
-      case "location":
-        next.location = plain;
-        break;
-      case "area":
-        next.area = plain;
-        break;
-      case "withCollaboration":
-        next.withCollaboration = plain;
-        break;
-      case "description":
-        next.description = plain;
-        break;
-      default: {
-        const _exhaustive: never = key;
-        return _exhaustive;
-      }
+    onMetadataChange({
+      ...metadata,
+      content: { ...metadata.content, [key]: doc },
+    });
+    if (key === "shortDescription") return;
+    if (key in form) {
+      const plain = richTextToPlain(doc);
+      onFormChange({
+        ...form,
+        [key]: key === "year" ? plain.replace(/\D/g, "").slice(0, 4) : plain,
+      });
     }
-    onFormChange(next);
+  };
+
+  const patchCustom = (key: string, value: ProjectCustomValue) =>
+    onMetadataChange({
+      ...metadata,
+      customValues: { ...metadata.customValues, [key]: value },
+    });
+
+  const patchValue = (
+    field: ProjectFieldDefinition,
+    value: ProjectCustomValue,
+  ) => {
+    const usesNativeStorage = PROJECT_BUILT_IN_FIELDS[field.key] === field.type;
+    if (!usesNativeStorage) {
+      patchCustom(field.key, value);
+    } else if (field.key === "tags") {
+      onMetadataChange({ ...metadata, tags: value as string[] });
+    } else if (field.key in form) {
+      onFormChange({ ...form, [field.key]: value });
+      if (PROJECT_CONTENT_FIELDS.includes(field.key as ProjectContentField)) {
+        onMetadataChange({
+          ...metadata,
+          content: {
+            ...metadata.content,
+            [field.key]: toRichText(String(value ?? "")),
+          },
+        });
+      }
+    } else {
+      patchCustom(field.key, value);
+    }
+  };
+
+  const renderField = (field: ProjectFieldDefinition) => {
+    const value = fieldValue(field, form, metadata);
+    const toggle = fieldToggle(visibility, field.key, setVisibility);
+    const usesNativeStorage = PROJECT_BUILT_IN_FIELDS[field.key] === field.type;
+
+    if (field.key === "category" && usesNativeStorage) {
+      return (
+        <SelectField
+          label={field.label}
+          required={field.required}
+          creatable
+          value={form.category}
+          onValueChange={(category) => patchValue(field, category)}
+          options={typologyOptions}
+          placeholder="Type or choose from the list"
+          labelAction={toggle}
+        />
+      );
+    }
+
+    if (field.type === ProjectFieldType.RICH_TEXT) {
+      const rich =
+        typeof value === "object" && value !== null && !Array.isArray(value)
+          ? value
+          : toRichText(String(value ?? ""));
+      return (
+        <RichTextField
+          label={field.label}
+          required={field.required}
+          value={rich}
+          onChange={(doc) =>
+            usesNativeStorage &&
+            (field.key === "shortDescription" || field.key === "description")
+              ? patchRich(field.key, doc)
+              : patchCustom(field.key, doc)
+          }
+          defaults={PROJECT_FIELD_BODY_DEFAULTS}
+          labelAction={toggle}
+          className={field.key === "description" ? "min-h-40" : undefined}
+        />
+      );
+    }
+
+    if (field.type === ProjectFieldType.SELECT) {
+      return (
+        <SelectField
+          label={field.label}
+          required={field.required}
+          value={plainValue(value)}
+          onValueChange={(next) => patchValue(field, next)}
+          options={(field.options ?? []).map((option) => ({
+            value: option,
+            label: option,
+          }))}
+          labelAction={toggle}
+        />
+      );
+    }
+
+    if (field.type === ProjectFieldType.BOOLEAN) {
+      return (
+        <div className="flex min-h-11 items-center justify-between rounded-lg border border-line bg-paper px-4 py-3">
+          <span className="text-sm font-medium text-ink">{field.label}</span>
+          <div className="flex items-center gap-3">
+            {toggle}
+            <Switch
+              checked={
+                value === true ||
+                ["true", "yes", "1"].includes(plainValue(value).toLowerCase())
+              }
+              onCheckedChange={(next) => patchValue(field, next)}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    const list = plainValue(value);
+    return (
+      <InputField
+        label={field.label}
+        required={field.required}
+        type={
+          field.type === ProjectFieldType.NUMBER
+            ? "number"
+            : field.type === ProjectFieldType.DATE
+              ? "date"
+              : field.type === ProjectFieldType.URL
+                ? "url"
+                : "text"
+        }
+        value={list}
+        onChange={(event) => {
+          const next = event.target.value;
+          patchValue(
+            field,
+            field.type === ProjectFieldType.MULTI_SELECT
+              ? next
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : field.type === ProjectFieldType.NUMBER
+                ? next === ""
+                  ? ""
+                  : Number(next)
+                : next,
+          );
+        }}
+        placeholder={
+          field.type === ProjectFieldType.MULTI_SELECT
+            ? "Comma-separated values"
+            : undefined
+        }
+        labelAction={toggle}
+      />
+    );
   };
 
   return (
-    <div className=" space-y-4">
-      {PROJECT_RICH_FIELDS.map((field) => {
-        const toggle = fieldToggle(visibility, field.key, setVisibility);
-        const wrapClass = field.wide ? "sm:col-span-2" : undefined;
-
-        if (field.key === "category") {
-          return (
-            <div key={field.key} className={wrapClass}>
-              <SelectField
-                label={field.label}
-                required={field.required}
-                creatable
-                value={form.category}
-                onValueChange={(category) =>
-                  onFormChange({ ...form, category })
-                }
-                options={typologyOptions}
-                placeholder="Type or choose from the list"
-                tooltip="Start typing for a new typology, or pick one from the dropdown. Saved projects add to the list."
-                labelAction={toggle}
-              />
-            </div>
-          );
+    <div className="space-y-4">
+      <RichTextField
+        label="Project title"
+        required
+        value={metadata.content?.title ?? toRichText(form.title)}
+        onChange={(doc) => patchRich("title", doc)}
+        defaults={PROJECT_FIELD_BODY_DEFAULTS}
+        labelAction={fieldToggle(visibility, "title", setVisibility)}
+      />
+      {fields
+        .filter((field) => field.enabled)
+        .sort((a, b) => a.order - b.order)
+        .map((field) => (
+          <div key={field.key}>{renderField(field)}</div>
+        ))}
+      <SelectField
+        label="Publication status"
+        value={form.status}
+        onValueChange={(status) =>
+          onFormChange({ ...form, status: status as ProjectStatus })
         }
-
-        const plain =
-          field.key === "year"
-            ? String(form.year)
-            : String(form[field.key] ?? "");
-
-        return (
-          <div key={field.key} className={wrapClass}>
-            <RichTextField
-              label={field.label}
-              required={field.required}
-              value={richForField(metadata, field.key, plain)}
-              onChange={(doc) => patchRich(field.key, doc)}
-              defaults={PROJECT_FIELD_BODY_DEFAULTS}
-              placeholder={field.placeholder}
-              tooltip={field.tooltip}
-              labelAction={toggle}
-              className={field.key === "description" ? "min-h-40" : undefined}
-            />
-          </div>
-        );
-      })}
+        options={[
+          { value: ProjectStatus.DRAFT, label: "Draft" },
+          { value: ProjectStatus.PUBLISHED, label: "Published" },
+          { value: ProjectStatus.ARCHIVED, label: "Archived" },
+        ]}
+      />
     </div>
   );
 }
