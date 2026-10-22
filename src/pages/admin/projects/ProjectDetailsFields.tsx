@@ -13,12 +13,12 @@ import { Switch } from "@/components/ui/switch";
 import {
   PROJECT_BUILT_IN_FIELDS,
   PROJECT_FIELD_BODY_DEFAULTS,
+  PROJECT_FIELD_LABEL_MAX,
 } from "@/lib/constants/projects";
 import { richTextToPlain, toRichText } from "@/lib/editor";
 import {
   PROJECT_CONTENT_FIELDS,
   ProjectFieldType,
-  ProjectStatus,
   type ProjectContentField,
   type ProjectCustomValue,
   type ProjectFieldDefinition,
@@ -118,6 +118,12 @@ export function ProjectDetailsFields({
       customValues: { ...metadata.customValues, [key]: value },
     });
 
+  const patchButtonLabel = (key: string, label: string) =>
+    onMetadataChange({
+      ...metadata,
+      buttonLabels: { ...metadata.buttonLabels, [key]: label },
+    });
+
   const patchValue = (
     field: ProjectFieldDefinition,
     value: ProjectCustomValue,
@@ -202,6 +208,32 @@ export function ProjectDetailsFields({
       );
     }
 
+    if (field.type === ProjectFieldType.URL) {
+      return (
+        <div className="grid gap-4 md:grid-cols-2">
+          <InputField
+            label={field.label}
+            required={field.required}
+            type="url"
+            value={plainValue(value)}
+            onChange={(event) => patchValue(field, event.target.value)}
+            placeholder="https://example.com"
+            labelAction={toggle}
+          />
+          <InputField
+            label="Button label"
+            value={metadata.buttonLabels?.[field.key] ?? ""}
+            maxLength={PROJECT_FIELD_LABEL_MAX}
+            maxChars={PROJECT_FIELD_LABEL_MAX}
+            onChange={(event) =>
+              patchButtonLabel(field.key, event.target.value)
+            }
+            placeholder={field.buttonLabel?.trim() || "Visit website"}
+          />
+        </div>
+      );
+    }
+
     if (field.type === ProjectFieldType.BOOLEAN) {
       return (
         <div className="flex min-h-11 items-center justify-between rounded-lg border border-line bg-paper px-4 py-3">
@@ -230,9 +262,7 @@ export function ProjectDetailsFields({
             ? "number"
             : field.type === ProjectFieldType.DATE
               ? "date"
-              : field.type === ProjectFieldType.URL
-                ? "url"
-                : "text"
+              : "text"
         }
         value={list}
         onChange={(event) => {
@@ -277,18 +307,6 @@ export function ProjectDetailsFields({
         .map((field) => (
           <div key={field.key}>{renderField(field)}</div>
         ))}
-      <SelectField
-        label="Publication status"
-        value={form.status}
-        onValueChange={(status) =>
-          onFormChange({ ...form, status: status as ProjectStatus })
-        }
-        options={[
-          { value: ProjectStatus.DRAFT, label: "Draft" },
-          { value: ProjectStatus.PUBLISHED, label: "Published" },
-          { value: ProjectStatus.ARCHIVED, label: "Archived" },
-        ]}
-      />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import ModuleHub from "./pages/admin/ModuleHub";
 import ProjectsList from "./pages/admin/projects/ProjectsList";
 import ProjectDetail from "./pages/admin/projects/ProjectDetail";
 import ProjectForm from "./pages/admin/projects/ProjectForm";
+import ProjectFieldsManager from "./pages/admin/projects/ProjectFieldsManager";
 import MediaManager from "./pages/admin/MediaManager";
 
 import HeroCMS from "./pages/admin/cms/HeroCMS";
@@ -33,7 +34,10 @@ import SiteIdentityDomains from "./pages/admin/site-identity/SiteIdentityDomains
 import AppearanceStyle from "./pages/admin/appearance/AppearanceStyle";
 import { PreviewSection } from "./components/admin/ui/SitePreview";
 import SectionTabs from "./components/admin/ui/SectionTabs";
-import { LEGACY_ADMIN_REDIRECTS } from "./lib/constants/sidebar";
+import {
+  LEGACY_ADMIN_REDIRECTS,
+  PROJECT_SECTION_TABS,
+} from "./lib/constants/sidebar";
 import SiteIdentityLayout from "./pages/admin/site-identity/SiteIdentityLayout";
 import SiteIdentityBranding from "./pages/admin/site-identity/SiteIdentityBranding";
 import SiteIdentityCursor from "./pages/admin/site-identity/SiteIdentityCursor";
@@ -222,8 +226,9 @@ function App() {
           ))}
           <Route path="features" element={<FeaturesCMS />} />
           <Route path="projects">
-            <Route element={<SectionTabs />}>
+            <Route element={<SectionTabs tabs={PROJECT_SECTION_TABS} />}>
               <Route index element={<ProjectsList />} />
+              <Route path="fields" element={<ProjectFieldsManager />} />
               <Route
                 path="appearance"
                 element={

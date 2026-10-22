@@ -12,7 +12,6 @@ import {
   isVisible,
   type VisibilityMap,
 } from "@/components/admin/ui/VisibilityToggle";
-import ProjectFieldsCard from "./ProjectFieldsCard";
 
 import { PORTFOLIO_IMAGE_STYLE_OPTIONS } from "@/lib/constants/portfolio/image-style";
 import {
@@ -20,11 +19,6 @@ import {
   PORTFOLIO_VISIBILITY_KEY,
   type PortfolioSectionCopy,
 } from "@/lib/constants/portfolio";
-import {
-  PROJECT_CARD_FIELD_LIMIT,
-  PROJECT_FIELD_LABEL_MAX,
-  PROJECT_FIELD_LIMIT,
-} from "@/lib/constants/projects";
 import { appearanceApi, portfolioSectionApi } from "@/services/api";
 import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
 import type { PortfolioSectionContent } from "@/types/portfolio";
@@ -48,7 +42,6 @@ const ProjectsSectionPanel = () => {
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
   const [loading, setLoading] = useState(true);
-  const [savingFields, setSavingFields] = useState<boolean>(false);
 
   const sectionVisible = isVisible(visibility, PORTFOLIO_VISIBILITY_KEY);
   const sectionCopy: PortfolioSectionCopy = {
@@ -58,53 +51,6 @@ const ProjectsSectionPanel = () => {
     viewAllLabel: section.viewAllLabel,
   };
 
-  const saveFields = async () => {
-    const fields = section.fields ?? [];
-    if (fields.length > PROJECT_FIELD_LIMIT) {
-      toast.error(
-        `A website can configure at most ${PROJECT_FIELD_LIMIT} project fields`,
-      );
-      return;
-    }
-    if (
-      fields.some(
-        (field) =>
-          !field.label.trim() ||
-          field.label.trim().length > PROJECT_FIELD_LABEL_MAX,
-      )
-    ) {
-      toast.error(
-        `Field labels must be 1–${PROJECT_FIELD_LABEL_MAX} characters`,
-      );
-      return;
-    }
-    if (
-      fields.filter((field) => field.enabled && field.showOnCard).length >
-      PROJECT_CARD_FIELD_LIMIT
-    ) {
-      toast.error(
-        `At most ${PROJECT_CARD_FIELD_LIMIT} fields can be shown on project cards`,
-      );
-      return;
-    }
-    setSavingFields(true);
-    let message = "Failed to save project fields";
-    let isError = true;
-    try {
-      const response = await portfolioSectionApi.updateSection(section);
-      message = response.data?.message || "Project fields saved";
-      if (response.data?.success) {
-        isError = false;
-        setSection(response.data.data);
-      }
-    } catch {
-      message = "Failed to save project fields";
-    } finally {
-      toast[isError ? "error" : "success"](message);
-      setSavingFields(false);
-    }
-  };
-
   useEffect(() => {
     const load = async () => {
       try {
@@ -112,9 +58,7 @@ const ProjectsSectionPanel = () => {
           portfolioSectionApi.getSection(),
           appearanceApi.get(),
         ]);
-        if (sectionRes.data?.success) {
-          setSection(sectionRes.data.data);
-        }
+        if (sectionRes.data?.success) setSection(sectionRes.data.data);
         if (appearanceRes.data?.success) {
           setVisibility(appearanceRes.data.data.visibility ?? {});
           setImageStyles(appearanceRes.data.data.imageStyles);
@@ -206,15 +150,6 @@ const ProjectsSectionPanel = () => {
           visibilityKey={PORTFOLIO_VISIBILITY_KEY}
           visibility={visibility}
           onVisibilityChange={setVisibility}
-        />
-
-        <ProjectFieldsCard
-          fields={section.fields ?? []}
-          onChange={(fields) =>
-            setSection((current) => ({ ...current, fields }))
-          }
-          onSave={saveFields}
-          saving={savingFields}
         />
       </PreviewPanel>
     </div>

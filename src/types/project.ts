@@ -25,6 +25,12 @@ export enum ProjectFieldType {
   URL = "url",
 }
 
+export enum ProjectFieldPlacement {
+  CARD = "card",
+  DETAIL = "detail",
+  BOTH = "both",
+}
+
 export enum ProjectStatus {
   DRAFT = "draft",
   PUBLISHED = "published",
@@ -41,6 +47,7 @@ export interface ProjectFieldDefinition {
   showOnDetail: boolean;
   order: number;
   options?: string[];
+  buttonLabel?: string;
 }
 
 export type ProjectCustomValue =
@@ -85,4 +92,5 @@ export interface ProjectMetadata {
   imageCaptions?: Record<string, ProjectImageCaption>;
   tags?: string[];
   customValues?: Record<string, ProjectCustomValue>;
+  buttonLabels?: Record<string, string>;
 }

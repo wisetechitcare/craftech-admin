@@ -90,10 +90,8 @@ export const PROJECT_LEGACY_FIELDS: ProjectFieldDefinition[] = [
 
 export const PROJECT_FIELD_TYPE_OPTIONS = [
   { value: ProjectFieldType.TEXT, label: "Text" },
-  { value: ProjectFieldType.RICH_TEXT, label: "Rich text" },
   { value: ProjectFieldType.NUMBER, label: "Number" },
   { value: ProjectFieldType.DATE, label: "Date" },
-  { value: ProjectFieldType.BOOLEAN, label: "Yes / No" },
   { value: ProjectFieldType.SELECT, label: "Select" },
   { value: ProjectFieldType.MULTI_SELECT, label: "Multi-select" },
   { value: ProjectFieldType.URL, label: "URL" },
