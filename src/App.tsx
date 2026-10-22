@@ -13,6 +13,7 @@ import AdminLayout from "./components/admin/Layout";
 import DashboardHome from "./pages/admin/DashboardHome";
 import ModuleHub from "./pages/admin/ModuleHub";
 import ProjectsList from "./pages/admin/projects/ProjectsList";
+import ProjectDetail from "./pages/admin/projects/ProjectDetail";
 import ProjectForm from "./pages/admin/projects/ProjectForm";
 import MediaManager from "./pages/admin/MediaManager";
 
@@ -220,9 +221,27 @@ function App() {
             />
           ))}
           <Route path="features" element={<FeaturesCMS />} />
-          <Route path="projects" element={<ProjectsList />} />
-          <Route path="projects/new" element={<ProjectForm />} />
-          <Route path="projects/:id" element={<ProjectForm />} />
+          <Route path="projects">
+            <Route element={<SectionTabs />}>
+              <Route index element={<ProjectsList />} />
+              <Route
+                path="appearance"
+                element={
+                  <AppearanceStyle
+                    key="portfolio"
+                    field="portfolioVariant"
+                    label="Projects Style"
+                    section={PreviewSection.PORTFOLIO}
+                    viewportHeight={1600}
+                    note="One style for the homepage Projects section and the /projects page. Project entries and section copy are edited on the Content tab."
+                  />
+                }
+              />
+            </Route>
+            <Route path="new" element={<ProjectForm />} />
+            <Route path=":id/edit" element={<ProjectForm />} />
+            <Route path=":id" element={<ProjectDetail />} />
+          </Route>
           <Route path="media" element={<MediaManager />} />
           <Route path="media-library" element={<MediaLibrary />} />
           <Route path="testimonials" element={<TestimonialsList />} />
@@ -246,7 +265,7 @@ function App() {
                     field="heroVariant"
                     label="Site Theme"
                     section={PreviewSection.SITE}
-                    viewportHeight={5600}
+                    viewportHeight={6800}
                   />
                 }
               />

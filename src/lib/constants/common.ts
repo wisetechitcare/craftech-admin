@@ -46,7 +46,11 @@ export const PHONE_ERROR_MESSAGE =
   "Enter 10 to 18 digits, with or without a + country code";
 
 export const SELECT_EMPTY_MESSAGE = "No options found";
-// export const SELECT_CREATABLE_EMPTY_MESSAGE =
-//   "No matching options found. Continue typing to create a new one.";
+export const SELECT_CREATABLE_EMPTY_MESSAGE =
+  "No matches. Keep typing to use a new typology.";
 export const SELECT_SEARCH_PLACEHOLDER = "Search...";
 export const SELECT_LOADING_PLACEHOLDER = "Loading options...";
+
+/** Gray tile when a project has no photos yet (HMS carousel fallback). */
+export const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e8eaed' width='400' height='300'/%3E%3C/svg%3E";

@@ -16,4 +16,5 @@ export const SECTION_VARIANT_FIELDS = [
   "contactVariant",
   "galleryVariant",
   "clientsVariant",
+  "portfolioVariant",
 ] as const;

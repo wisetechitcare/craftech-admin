@@ -24,7 +24,8 @@ const PageHeader = ({
         {count !== undefined && (
           <span className="font-normal text-ink-faint">
             {" "}
-            ({count}/{max})
+            ({count}
+            {max !== undefined ? `/${max}` : ""})
           </span>
         )}
       </h2>

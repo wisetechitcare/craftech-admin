@@ -6,6 +6,7 @@ import type { AppearanceUpdatePayload } from "@/types/appearance";
 import type { ContactSectionContent } from "@/types/contact";
 import type { FaqItem, FaqSectionContent } from "@/types/faq";
 import type { GalleryImage, GallerySectionContent } from "@/types/gallery";
+import type { PortfolioSectionContent } from "@/types/portfolio";
 import type { HeroContent } from "@/types/hero";
 import type { ClientRecord, ClientsSectionContent } from "@/types/clients";
 import type { SiteSettings } from "@/types/settings";
@@ -18,6 +19,7 @@ export enum PreviewSection {
   ABOUT = "about",
   FAQ = "faq",
   GALLERY = "gallery",
+  PORTFOLIO = "portfolio",
   /** The first posted gallery image alone, its caption held open. */
   GALLERY_CAPTION = "gallery-caption",
   CONTACT = "contact",
@@ -34,6 +36,7 @@ export interface PreviewDraft {
   aboutContent?: AboutContent;
   faqContent?: { faqs: FaqItem[]; section: FaqSectionContent };
   galleryContent?: { images: GalleryImage[]; section: GallerySectionContent };
+  portfolioSection?: PortfolioSectionContent;
   contactContent?: { section: ContactSectionContent };
   clientsContent?: { section: ClientsSectionContent };
   clientsList?: ClientRecord[];

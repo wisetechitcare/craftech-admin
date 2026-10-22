@@ -19,6 +19,7 @@ import type {
   GallerySectionContent,
 } from "../types/gallery";
 import type { HeroContent, HeroResponse } from "../types/hero";
+import type { PortfolioSectionContent } from "../types/portfolio";
 import type { FontPage, FontQuery } from "../types/rich-text";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
@@ -183,12 +184,29 @@ export const tenantsApi = {
 };
 
 // ── Projects ─────────────────────────────────────────────────────────────────
+export const portfolioSectionApi = {
+  getSection: () =>
+    api.get<{
+      success: boolean;
+      message?: string;
+      data: PortfolioSectionContent;
+    }>("/cms/projects/section"),
+  updateSection: (data: PortfolioSectionContent) =>
+    api.put<{
+      success: boolean;
+      message?: string;
+      data: PortfolioSectionContent;
+    }>("/cms/projects/section", data),
+};
+
 export const projectsApi = {
   getAll: (params?: any) => api.get("/projects", { params }),
+  getTypologies: () => api.get("/projects/typologies"),
   getById: (id: string) => api.get(`/projects/${id}`),
   create: (data: any) => api.post("/projects", data),
   update: (id: string, data: any) => api.put(`/projects/${id}`, data),
   delete: (id: string) => api.delete(`/projects/${id}`),
+  reorder: (ids: string[]) => api.put("/projects/reorder", { ids }),
   addImages: (id: string, data: any) =>
     api.post(`/projects/${id}/images`, data),
   removeImage: (id: string, imageIndex: number) =>
