@@ -41,7 +41,7 @@ const ProjectsSectionPanel = () => {
   });
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const sectionVisible = isVisible(visibility, PORTFOLIO_VISIBILITY_KEY);
   const sectionCopy: PortfolioSectionCopy = {
@@ -116,7 +116,7 @@ const ProjectsSectionPanel = () => {
         {imageStyles ? (
           <ImageStyleCard
             section={ImageStyleSection.PORTFOLIO}
-            description="List thumbnails and detail photos. Inline gallery puts every photo below the project copy."
+            description="How project cards look and behave in every layout, plus the detail page's photos."
             styles={imageStyles}
             onChange={(next) => setImageStyles(withSyncedProjectDetail(next))}
             options={PORTFOLIO_IMAGE_STYLE_OPTIONS}

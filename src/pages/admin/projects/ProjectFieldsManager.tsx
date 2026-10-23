@@ -3,19 +3,19 @@ import { isAxiosError } from "axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
-import { PageHeader } from "@/components/common";
 import ProjectFieldsCard from "./ProjectFieldsCard";
 
 import {
   PROJECT_CARD_FIELD_LIMIT,
   PROJECT_FIELD_LABEL_MAX,
   PROJECT_FIELD_LIMIT,
+  PROJECT_FIELD_OPTION_LIMIT,
+  PROJECT_FIELD_OPTION_MAX,
+  PROJECT_TAGS_FIELD_KEY,
 } from "@/lib/constants/projects";
+import { usesCardSlot } from "@/lib/utils/projects";
 import { portfolioSectionApi } from "@/services/api";
 import { ProjectFieldType, type ProjectFieldDefinition } from "@/types/project";
-
-const FIELD_OPTION_LIMIT = 50;
-const FIELD_OPTION_MAX = 80;
 
 const validationMessage = (fields: ProjectFieldDefinition[]): string | null => {
   if (fields.length > PROJECT_FIELD_LIMIT) {
@@ -37,7 +37,8 @@ const validationMessage = (fields: ProjectFieldDefinition[]): string | null => {
           field.type,
         ) &&
         !(
-          field.key === "tags" && field.type === ProjectFieldType.MULTI_SELECT
+          field.key === PROJECT_TAGS_FIELD_KEY &&
+          field.type === ProjectFieldType.MULTI_SELECT
         ) &&
         !field.options?.length,
     )
@@ -55,19 +56,17 @@ const validationMessage = (fields: ProjectFieldDefinition[]): string | null => {
   if (
     fields.some(
       (field) =>
-        (field.options?.length ?? 0) > FIELD_OPTION_LIMIT ||
+        (field.options?.length ?? 0) > PROJECT_FIELD_OPTION_LIMIT ||
         field.options?.some(
-          (option) => !option.trim() || option.length > FIELD_OPTION_MAX,
+          (option) =>
+            !option.trim() || option.length > PROJECT_FIELD_OPTION_MAX,
         ),
     )
   ) {
-    return `Fields can have up to ${FIELD_OPTION_LIMIT} options of ${FIELD_OPTION_MAX} characters each`;
+    return `Fields can have up to ${PROJECT_FIELD_OPTION_LIMIT} options of ${PROJECT_FIELD_OPTION_MAX} characters each`;
   }
-  if (
-    fields.filter((field) => field.enabled && field.showOnCard).length >
-    PROJECT_CARD_FIELD_LIMIT
-  ) {
-    return `At most ${PROJECT_CARD_FIELD_LIMIT} fields can be shown on project cards`;
+  if (fields.filter(usesCardSlot).length > PROJECT_CARD_FIELD_LIMIT) {
+    return `At most ${PROJECT_CARD_FIELD_LIMIT} text fields can be shown on project cards`;
   }
   return null;
 };
@@ -75,8 +74,8 @@ const validationMessage = (fields: ProjectFieldDefinition[]): string | null => {
 export default function ProjectFieldsManager() {
   const [fields, setFields] = useState<ProjectFieldDefinition[]>([]);
   const [savedFields, setSavedFields] = useState<ProjectFieldDefinition[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
   const dirty = JSON.stringify(fields) !== JSON.stringify(savedFields);
 
   useEffect(() => {
@@ -101,19 +100,31 @@ export default function ProjectFieldsManager() {
       toast.error(error);
       return;
     }
+    let message = "Failed to save project fields";
+    let isError = true;
     setSaving(true);
+
     try {
       const response = await portfolioSectionApi.updateFields(fields);
-      const saved = response.data.data;
-      setFields(saved);
-      setSavedFields(saved);
-      toast.success(response.data.message || "Project fields saved");
+
+      message = response.data?.message || message;
+
+      if (response.data?.success) {
+        isError = false;
+        setFields(response.data.data);
+        setSavedFields(response.data.data);
+      }
     } catch (error) {
-      const message = isAxiosError<{ message?: string }>(error)
-        ? error.response?.data?.message
-        : undefined;
-      toast.error(message || "Failed to save project fields");
+      if (isAxiosError<{ message?: string }>(error)) {
+        message = error.response?.data?.message || message;
+      }
     } finally {
+      if (isError) {
+        toast.error(message);
+      } else {
+        toast.success(message);
+      }
+
       setSaving(false);
     }
   };
@@ -127,19 +138,13 @@ export default function ProjectFieldsManager() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Project fields"
-        description="Configure reusable project information without changing the Projects section copy."
-      />
-      <ProjectFieldsCard
-        fields={fields}
-        onChange={setFields}
-        onSave={save}
-        onDiscard={() => setFields(savedFields)}
-        saving={saving}
-        dirty={dirty}
-      />
-    </div>
+    <ProjectFieldsCard
+      fields={fields}
+      onChange={setFields}
+      onSave={save}
+      onDiscard={() => setFields(savedFields)}
+      saving={saving}
+      dirty={dirty}
+    />
   );
 }

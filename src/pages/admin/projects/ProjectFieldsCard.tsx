@@ -1,7 +1,10 @@
 import { useState } from "react";
 import {
+  Asterisk,
   ChevronDown,
-  ChevronUp,
+  EyeOff,
+  LayoutGrid,
+  Lock,
   Plus,
   RotateCcw,
   Save,
@@ -22,7 +25,11 @@ import {
   PROJECT_DETAIL_FIELD_WARNING_LIMIT,
   PROJECT_FIELD_LABEL_MAX,
   PROJECT_FIELD_LIMIT,
+  PROJECT_FIELD_PILL_CLASS,
+  PROJECT_FIELD_PLACEMENTS,
+  PROJECT_FIELD_TYPE_LABELS,
   PROJECT_FIELD_TYPE_OPTIONS,
+  PROJECT_UNTITLED_FIELD_LABEL,
 } from "@/lib/constants/projects";
 import { DragList } from "@/lib/constants/drag-lists";
 import {
@@ -30,6 +37,7 @@ import {
   ProjectFieldType,
   type ProjectFieldDefinition,
 } from "@/types/project";
+import { takesCardSlot, usesCardSlot } from "@/lib/utils/projects";
 import { cn, move } from "@/utils/utils";
 
 interface ProjectFieldsCardProps {
@@ -40,16 +48,6 @@ interface ProjectFieldsCardProps {
   saving: boolean;
   dirty: boolean;
 }
-
-const PLACEMENTS = [
-  { value: ProjectFieldPlacement.CARD, label: "Card only" },
-  { value: ProjectFieldPlacement.DETAIL, label: "Detail only" },
-  { value: ProjectFieldPlacement.BOTH, label: "Card + Detail" },
-] as const;
-
-const typeLabel = (type: ProjectFieldType): string =>
-  PROJECT_FIELD_TYPE_OPTIONS.find((option) => option.value === type)?.label ??
-  (type === ProjectFieldType.RICH_TEXT ? "Long text" : "Boolean");
 
 const placementOf = (field: ProjectFieldDefinition): ProjectFieldPlacement => {
   if (field.showOnCard && field.showOnDetail) return ProjectFieldPlacement.BOTH;
@@ -72,12 +70,11 @@ const ProjectFieldsCard = ({
 }: ProjectFieldsCardProps) => {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
-  const cardCount = fields.filter(
-    (field) => field.enabled && field.showOnCard,
-  ).length;
+  const cardCount = fields.filter(usesCardSlot).length;
   const detailCount = fields.filter(
     (field) => field.enabled && field.showOnDetail,
   ).length;
+  const cardSlotsFull = cardCount >= PROJECT_CARD_FIELD_LIMIT;
 
   const patch = (index: number, value: Partial<ProjectFieldDefinition>) =>
     onChange(
@@ -129,8 +126,29 @@ const ProjectFieldsCard = ({
         max={PROJECT_FIELD_LIMIT}
         description="Choose the information each project can store and where it appears. Drag any row to reorder it."
         controls={
-          <span className="rounded-full bg-raise px-3 py-1 text-xs font-semibold text-ink-soft">
+          <span
+            title={`Up to ${PROJECT_CARD_FIELD_LIMIT} text fields can show on project cards. Links and multi-select tags don't count.`}
+            className={cn(
+              PROJECT_FIELD_PILL_CLASS,
+              "gap-2 px-3 py-1.5",
+              cardSlotsFull
+                ? "bg-warn/10 text-warn ring-warn/25"
+                : "bg-brand/10 text-brand ring-brand/25",
+            )}
+          >
+            <LayoutGrid className="size-3.5" />
             Card fields {cardCount}/{PROJECT_CARD_FIELD_LIMIT}
+            <span className="flex gap-1" aria-hidden>
+              {Array.from({ length: PROJECT_CARD_FIELD_LIMIT }, (_, slot) => (
+                <span
+                  key={slot}
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    slot < cardCount ? "bg-current" : "bg-current/25",
+                  )}
+                />
+              ))}
+            </span>
           </span>
         }
       >
@@ -139,50 +157,93 @@ const ProjectFieldsCard = ({
             const builtIn = Boolean(PROJECT_BUILT_IN_FIELDS[field.key]);
             const open = openKey === field.key;
             const placement = placementOf(field);
-            const fieldUsesCard = field.enabled && field.showOnCard;
+            const placementOption = PROJECT_FIELD_PLACEMENTS.find(
+              (item) => item.value === placement,
+            );
+            const PlacementIcon = placementOption?.icon;
             const cardLimitReached =
-              cardCount >= PROJECT_CARD_FIELD_LIMIT && !fieldUsesCard;
-            const fieldTypeLabel = typeLabel(field.type);
+              cardSlotsFull && takesCardSlot(field) && !usesCardSlot(field);
+            const fieldLabel = field.label || PROJECT_UNTITLED_FIELD_LABEL;
 
             return (
               <DragBlock
                 key={field.key}
                 listId={DragList.PROJECT_FIELDS}
                 index={index}
-                label={field.label || "Untitled field"}
+                label={fieldLabel}
                 onMove={moveField}
               >
                 <div className="rounded-xl border border-line bg-raise pt-2">
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                  <Button
+                    variant="none"
+                    className="flex w-full justify-start gap-3 rounded-xl px-4 py-3 text-left"
                     onClick={() => setOpenKey(open ? null : field.key)}
                     aria-expanded={open}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-ink">
-                        {field.label || "Untitled field"}
+                      <span
+                        className={cn(
+                          "block truncate text-sm font-semibold text-ink",
+                          !field.enabled && "text-ink-mute line-through",
+                        )}
+                      >
+                        {fieldLabel}
                       </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-mute">
-                        {builtIn ? (
-                          <span className="rounded-full bg-paper px-2 py-0.5 font-semibold text-ink-soft ring-1 ring-line">
-                            Built-in
+                      <span className="mt-2 flex flex-wrap items-center gap-2">
+                        {placementOption && PlacementIcon ? (
+                          <span
+                            className={cn(
+                              PROJECT_FIELD_PILL_CLASS,
+                              placementOption.className,
+                            )}
+                          >
+                            <PlacementIcon className="size-3.5" />
+                            {placementOption.label}
                           </span>
                         ) : null}
-                        <span>
-                          {
-                            PLACEMENTS.find((item) => item.value === placement)
-                              ?.label
-                          }
-                        </span>
+                        {field.required ? (
+                          <span
+                            className={cn(
+                              PROJECT_FIELD_PILL_CLASS,
+                              "bg-danger/10 text-danger ring-danger/25",
+                            )}
+                          >
+                            <Asterisk className="size-3.5" />
+                            Required
+                          </span>
+                        ) : null}
+                        {!field.enabled ? (
+                          <span
+                            className={cn(
+                              PROJECT_FIELD_PILL_CLASS,
+                              "bg-paper text-ink-mute ring-line",
+                            )}
+                          >
+                            <EyeOff className="size-3.5" />
+                            Hidden
+                          </span>
+                        ) : null}
+                        {builtIn ? (
+                          <span
+                            title="Default fields can't be deleted"
+                            className={cn(
+                              PROJECT_FIELD_PILL_CLASS,
+                              "bg-paper text-ink-soft ring-line",
+                            )}
+                          >
+                            <Lock className="size-3" />
+                            Default
+                          </span>
+                        ) : null}
                       </span>
                     </span>
-                    {open ? (
-                      <ChevronUp className="size-4 text-ink-mute" />
-                    ) : (
-                      <ChevronDown className="size-4 text-ink-mute" />
-                    )}
-                  </button>
+                    <ChevronDown
+                      className={cn(
+                        "size-4 text-ink-mute transition-transform",
+                        open && "rotate-180",
+                      )}
+                    />
+                  </Button>
 
                   {open ? (
                     <div className="space-y-4 border-t border-line p-4">
@@ -199,7 +260,7 @@ const ProjectFieldsCard = ({
                         {builtIn ? (
                           <InputField
                             label="Field type"
-                            value={fieldTypeLabel}
+                            value={PROJECT_FIELD_TYPE_LABELS[field.type]}
                             disabled
                           />
                         ) : (
@@ -265,38 +326,43 @@ const ProjectFieldsCard = ({
                           Required
                         </label>
                         <fieldset className="min-w-0 flex-1">
-                          <legend className="mb-2 text-sm font-medium text-black">
+                          <legend className="mb-2 text-sm font-medium text-ink">
                             Show on
                           </legend>
                           <div className="flex flex-wrap gap-2">
-                            {PLACEMENTS.map((option) => {
-                              const cardBearing =
-                                option.value !== ProjectFieldPlacement.DETAIL;
-                              const disabled = cardBearing && cardLimitReached;
+                            {PROJECT_FIELD_PLACEMENTS.map((option) => {
+                              const OptionIcon = option.icon;
+                              const selected = placement === option.value;
+                              const disabled =
+                                option.value !== ProjectFieldPlacement.DETAIL &&
+                                cardLimitReached;
                               return (
-                                <button
+                                <Button
                                   key={option.value}
-                                  type="button"
+                                  variant="none"
+                                  size="xs"
                                   disabled={disabled}
+                                  aria-pressed={selected}
                                   onClick={() =>
                                     patch(index, placementFlags(option.value))
                                   }
+                                  startIcon={
+                                    <OptionIcon className="size-3.5" />
+                                  }
                                   className={cn(
-                                    "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
-                                    placement === option.value
-                                      ? "border-violet-500 bg-violet-500/10 text-violet-700"
-                                      : "border-line bg-paper text-ink-soft hover:border-violet-400",
-                                    disabled &&
-                                      "cursor-not-allowed opacity-40 hover:border-line",
+                                    "font-semibold ring-1 ring-inset",
+                                    selected
+                                      ? option.className
+                                      : "bg-paper text-ink-soft ring-line hover:ring-brand/40",
                                   )}
                                 >
                                   {option.label}
-                                </button>
+                                </Button>
                               );
                             })}
                           </div>
                           {cardLimitReached ? (
-                            <p className="mt-1.5 text-xs text-gray-500">
+                            <p className="mt-1.5 text-xs text-warn">
                               Card limit reached ({cardCount}/
                               {PROJECT_CARD_FIELD_LIMIT})
                             </p>
@@ -325,7 +391,7 @@ const ProjectFieldsCard = ({
         </div>
 
         {detailCount > PROJECT_DETAIL_FIELD_WARNING_LIMIT ? (
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-danger">
             More than {PROJECT_DETAIL_FIELD_WARNING_LIMIT} detail fields may
             make project pages feel crowded.
           </p>

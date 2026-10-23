@@ -29,6 +29,7 @@ export interface ImageStyle {
   grayscale: boolean;
   hoverCaption: boolean;
   masonry: boolean;
+  detailPage: boolean;
 }
 
 /** Always complete — the server fills in the defaults, so the Admin holds none. */
