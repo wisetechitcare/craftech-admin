@@ -37,7 +37,11 @@ import {
   ProjectFieldType,
   type ProjectFieldDefinition,
 } from "@/types/project";
-import { takesCardSlot, usesCardSlot } from "@/lib/utils/projects";
+import {
+  newProjectField,
+  takesCardSlot,
+  usesCardSlot,
+} from "@/lib/utils/projects";
 import { cn, move } from "@/utils/utils";
 
 interface ProjectFieldsCardProps {
@@ -47,6 +51,8 @@ interface ProjectFieldsCardProps {
   onDiscard: () => void;
   saving: boolean;
   dirty: boolean;
+  /** The row that starts expanded, e.g. a field added from the project form. */
+  defaultOpenKey?: string;
 }
 
 const placementOf = (field: ProjectFieldDefinition): ProjectFieldPlacement => {
@@ -67,8 +73,9 @@ const ProjectFieldsCard = ({
   onDiscard,
   saving,
   dirty,
+  defaultOpenKey,
 }: ProjectFieldsCardProps) => {
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [openKey, setOpenKey] = useState<string | null>(defaultOpenKey ?? null);
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const cardCount = fields.filter(usesCardSlot).length;
   const detailCount = fields.filter(
@@ -85,21 +92,9 @@ const ProjectFieldsCard = ({
 
   const addField = () => {
     if (fields.length >= PROJECT_FIELD_LIMIT) return;
-    const key = `customField${Date.now()}`;
-    onChange([
-      ...fields,
-      {
-        key,
-        label: "",
-        type: ProjectFieldType.TEXT,
-        required: false,
-        enabled: true,
-        showOnCard: false,
-        showOnDetail: true,
-        order: fields.length,
-      },
-    ]);
-    setOpenKey(key);
+    const field = newProjectField(fields.length);
+    onChange([...fields, field]);
+    setOpenKey(field.key);
   };
 
   const moveField = (from: number, to: number) =>

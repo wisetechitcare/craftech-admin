@@ -24,8 +24,6 @@ export enum ImageStyleSection {
 
 /** One section's image treatment; every layout of that section honours it. */
 export interface ImageStyle {
-  border: boolean;
-  rounded: boolean;
   grayscale: boolean;
   hoverCaption: boolean;
   masonry: boolean;

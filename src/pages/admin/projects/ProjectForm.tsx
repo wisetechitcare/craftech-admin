@@ -8,6 +8,7 @@ import FileUpload from "@/components/admin/ui/FileUpload";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 import { Button } from "@/components/ui/button";
 
+import ProjectAddFieldButton from "./ProjectAddFieldButton";
 import ProjectCaptionModal from "./ProjectCaptionModal";
 import { ProjectDetailsFields } from "./ProjectDetailsFields";
 
@@ -395,6 +396,10 @@ export default function ProjectForm() {
             onMetadataChange={setMetadata}
             typologyOptions={typologyOptions}
             fields={fieldDefinitions}
+          />
+          <ProjectAddFieldButton
+            fieldCount={fieldDefinitions.length}
+            onFieldsSaved={setFieldDefinitions}
           />
 
           <div className="flex justify-end pt-2">

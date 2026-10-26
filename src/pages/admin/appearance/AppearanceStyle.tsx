@@ -10,7 +10,10 @@ import type { PreviewSection } from "@/components/admin/ui/SitePreview";
 import { AdminInfoCallout } from "@/components/common";
 import { Button } from "@/components/ui/button";
 
-import { LAYOUT_VARIANT_LABELS } from "@/lib/constants/appearance";
+import {
+  FRAME_STYLE_DEFAULTS,
+  LAYOUT_VARIANT_LABELS,
+} from "@/lib/constants/appearance";
 import { siteThemeOf, siteThemePayload } from "@/lib/utils/common";
 import { appearanceApi } from "@/services/api";
 import type { SectionVariantField } from "@/types/appearance";
@@ -33,7 +36,7 @@ const themeChangeMessage = (
   const intro = current
     ? `Your website theme is currently ${LAYOUT_VARIANT_LABELS[current]}.`
     : "Your sections currently use different styles.";
-  return `${intro} Saving ${nextLabel} here switches the whole website to ${nextLabel} — the navbar, hero, about, gallery, projects, FAQ and contact sections all follow it.`;
+  return `${intro} Saving ${nextLabel} here switches the whole website to ${nextLabel} — the navbar, hero, about, gallery, projects, FAQ and contact sections all follow it. Border and rounded corners go back to its default.`;
 };
 
 /** One section's style picker. Styles are shared: a save sets the theme for every section. */
@@ -60,6 +63,11 @@ export default function AppearanceStyle({
       .catch(() => toast.error(`Failed to load the ${label.toLowerCase()}`));
   }, [field, label]);
 
+  const themePayload = (variant: LayoutVariant) =>
+    variant === siteTheme
+      ? siteThemePayload(variant)
+      : { ...siteThemePayload(variant), ...FRAME_STYLE_DEFAULTS };
+
   const save = async () => {
     if (!value) return;
 
@@ -70,7 +78,7 @@ export default function AppearanceStyle({
     setSaving(true);
 
     try {
-      const response = await appearanceApi.update(siteThemePayload(value));
+      const response = await appearanceApi.update(themePayload(value));
 
       message = response.data?.message || message;
 
@@ -118,7 +126,7 @@ export default function AppearanceStyle({
   return (
     <PreviewPanel
       section={section}
-      draft={{ appearance: siteThemePayload(value) }}
+      draft={{ appearance: themePayload(value) }}
       viewportHeight={viewportHeight}
     >
       <AdminInfoCallout description="One theme is shared by the whole website. Changing it here also changes every other section, and the Site Theme under Global → Site Identity." />

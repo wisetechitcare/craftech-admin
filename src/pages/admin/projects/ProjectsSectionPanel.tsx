@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
 import { PageHeader } from "@/components/common";
+import FrameStyleCard from "@/components/admin/ui/FrameStyleCard";
 import ImageStyleCard from "@/components/admin/ui/ImageStyleCard";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import SectionContentCard from "@/components/admin/ui/SectionContentCard";
@@ -20,6 +21,7 @@ import {
   type PortfolioSectionCopy,
 } from "@/lib/constants/portfolio";
 import { appearanceApi, portfolioSectionApi } from "@/services/api";
+import type { FrameStyle } from "@/types/appearance";
 import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
 import type { PortfolioSectionContent } from "@/types/portfolio";
 
@@ -41,6 +43,7 @@ const ProjectsSectionPanel = () => {
   });
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
+  const [frame, setFrame] = useState<FrameStyle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const sectionVisible = isVisible(visibility, PORTFOLIO_VISIBILITY_KEY);
@@ -62,6 +65,10 @@ const ProjectsSectionPanel = () => {
         if (appearanceRes.data?.success) {
           setVisibility(appearanceRes.data.data.visibility ?? {});
           setImageStyles(appearanceRes.data.data.imageStyles);
+          setFrame({
+            borders: appearanceRes.data.data.borders,
+            roundedCorners: appearanceRes.data.data.roundedCorners,
+          });
         }
       } catch {
         toast.error("Failed to load projects section settings");
@@ -103,7 +110,11 @@ const ProjectsSectionPanel = () => {
         placement="above"
         draft={{
           portfolioSection: section,
-          appearance: { visibility, ...(imageStyles && { imageStyles }) },
+          appearance: {
+            visibility,
+            ...(imageStyles && { imageStyles }),
+            ...frame,
+          },
         }}
         sectionHidden={!sectionVisible}
         onShowSection={() =>
@@ -123,6 +134,8 @@ const ProjectsSectionPanel = () => {
             options={PORTFOLIO_IMAGE_STYLE_OPTIONS}
           />
         ) : null}
+
+        {frame ? <FrameStyleCard frame={frame} onChange={setFrame} /> : null}
 
         <SectionContentCard
           name="Projects"

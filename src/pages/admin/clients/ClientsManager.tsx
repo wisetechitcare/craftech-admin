@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/common";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import { PreviewSection } from "@/components/admin/ui/SitePreview";
 import SectionContentCard from "@/components/admin/ui/SectionContentCard";
+import FrameStyleCard from "@/components/admin/ui/FrameStyleCard";
 import ImageStyleCard from "@/components/admin/ui/ImageStyleCard";
 import SwitchOptionsCard from "@/components/admin/ui/SwitchOptionsCard";
 import {
@@ -29,6 +30,7 @@ import { updateAppearanceVisibility } from "@/lib/utils/appearance";
 import { useClientsList } from "@/hooks/use-clients-list";
 import { appearanceApi, cmsApi } from "@/services/api";
 import type { ClientsCopyRules, ClientsSectionContent } from "@/types/clients";
+import type { FrameStyle } from "@/types/appearance";
 import type { ImageStyleMap, LayoutVariant } from "@/types/common";
 import { ImageStyleSection } from "@/types/common";
 
@@ -43,6 +45,7 @@ const ClientsManager = () => {
   );
   const [copyRules, setCopyRules] = useState<ClientsCopyRules | null>(null);
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
+  const [frame, setFrame] = useState<FrameStyle | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingMode, setSavingMode] = useState(false);
 
@@ -63,6 +66,10 @@ const ClientsManager = () => {
             appearance.clientsVariant ?? CLIENTS_VARIANT_DEFAULT,
           );
           setImageStyles(appearance.imageStyles);
+          setFrame({
+            borders: appearance.borders,
+            roundedCorners: appearance.roundedCorners,
+          });
         }
 
         if (sectionRes.data?.success) {
@@ -134,6 +141,7 @@ const ClientsManager = () => {
             visibility,
             clientsVariant,
             ...(imageStyles && { imageStyles }),
+            ...frame,
           },
         }}
         caption="The live Clients band (intro + logos), rendered by the website. Unsaved copy, logos and visibility show here before you save."
@@ -176,6 +184,8 @@ const ClientsManager = () => {
             options={CLIENTS_IMAGE_STYLE_OPTIONS}
           />
         ) : null}
+
+        {frame ? <FrameStyleCard frame={frame} onChange={setFrame} /> : null}
 
         <ClientsLogosPanel
           items={items}

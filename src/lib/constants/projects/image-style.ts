@@ -1,7 +1,7 @@
 import { IMAGE_STYLE_OPTIONS } from "@/lib/constants/common";
 import type { ImageStyleOption } from "@/types/common";
 
-/** Project detail photos: frame switches + which photo layout to use. */
+/** Project detail photos: tone and caption switches + which photo layout to use. */
 export const PROJECT_DETAIL_IMAGE_STYLE_OPTIONS: ImageStyleOption[] = [
   ...IMAGE_STYLE_OPTIONS.filter((opt) => opt.key !== "masonry"),
   {

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { PageHeader } from "@/components/common";
 import ConfirmModal from "@/components/admin/ui/ConfirmModal";
 import FileUpload from "@/components/admin/ui/FileUpload";
+import FrameStyleCard from "@/components/admin/ui/FrameStyleCard";
 import ImageStyleCard from "@/components/admin/ui/ImageStyleCard";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import SectionContentCard from "@/components/admin/ui/SectionContentCard";
@@ -30,6 +31,7 @@ import {
   GALLERY_VISIBILITY_KEY,
 } from "@/lib/constants/gallery";
 import { appearanceApi, galleryApi, uploadApi } from "@/services/api";
+import type { FrameStyle } from "@/types/appearance";
 import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
 import type {
   GalleryImage,
@@ -54,6 +56,7 @@ const GalleryManager = () => {
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   // Null until Appearance answers: the server owns the defaults.
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
+  const [frame, setFrame] = useState<FrameStyle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [uploading, setUploading] = useState<boolean>(false);
   // Bumped after every upload so FileUpload remounts empty, as in SlideMedia.
@@ -116,6 +119,10 @@ const GalleryManager = () => {
         isError = false;
         setVisibility(response.data.data.visibility ?? {});
         setImageStyles(response.data.data.imageStyles);
+        setFrame({
+          borders: response.data.data.borders,
+          roundedCorners: response.data.data.roundedCorners,
+        });
       }
     } catch (error) {
       if (isAxiosError(error)) {
@@ -319,7 +326,11 @@ const GalleryManager = () => {
         placement="above"
         draft={{
           galleryContent: { images, section },
-          appearance: { visibility, ...(imageStyles && { imageStyles }) },
+          appearance: {
+            visibility,
+            ...(imageStyles && { imageStyles }),
+            ...frame,
+          },
         }}
         caption="The live homepage Gallery section, rendered by the website itself. Unsaved copy, order and visibility show here before you save them."
         sectionHidden={!sectionVisible}
@@ -335,6 +346,8 @@ const GalleryManager = () => {
             onChange={setImageStyles}
           />
         )}
+
+        {frame && <FrameStyleCard frame={frame} onChange={setFrame} />}
 
         <SectionContentCard
           name="Gallery"

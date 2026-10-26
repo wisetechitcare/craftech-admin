@@ -13,7 +13,7 @@ import {
   PROJECT_FIELD_OPTION_MAX,
   PROJECT_TAGS_FIELD_KEY,
 } from "@/lib/constants/projects";
-import { usesCardSlot } from "@/lib/utils/projects";
+import { newProjectField, usesCardSlot } from "@/lib/utils/projects";
 import { portfolioSectionApi } from "@/services/api";
 import { ProjectFieldType, type ProjectFieldDefinition } from "@/types/project";
 
@@ -71,7 +71,16 @@ const validationMessage = (fields: ProjectFieldDefinition[]): string | null => {
   return null;
 };
 
-export default function ProjectFieldsManager() {
+interface ProjectFieldsManagerProps {
+  /** Opens with a blank field expanded (the project form's Add field). */
+  startWithNewField?: boolean;
+  onSaved?: (fields: ProjectFieldDefinition[]) => void;
+}
+
+export default function ProjectFieldsManager({
+  startWithNewField = false,
+  onSaved,
+}: ProjectFieldsManagerProps) {
   const [fields, setFields] = useState<ProjectFieldDefinition[]>([]);
   const [savedFields, setSavedFields] = useState<ProjectFieldDefinition[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -87,12 +96,16 @@ export default function ProjectFieldsManager() {
             ? field
             : { ...field, showOnDetail: true },
         );
-        setFields(loaded);
         setSavedFields(loaded);
+        setFields(
+          startWithNewField && loaded.length < PROJECT_FIELD_LIMIT
+            ? [...loaded, newProjectField(loaded.length)]
+            : loaded,
+        );
       })
       .catch(() => toast.error("Failed to load project fields"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [startWithNewField]);
 
   const save = async () => {
     const error = validationMessage(fields);
@@ -113,6 +126,7 @@ export default function ProjectFieldsManager() {
         isError = false;
         setFields(response.data.data);
         setSavedFields(response.data.data);
+        onSaved?.(response.data.data);
       }
     } catch (error) {
       if (isAxiosError<{ message?: string }>(error)) {
@@ -145,6 +159,7 @@ export default function ProjectFieldsManager() {
       onDiscard={() => setFields(savedFields)}
       saving={saving}
       dirty={dirty}
+      defaultOpenKey={startWithNewField ? fields.at(-1)?.key : undefined}
     />
   );
 }

@@ -20,7 +20,7 @@ interface ImageStyleCardProps {
   description: string;
   styles: ImageStyleMap;
   onChange: (styles: ImageStyleMap) => void;
-  /** Defaults to all switches; Clients passes border / rounded / B&W only. */
+  /** Defaults to all switches; Clients passes B&W only. */
   options?: ImageStyleOption[];
 }
 
