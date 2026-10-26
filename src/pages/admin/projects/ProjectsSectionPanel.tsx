@@ -116,7 +116,8 @@ const ProjectsSectionPanel = () => {
         {imageStyles ? (
           <ImageStyleCard
             section={ImageStyleSection.PORTFOLIO}
-            description="How project cards look and behave in every layout, plus the detail page's photos."
+            title="Display & Layout"
+            description="Customize how projects appear across layouts, including card styles, hover effects, and detail page photo presentation."
             styles={imageStyles}
             onChange={(next) => setImageStyles(withSyncedProjectDetail(next))}
             options={PORTFOLIO_IMAGE_STYLE_OPTIONS}

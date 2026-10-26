@@ -6,9 +6,9 @@ export const PORTFOLIO_IMAGE_STYLE_OPTIONS: ImageStyleOption[] = [
   ...IMAGE_STYLE_OPTIONS.filter((opt) => opt.key !== "masonry"),
   {
     key: "detailPage",
-    label: "Project detail page",
+    label: "Project detail pages",
     helper:
-      "On: compact cards that open each project's own page, for photo-led work like construction or interiors. Off: the whole project on its card, with summary, fields, tags and link buttons, and no detail pages. Suits developers and freelancers.",
+      "On: each project opens its own detail page, and links like Live Demo stay separate buttons. Off: no detail pages; a project opens its first link, or nothing if it has none.",
   },
   {
     key: "masonry",

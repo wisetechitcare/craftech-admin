@@ -16,6 +16,7 @@ import type {
 
 interface ImageStyleCardProps {
   section: ImageStyleSection;
+  title?: string;
   description: string;
   styles: ImageStyleMap;
   onChange: (styles: ImageStyleMap) => void;
@@ -25,6 +26,7 @@ interface ImageStyleCardProps {
 
 const ImageStyleCard = ({
   section,
+  title = "Image Style",
   description,
   styles,
   onChange,
@@ -66,7 +68,7 @@ const ImageStyleCard = ({
 
   return (
     <SwitchOptionsCard
-      title="Image Style"
+      title={title}
       description={description}
       rows={options.map(({ key, label, helper }) => ({
         key,
