@@ -12,12 +12,14 @@ import {
   SectionVisibilitySwitch,
   isVisible,
   type VisibilityMap,
+  type VisibilitySection,
 } from "@/components/admin/ui/VisibilityToggle";
 
 import { PORTFOLIO_IMAGE_STYLE_OPTIONS } from "@/lib/constants/portfolio/image-style";
 import {
   PORTFOLIO_SECTION_FIELDS,
   PORTFOLIO_VISIBILITY_KEY,
+  PROJECTS_PAGE_VISIBILITY_GROUP,
   type PortfolioSectionCopy,
 } from "@/lib/constants/portfolio";
 import { appearanceApi, portfolioSectionApi } from "@/services/api";
@@ -42,6 +44,9 @@ const ProjectsSectionPanel = () => {
     viewAllLabel: "",
   });
   const [visibility, setVisibility] = useState<VisibilityMap>({});
+  const [pageToolSections, setPageToolSections] = useState<VisibilitySection[]>(
+    [],
+  );
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
   const [frame, setFrame] = useState<FrameStyle | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -64,6 +69,11 @@ const ProjectsSectionPanel = () => {
         if (sectionRes.data?.success) setSection(sectionRes.data.data);
         if (appearanceRes.data?.success) {
           setVisibility(appearanceRes.data.data.visibility ?? {});
+          setPageToolSections(
+            appearanceRes.data.data.visibilityOptions?.find(
+              (group) => group.key === PROJECTS_PAGE_VISIBILITY_GROUP,
+            )?.sections ?? [],
+          );
           setImageStyles(appearanceRes.data.data.imageStyles);
           setFrame({
             borders: appearanceRes.data.data.borders,
@@ -124,6 +134,8 @@ const ProjectsSectionPanel = () => {
           }))
         }
       >
+        {frame ? <FrameStyleCard frame={frame} onChange={setFrame} /> : null}
+
         {imageStyles ? (
           <ImageStyleCard
             section={ImageStyleSection.PORTFOLIO}
@@ -132,10 +144,11 @@ const ProjectsSectionPanel = () => {
             styles={imageStyles}
             onChange={(next) => setImageStyles(withSyncedProjectDetail(next))}
             options={PORTFOLIO_IMAGE_STYLE_OPTIONS}
+            visibilityOptions={pageToolSections}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
           />
         ) : null}
-
-        {frame ? <FrameStyleCard frame={frame} onChange={setFrame} /> : null}
 
         <SectionContentCard
           name="Projects"

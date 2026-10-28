@@ -338,6 +338,8 @@ const GalleryManager = () => {
           setVisibility((prev) => ({ ...prev, [GALLERY_VISIBILITY_KEY]: true }))
         }
       >
+        {frame && <FrameStyleCard frame={frame} onChange={setFrame} />}
+
         {imageStyles && (
           <ImageStyleCard
             section={ImageStyleSection.GALLERY}
@@ -346,8 +348,6 @@ const GalleryManager = () => {
             onChange={setImageStyles}
           />
         )}
-
-        {frame && <FrameStyleCard frame={frame} onChange={setFrame} />}
 
         <SectionContentCard
           name="Gallery"
