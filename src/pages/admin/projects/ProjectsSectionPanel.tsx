@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
 import { PageHeader } from "@/components/common";
+import FrameStyleCard from "@/components/admin/ui/FrameStyleCard";
 import ImageStyleCard from "@/components/admin/ui/ImageStyleCard";
 import PreviewPanel from "@/components/admin/ui/PreviewPanel";
 import SectionContentCard from "@/components/admin/ui/SectionContentCard";
@@ -11,21 +12,18 @@ import {
   SectionVisibilitySwitch,
   isVisible,
   type VisibilityMap,
+  type VisibilitySection,
 } from "@/components/admin/ui/VisibilityToggle";
-import ProjectFieldsCard from "./ProjectFieldsCard";
 
 import { PORTFOLIO_IMAGE_STYLE_OPTIONS } from "@/lib/constants/portfolio/image-style";
 import {
   PORTFOLIO_SECTION_FIELDS,
   PORTFOLIO_VISIBILITY_KEY,
+  PROJECTS_PAGE_VISIBILITY_GROUP,
   type PortfolioSectionCopy,
 } from "@/lib/constants/portfolio";
-import {
-  PROJECT_CARD_FIELD_LIMIT,
-  PROJECT_FIELD_LABEL_MAX,
-  PROJECT_FIELD_LIMIT,
-} from "@/lib/constants/projects";
 import { appearanceApi, portfolioSectionApi } from "@/services/api";
+import type { FrameStyle } from "@/types/appearance";
 import { ImageStyleSection, type ImageStyleMap } from "@/types/common";
 import type { PortfolioSectionContent } from "@/types/portfolio";
 
@@ -46,9 +44,12 @@ const ProjectsSectionPanel = () => {
     viewAllLabel: "",
   });
   const [visibility, setVisibility] = useState<VisibilityMap>({});
+  const [pageToolSections, setPageToolSections] = useState<VisibilitySection[]>(
+    [],
+  );
   const [imageStyles, setImageStyles] = useState<ImageStyleMap | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [savingFields, setSavingFields] = useState<boolean>(false);
+  const [frame, setFrame] = useState<FrameStyle | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const sectionVisible = isVisible(visibility, PORTFOLIO_VISIBILITY_KEY);
   const sectionCopy: PortfolioSectionCopy = {
@@ -58,53 +59,6 @@ const ProjectsSectionPanel = () => {
     viewAllLabel: section.viewAllLabel,
   };
 
-  const saveFields = async () => {
-    const fields = section.fields ?? [];
-    if (fields.length > PROJECT_FIELD_LIMIT) {
-      toast.error(
-        `A website can configure at most ${PROJECT_FIELD_LIMIT} project fields`,
-      );
-      return;
-    }
-    if (
-      fields.some(
-        (field) =>
-          !field.label.trim() ||
-          field.label.trim().length > PROJECT_FIELD_LABEL_MAX,
-      )
-    ) {
-      toast.error(
-        `Field labels must be 1–${PROJECT_FIELD_LABEL_MAX} characters`,
-      );
-      return;
-    }
-    if (
-      fields.filter((field) => field.enabled && field.showOnCard).length >
-      PROJECT_CARD_FIELD_LIMIT
-    ) {
-      toast.error(
-        `At most ${PROJECT_CARD_FIELD_LIMIT} fields can be shown on project cards`,
-      );
-      return;
-    }
-    setSavingFields(true);
-    let message = "Failed to save project fields";
-    let isError = true;
-    try {
-      const response = await portfolioSectionApi.updateSection(section);
-      message = response.data?.message || "Project fields saved";
-      if (response.data?.success) {
-        isError = false;
-        setSection(response.data.data);
-      }
-    } catch {
-      message = "Failed to save project fields";
-    } finally {
-      toast[isError ? "error" : "success"](message);
-      setSavingFields(false);
-    }
-  };
-
   useEffect(() => {
     const load = async () => {
       try {
@@ -112,12 +66,19 @@ const ProjectsSectionPanel = () => {
           portfolioSectionApi.getSection(),
           appearanceApi.get(),
         ]);
-        if (sectionRes.data?.success) {
-          setSection(sectionRes.data.data);
-        }
+        if (sectionRes.data?.success) setSection(sectionRes.data.data);
         if (appearanceRes.data?.success) {
           setVisibility(appearanceRes.data.data.visibility ?? {});
+          setPageToolSections(
+            appearanceRes.data.data.visibilityOptions?.find(
+              (group) => group.key === PROJECTS_PAGE_VISIBILITY_GROUP,
+            )?.sections ?? [],
+          );
           setImageStyles(appearanceRes.data.data.imageStyles);
+          setFrame({
+            borders: appearanceRes.data.data.borders,
+            roundedCorners: appearanceRes.data.data.roundedCorners,
+          });
         }
       } catch {
         toast.error("Failed to load projects section settings");
@@ -159,7 +120,11 @@ const ProjectsSectionPanel = () => {
         placement="above"
         draft={{
           portfolioSection: section,
-          appearance: { visibility, ...(imageStyles && { imageStyles }) },
+          appearance: {
+            visibility,
+            ...(imageStyles && { imageStyles }),
+            ...frame,
+          },
         }}
         sectionHidden={!sectionVisible}
         onShowSection={() =>
@@ -169,13 +134,19 @@ const ProjectsSectionPanel = () => {
           }))
         }
       >
+        {frame ? <FrameStyleCard frame={frame} onChange={setFrame} /> : null}
+
         {imageStyles ? (
           <ImageStyleCard
             section={ImageStyleSection.PORTFOLIO}
-            description="List thumbnails and detail photos. Inline gallery puts every photo below the project copy."
+            title="Display & Layout"
+            description="Customize how projects appear across layouts, including card styles, hover effects, and detail page photo presentation."
             styles={imageStyles}
             onChange={(next) => setImageStyles(withSyncedProjectDetail(next))}
             options={PORTFOLIO_IMAGE_STYLE_OPTIONS}
+            visibilityOptions={pageToolSections}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
           />
         ) : null}
 
@@ -206,15 +177,6 @@ const ProjectsSectionPanel = () => {
           visibilityKey={PORTFOLIO_VISIBILITY_KEY}
           visibility={visibility}
           onVisibilityChange={setVisibility}
-        />
-
-        <ProjectFieldsCard
-          fields={section.fields ?? []}
-          onChange={(fields) =>
-            setSection((current) => ({ ...current, fields }))
-          }
-          onSave={saveFields}
-          saving={savingFields}
         />
       </PreviewPanel>
     </div>

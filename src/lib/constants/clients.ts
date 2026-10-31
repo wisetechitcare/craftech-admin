@@ -2,10 +2,9 @@ import { IMAGE_STYLE_OPTIONS } from "@/lib/constants/common";
 import { LayoutVariant, type SectionCopyField } from "@/types/common";
 import type { ClientsCopyRules, ClientsSectionContent } from "@/types/clients";
 
-/** Variant 2 grid: frame, corners, and B&W only (no gallery caption / masonry). */
+/** Variant 2 grid: B&W only (no gallery caption / masonry); frame and corners live in FrameStyleCard. */
 export const CLIENTS_IMAGE_STYLE_OPTIONS = IMAGE_STYLE_OPTIONS.filter(
-  (opt) =>
-    opt.key === "border" || opt.key === "rounded" || opt.key === "grayscale",
+  (opt) => opt.key === "grayscale",
 );
 
 export const CLIENTS_VARIANT_DEFAULT = LayoutVariant.PREMIUM_GLASS;

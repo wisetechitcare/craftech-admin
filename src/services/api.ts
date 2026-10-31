@@ -20,6 +20,7 @@ import type {
 } from "../types/gallery";
 import type { HeroContent, HeroResponse } from "../types/hero";
 import type { PortfolioSectionContent } from "../types/portfolio";
+import type { ProjectFieldDefinition } from "../types/project";
 import type { FontPage, FontQuery } from "../types/rich-text";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api";
@@ -197,6 +198,12 @@ export const portfolioSectionApi = {
       message?: string;
       data: PortfolioSectionContent;
     }>("/cms/projects/section", data),
+  updateFields: (fields: ProjectFieldDefinition[]) =>
+    api.put<{
+      success: boolean;
+      message?: string;
+      data: ProjectFieldDefinition[];
+    }>("/cms/projects/fields", { fields }),
 };
 
 export const projectsApi = {

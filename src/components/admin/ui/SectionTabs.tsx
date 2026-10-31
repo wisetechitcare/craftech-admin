@@ -3,17 +3,28 @@ import { motion, useReducedMotion } from "framer-motion";
 
 import { adminBrandMarkClass } from "@/lib/constants/admin-theme";
 import { SECTION_TABS } from "@/lib/constants/sidebar";
+import type { SectionTab } from "@/types/navigation";
 import { cn } from "@/utils/utils";
 
 const FILL_SPRING = { type: "spring", stiffness: 380, damping: 32 };
 
-export default function SectionTabs() {
+export default function SectionTabs({
+  tabs = SECTION_TABS,
+}: {
+  tabs?: SectionTab[];
+}) {
   const reduceMotion = useReducedMotion();
 
   return (
     <div className="space-y-6">
-      <nav aria-label="Section settings" className="grid grid-cols-2 gap-3">
-        {SECTION_TABS.map((tab, index) => (
+      <nav
+        aria-label="Section settings"
+        className={cn(
+          "grid gap-3",
+          tabs.length === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2",
+        )}
+      >
+        {tabs.map((tab, index) => (
           <NavLink
             key={tab.path}
             to={tab.path}

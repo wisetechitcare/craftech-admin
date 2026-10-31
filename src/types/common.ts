@@ -24,11 +24,10 @@ export enum ImageStyleSection {
 
 /** One section's image treatment; every layout of that section honours it. */
 export interface ImageStyle {
-  border: boolean;
-  rounded: boolean;
   grayscale: boolean;
   hoverCaption: boolean;
   masonry: boolean;
+  detailPage: boolean;
 }
 
 /** Always complete — the server fills in the defaults, so the Admin holds none. */

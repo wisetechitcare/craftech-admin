@@ -8,6 +8,9 @@ export type PortfolioSectionCopy = Pick<
 
 export const PORTFOLIO_VISIBILITY_KEY = "home.portfolio";
 
+/** The registry group holding the /projects page tools (search, category tabs). */
+export const PROJECTS_PAGE_VISIBILITY_GROUP = "projects";
+
 export const PORTFOLIO_SECTION_DEFAULTS: PortfolioSectionContent = {
   eyebrow: "Our Work",
   title: "Engineering Distinction.",

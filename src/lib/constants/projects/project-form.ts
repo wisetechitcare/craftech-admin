@@ -1,5 +1,8 @@
+import { FileText, Layers, LayoutGrid } from "lucide-react";
+
 import { richTextToPlain, toRichText } from "@/lib/editor";
 import {
+  ProjectFieldPlacement,
   ProjectFieldType,
   type ProjectContentField,
   type ProjectFieldDefinition,
@@ -11,9 +14,41 @@ export const PROJECT_CAPTION_TITLE_MAX = 80;
 export const PROJECT_CAPTION_DESCRIPTION_MAX = 200;
 
 export const PROJECT_FIELD_LIMIT = 20;
-export const PROJECT_CARD_FIELD_LIMIT = 3;
+export const PROJECT_CARD_FIELD_LIMIT = 6;
 export const PROJECT_DETAIL_FIELD_WARNING_LIMIT = 12;
 export const PROJECT_FIELD_LABEL_MAX = 40;
+export const PROJECT_FIELD_OPTION_LIMIT = 50;
+export const PROJECT_FIELD_OPTION_MAX = 80;
+export const PROJECT_TAGS_FIELD_KEY = "tags";
+export const PROJECT_CARD_SLOT_FREE_TYPES = [
+  ProjectFieldType.URL,
+  ProjectFieldType.MULTI_SELECT,
+];
+export const PROJECT_UNTITLED_FIELD_LABEL = "Untitled field";
+
+export const PROJECT_FIELD_PILL_CLASS =
+  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset";
+
+export const PROJECT_FIELD_PLACEMENTS = [
+  {
+    value: ProjectFieldPlacement.CARD,
+    label: "Card only",
+    icon: LayoutGrid,
+    className: "bg-ok/10 text-ok ring-ok/25",
+  },
+  {
+    value: ProjectFieldPlacement.DETAIL,
+    label: "Detail only",
+    icon: FileText,
+    className: "bg-raise text-ink-soft ring-line",
+  },
+  {
+    value: ProjectFieldPlacement.BOTH,
+    label: "Card + Detail",
+    icon: Layers,
+    className: "bg-brand/10 text-brand ring-brand/25",
+  },
+] as const;
 
 export const PROJECT_CAPTION_PREVIEW_WIDTH = 640;
 export const PROJECT_CAPTION_PREVIEW_HEIGHT = 480;
@@ -88,16 +123,25 @@ export const PROJECT_LEGACY_FIELDS: ProjectFieldDefinition[] = [
   }),
 ];
 
+export const PROJECT_FIELD_TYPE_LABELS: Record<ProjectFieldType, string> = {
+  [ProjectFieldType.TEXT]: "Text",
+  [ProjectFieldType.RICH_TEXT]: "Long text",
+  [ProjectFieldType.NUMBER]: "Number",
+  [ProjectFieldType.DATE]: "Date",
+  [ProjectFieldType.BOOLEAN]: "Boolean",
+  [ProjectFieldType.SELECT]: "Select",
+  [ProjectFieldType.MULTI_SELECT]: "Multi-select",
+  [ProjectFieldType.URL]: "URL",
+};
+
 export const PROJECT_FIELD_TYPE_OPTIONS = [
-  { value: ProjectFieldType.TEXT, label: "Text" },
-  { value: ProjectFieldType.RICH_TEXT, label: "Rich text" },
-  { value: ProjectFieldType.NUMBER, label: "Number" },
-  { value: ProjectFieldType.DATE, label: "Date" },
-  { value: ProjectFieldType.BOOLEAN, label: "Yes / No" },
-  { value: ProjectFieldType.SELECT, label: "Select" },
-  { value: ProjectFieldType.MULTI_SELECT, label: "Multi-select" },
-  { value: ProjectFieldType.URL, label: "URL" },
-];
+  ProjectFieldType.TEXT,
+  ProjectFieldType.NUMBER,
+  ProjectFieldType.DATE,
+  ProjectFieldType.SELECT,
+  ProjectFieldType.MULTI_SELECT,
+  ProjectFieldType.URL,
+].map((value) => ({ value, label: PROJECT_FIELD_TYPE_LABELS[value] }));
 
 export interface ProjectRichFieldConfig {
   key: ProjectContentField;

@@ -50,6 +50,17 @@ export interface VisibilityGroup {
   sections: VisibilitySection[];
 }
 
+/** The site-wide frame switches; every page and section follows them. */
+export type FrameStyleField = "borders" | "roundedCorners";
+
+export type FrameStyle = Pick<AppearanceResponse, FrameStyleField>;
+
+export interface FrameStyleOption {
+  key: FrameStyleField;
+  label: string;
+  helper: string;
+}
+
 /** The Appearance fields that each hold one section's layout. */
 export type SectionVariantField = (typeof SECTION_VARIANT_FIELDS)[number];
 
@@ -64,6 +75,8 @@ export interface AppearanceResponse {
   clientsVariant: LayoutVariant;
   portfolioVariant: LayoutVariant;
   customCursorVariant: CustomCursorVariant;
+  borders: boolean;
+  roundedCorners: boolean;
   navbar: NavbarContent;
   navbarRules: NavbarRules;
   navigationDestinations: NavigationDestinationOption[];
@@ -90,6 +103,8 @@ export interface AppearanceUpdatePayload {
   clientsVariant?: LayoutVariant;
   portfolioVariant?: LayoutVariant;
   customCursorVariant?: CustomCursorVariant;
+  borders?: boolean;
+  roundedCorners?: boolean;
   navbar?: NavbarContent;
   visibility?: VisibilityMap;
   sectionOrder?: string[];

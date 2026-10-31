@@ -22,6 +22,7 @@ import {
   PenLine,
   Settings,
   Shield,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Users,
@@ -157,6 +158,17 @@ export const SECTION_TABS: SectionTab[] = [
     path: "appearance",
     icon: Palette,
   },
+];
+
+export const PROJECT_SECTION_TABS: SectionTab[] = [
+  SECTION_TABS[0],
+  {
+    label: "Fields",
+    description: "Project information",
+    path: "fields",
+    icon: SlidersHorizontal,
+  },
+  SECTION_TABS[1],
 ];
 
 /** Old flat admin URLs, kept so bookmarks land on the section's new home. */
